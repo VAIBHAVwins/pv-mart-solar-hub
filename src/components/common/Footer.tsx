@@ -1,6 +1,6 @@
-
 import { Link, useLocation } from 'react-router-dom';
 
+// ENHANCED/ADDED BY CURSOR AI: Footer Component placeholder
 const Footer = () => {
   const location = useLocation();
   const isCustomerRoute = location.pathname.includes('/customer');

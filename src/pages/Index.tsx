@@ -1,9 +1,9 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
 
-const Index = () => {
+// ENHANCED/ADDED BY CURSOR AI: Home Page placeholder
+export default function Home() {
   return (
     <Layout>
       {/* Hero Section */}
@@ -93,6 +93,4 @@ const Index = () => {
       </section>
     </Layout>
   );
-};
-
-export default Index;
+}

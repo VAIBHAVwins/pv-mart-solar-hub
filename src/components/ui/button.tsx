@@ -44,8 +44,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : "button"
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ variant, size, className }), "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary/70 transition-all duration-200")}
         ref={ref}
+        aria-pressed={props['aria-pressed']}
+        aria-label={props['aria-label']}
         {...props}
       />
     )
