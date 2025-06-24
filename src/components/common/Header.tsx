@@ -1,12 +1,13 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { theme, setTheme } = useTheme();
 
   const isCustomerRoute = location.pathname.includes('/customer');
   const isVendorRoute = location.pathname.includes('/vendor');
@@ -55,8 +56,25 @@ const Header = () => {
             </Link>
           </nav>
 
-          {/* Auth Buttons */}
+          {/* ENHANCED BY CURSOR AI: Theme toggle button (desktop) */}
           <div className="hidden md:flex items-center space-x-3">
+            <div className="flex gap-2 mr-4">
+              <button
+                className={`px-3 py-1 rounded ${theme === 'light' ? 'bg-white text-black font-bold' : 'bg-transparent border border-white text-white'}`}
+                onClick={() => setTheme('light')}
+                aria-label="Switch to light mode"
+              >Light</button>
+              <button
+                className={`px-3 py-1 rounded ${theme === 'dark' ? 'bg-black text-white font-bold' : 'bg-transparent border border-white text-white'}`}
+                onClick={() => setTheme('dark')}
+                aria-label="Switch to dark mode"
+              >Dark</button>
+              <button
+                className={`px-3 py-1 rounded ${theme === 'system' ? 'bg-gray-300 text-black font-bold' : 'bg-transparent border border-white text-white'}`}
+                onClick={() => setTheme('system')}
+                aria-label="Switch to system default mode"
+              >System</button>
+            </div>
             <Link to="/customer/login">
               <Button variant="outline" size="sm" className={isCustomerRoute ? 'border-[#8b4a08] text-[#8b4a08] hover:bg-[#8b4a08] hover:text-white' : ''}>
                 Customer Login
@@ -93,6 +111,24 @@ const Header = () => {
             <Link to="/contact" className={`block ${getLinkClasses()} transition-colors`}>
               Contact
             </Link>
+            {/* ENHANCED BY CURSOR AI: Theme toggle button (mobile) */}
+            <div className="flex gap-2 pt-3">
+              <button
+                className={`px-3 py-1 rounded ${theme === 'light' ? 'bg-white text-black font-bold' : 'bg-transparent border border-white text-white'}`}
+                onClick={() => setTheme('light')}
+                aria-label="Switch to light mode"
+              >Light</button>
+              <button
+                className={`px-3 py-1 rounded ${theme === 'dark' ? 'bg-black text-white font-bold' : 'bg-transparent border border-white text-white'}`}
+                onClick={() => setTheme('dark')}
+                aria-label="Switch to dark mode"
+              >Dark</button>
+              <button
+                className={`px-3 py-1 rounded ${theme === 'system' ? 'bg-gray-300 text-black font-bold' : 'bg-transparent border border-white text-white'}`}
+                onClick={() => setTheme('system')}
+                aria-label="Switch to system default mode"
+              >System</button>
+            </div>
             <div className="flex flex-col space-y-2 pt-3">
               <Link to="/customer/login">
                 <Button variant="outline" size="sm" className="w-full">
