@@ -1,11 +1,6 @@
 import type { Config } from "tailwindcss";
 
 // ENHANCED BY CURSOR AI: This Tailwind config includes custom palettes for customer and vendor themes.
-// Required for Tailwind plugins (CURSOR AI)
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-// @ts-ignore
-const require = require;
-
 export default {
 	darkMode: ["class"],
 	content: [

@@ -1,22 +1,13 @@
+// ENHANCED/ADDED BY CURSOR AI: Layout Component placeholder
+import Header from '../common/Header';
+import Footer from '../common/Footer';
 
-import Header from '@/components/common/Header';
-import Footer from '@/components/common/Footer';
-
-interface LayoutProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-const Layout = ({ children, className = '' }: LayoutProps) => {
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className={`flex-1 ${className}`}>
-        {children}
-      </main>
-      <Footer />
-    </div>
-  );
-};
+const Layout = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen flex flex-col">
+    <Header />
+    <main className="flex-1">{children}</main>
+    <Footer />
+  </div>
+);
 
 export default Layout;

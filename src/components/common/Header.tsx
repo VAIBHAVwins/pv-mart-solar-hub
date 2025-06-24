@@ -76,12 +76,28 @@ const Header = () => {
               >System</button>
             </div>
             <Link to="/customer/login">
-              <Button variant="outline" size="sm" className={isCustomerRoute ? 'border-[#8b4a08] text-[#8b4a08] hover:bg-[#8b4a08] hover:text-white' : ''}>
+              <Button
+                variant={isCustomerRoute ? 'outline' : 'default'}
+                size="sm"
+                className={
+                  isCustomerRoute
+                    ? 'border-[#8b4a08] text-[#8b4a08] hover:bg-[#8b4a08] hover:text-white'
+                    : 'bg-[#8b4a08] text-white hover:bg-[#3d1604] hover:text-white border-none'
+                }
+              >
                 Customer Login
               </Button>
             </Link>
             <Link to="/vendor/login">
-              <Button variant="outline" size="sm" className={isVendorRoute ? 'border-[#b07e66] text-[#b07e66] hover:bg-[#b07e66] hover:text-white' : ''}>
+              <Button
+                variant={isVendorRoute ? 'outline' : 'default'}
+                size="sm"
+                className={
+                  isVendorRoute
+                    ? 'border-[#b07e66] text-[#b07e66] hover:bg-[#b07e66] hover:text-white'
+                    : 'bg-[#b07e66] text-white hover:bg-[#6f4a39] hover:text-white border-none'
+                }
+              >
                 Vendor Login
               </Button>
             </Link>

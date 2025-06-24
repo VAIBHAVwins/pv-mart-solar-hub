@@ -7,7 +7,16 @@ export default function Home() {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-[#589bee] to-[#5279ac] text-white py-20">
+      <section
+        className="relative text-white py-20"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(40,60,90,0.5),rgba(40,60,90,0.5)), url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* ENHANCED BY CURSOR AI: Solar panel image background added */}
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-5xl font-bold mb-6">
             Your Solar Energy Journey Starts Here
