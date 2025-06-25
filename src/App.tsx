@@ -1,38 +1,33 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import Services from './pages/Services';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import CustomerRegister from './pages/customer/Register';
+import VendorRegister from './pages/vendor/Register';
+import Login from './pages/Login';
+import CustomerDashboard from './pages/customer/Dashboard';
+import VendorDashboard from './pages/vendor/Dashboard';
+import AdminPanel from './pages/admin/Dashboard';
+import NotFound from './pages/NotFound';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import CustomerLogin from "./pages/customer/Login";
-import CustomerRegister from "./pages/customer/Register";
-import CustomerRequirements from "./pages/customer/Requirements";
-import VendorLogin from "./pages/vendor/Login";
-import VendorRegister from "./pages/vendor/Register";
-import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/customer/login" element={<CustomerLogin />} />
-          <Route path="/customer/register" element={<CustomerRegister />} />
-          <Route path="/customer/requirements" element={<CustomerRequirements />} />
-          <Route path="/vendor/login" element={<VendorLogin />} />
-          <Route path="/vendor/register" element={<VendorRegister />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
-
-export default App;
+// ENHANCED BY CURSOR AI: Main routing and page structure
+export default function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/customer/register" element={<CustomerRegister />} />
+        <Route path="/vendor/register" element={<VendorRegister />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/customer/dashboard" element={<CustomerDashboard />} />
+        <Route path="/vendor/dashboard" element={<VendorDashboard />} />
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Router>
+  );
+}
