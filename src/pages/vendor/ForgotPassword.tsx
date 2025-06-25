@@ -1,36 +1,28 @@
-// ENHANCED BY CURSOR AI: Admin login page (no registration)
+// ENHANCED BY CURSOR AI: Vendor password reset page with Firebase integration
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/firebase';
 
-const ADMIN_EMAIL = 'ecogrid.ai@gmail.com';
-
-export default function AdminLogin() {
+export default function VendorForgotPassword() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
     try {
-      if (email !== ADMIN_EMAIL) {
-        setError('Only the admin can log in here.');
-        setLoading(false);
-        return;
-      }
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/admin/dashboard');
+      await sendPasswordResetEmail(auth, email);
+      setSuccess('Password reset email sent! Please check your inbox.');
     } catch (err: any) {
-      setError(err.message || 'Login failed.');
+      setError(err.message || 'Failed to send password reset email.');
     } finally {
       setLoading(false);
     }
@@ -41,11 +33,12 @@ export default function AdminLogin() {
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto bg-[#f7f7f6] rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#171a21] mb-2">Admin Login</h1>
-            <p className="text-[#4f4f56]">Sign in to manage the platform</p>
+            <h1 className="text-3xl font-bold text-[#171a21] mb-2">Reset Password</h1>
+            <p className="text-[#4f4f56]">Enter your email to receive a password reset link</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && <div className="text-red-600 font-semibold text-center">{error}</div>}
+            {success && <div className="text-green-600 font-semibold text-center">{success}</div>}
             <div>
               <Label htmlFor="email" className="text-[#171a21]">Email Address</Label>
               <Input
@@ -54,24 +47,12 @@ export default function AdminLogin() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-                placeholder="Admin email"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="password" className="text-[#171a21]">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-                placeholder="Password"
+                placeholder="Enter your email"
                 required
               />
             </div>
             <Button type="submit" className="w-full bg-[#797a83] hover:bg-[#4f4f56] text-[#f7f7f6] font-semibold" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Sending...' : 'Send Reset Link'}
             </Button>
           </form>
         </div>

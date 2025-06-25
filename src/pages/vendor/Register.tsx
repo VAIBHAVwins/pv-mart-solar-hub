@@ -1,11 +1,14 @@
-
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Layout from '@/components/layout/Layout';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { auth, db } from '@/firebase';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
+// CURSOR AI: Modern, professional Vendor Registration redesign with vendor color palette and UI patterns
 const VendorRegister = () => {
   const [formData, setFormData] = useState({
     companyName: '',
@@ -14,9 +17,14 @@ const VendorRegister = () => {
     phone: '',
     address: '',
     licenseNumber: '',
+    serviceAreas: '',
+    specializations: '',
     password: '',
     confirmPassword: ''
   });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -25,23 +33,63 @@ const VendorRegister = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateEmail = (email: string) => /.+@.+\..+/.test(email);
+  const validatePhone = (phone: string) => /^\d{10}$/.test(phone);
+  const validatePassword = (pw: string) => pw.length >= 6;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle registration logic here
-    console.log('Vendor registration:', formData);
+    setError('');
+    setSuccess('');
+    if (!validateEmail(formData.email)) {
+      setError('Invalid email address.');
+      return;
+    }
+    if (!validatePhone(formData.phone)) {
+      setError('Phone number must be 10 digits.');
+      return;
+    }
+    if (!validatePassword(formData.password)) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      await setDoc(doc(db, 'vendors', cred.user.uid), {
+        uid: cred.user.uid,
+        companyName: formData.companyName,
+        contactPerson: formData.contactPerson,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        licenseNumber: formData.licenseNumber,
+        serviceAreas: formData.serviceAreas,
+        specializations: formData.specializations,
+        createdAt: new Date().toISOString(),
+        verified: false,
+      });
+      await sendEmailVerification(cred.user);
+      setSuccess('Registration successful! Please check your email to verify your account.');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Layout className="bg-gradient-to-br from-[#797a83] to-[#4f4f56] min-h-screen">
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-2xl mx-auto bg-[#f7f7f6] rounded-lg shadow-lg p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#171a21] mb-2">Join as Vendor</h1>
-            <p className="text-[#4f4f56]">Register your solar business and start receiving leads</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <Layout>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f7f7f6] py-16 px-4">
+        <div className="bg-[#e6d3b3] p-10 rounded-2xl shadow-xl w-full max-w-2xl animate-fade-in">
+          <h1 className="text-4xl font-extrabold mb-6 text-center text-[#797a83] drop-shadow">Join as Vendor</h1>
+          <p className="text-[#4f4f56] mb-8 text-center">Register your solar business and start receiving leads</p>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="companyName" className="text-[#171a21]">Company Name</Label>
                 <Input
@@ -67,8 +115,7 @@ const VendorRegister = () => {
                 />
               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="email" className="text-[#171a21]">Email Address</Label>
                 <Input
@@ -96,7 +143,6 @@ const VendorRegister = () => {
                 />
               </div>
             </div>
-
             <div>
               <Label htmlFor="address" className="text-[#171a21]">Business Address</Label>
               <Input
@@ -109,7 +155,6 @@ const VendorRegister = () => {
                 required
               />
             </div>
-
             <div>
               <Label htmlFor="licenseNumber" className="text-[#171a21]">License Number</Label>
               <Input
@@ -122,8 +167,7 @@ const VendorRegister = () => {
                 required
               />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="password" className="text-[#171a21]">Password</Label>
                 <Input
@@ -146,28 +190,47 @@ const VendorRegister = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-                  placeholder="Confirm your password"
+                  placeholder="Confirm password"
                   required
                 />
               </div>
             </div>
-
-            <Button 
-              type="submit" 
-              className="w-full bg-[#797a83] hover:bg-[#4f4f56] text-[#f7f7f6] font-semibold"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="serviceAreas" className="text-[#171a21]">Service Areas</Label>
+                <Input
+                  id="serviceAreas"
+                  name="serviceAreas"
+                  value={formData.serviceAreas}
+                  onChange={handleChange}
+                  className="mt-1 border-[#b07e66] focus:border-[#797a83]"
+                  placeholder="e.g. Delhi, Mumbai, etc."
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="specializations" className="text-[#171a21]">Specializations</Label>
+                <Input
+                  id="specializations"
+                  name="specializations"
+                  value={formData.specializations}
+                  onChange={handleChange}
+                  className="mt-1 border-[#b07e66] focus:border-[#797a83]"
+                  placeholder="e.g. Rooftop, Commercial, etc."
+                  required
+                />
+              </div>
+            </div>
+            {error && <div className="text-red-600 font-semibold text-center">{error}</div>}
+            {success && <div className="text-green-600 font-semibold text-center">{success}</div>}
+            <Button
+              type="submit"
+              className="w-full bg-[#797a83] text-white py-3 rounded-lg font-bold hover:bg-[#4f4f56] shadow-md transition"
+              disabled={loading}
             >
-              Register as Vendor
+              {loading ? 'Registering...' : 'Register'}
             </Button>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-[#4f4f56]">
-              Already have an account?{' '}
-              <Link to="/vendor/login" className="text-[#b07e66] hover:underline font-semibold">
-                Sign in here
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </Layout>

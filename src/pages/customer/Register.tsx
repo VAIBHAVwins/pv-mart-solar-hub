@@ -14,9 +14,29 @@ export default function CustomerRegister() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const validateEmail = (email: string) => /.+@.+\..+/.test(email);
+  const validatePhone = (phone: string) => /^\d{10}$/.test(phone);
+  const validatePassword = (pw: string) => pw.length >= 6;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!validateEmail(form.email)) {
+      setError('Invalid email address.');
+      return;
+    }
+    if (!validatePhone(form.phone)) {
+      setError('Phone number must be 10 digits.');
+      return;
+    }
+    if (!validatePassword(form.password)) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
     setLoading(true);
     try {
       await register(form.name, form.email, form.password);
@@ -60,6 +80,17 @@ export default function CustomerRegister() {
             type="password"
             name="password"
             value={form.password}
+            onChange={handleChange}
+            required
+            className="w-full border px-3 py-2 rounded"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-1 font-semibold">Confirm Password</label>
+          <input
+            type="password"
+            name="confirmPassword"
+            value={form.confirmPassword}
             onChange={handleChange}
             required
             className="w-full border px-3 py-2 rounded"
