@@ -33,7 +33,7 @@ const Footer = () => {
         <div className="grid md:grid-cols-4 gap-6">
           {/* Company Info */}
           <div>
-            <h3 className="text-xl font-bold mb-3">PHOTOVOLATICSYNTHESIS</h3>
+            <h3 className="text-xl font-bold mb-3">PVMART</h3>
             <p className="text-sm opacity-80">
               Your trusted platform for solar energy solutions. Connecting customers with verified solar vendors.
             </p>
@@ -91,7 +91,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-opacity-20 mt-6 pt-6 text-center text-sm opacity-80">
-          <p>&copy; 2024 <span className="font-bold">PHOTOVOLATICSYNTHESIS</span>. All rights reserved. | 
+          <p>&copy; 2024 <span className="font-bold">PVMART</span>. All rights reserved. | 
             <Link to="/privacy" className={`${getLinkClasses()} ml-2`}>Privacy Policy</Link> | 
             <Link to="/terms" className={`${getLinkClasses()} ml-2`}>Terms of Service</Link>
           </p>
