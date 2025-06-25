@@ -1,81 +1,95 @@
-// ENHANCED BY CURSOR AI: Admin login page (no registration)
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/firebase';
-
-const ADMIN_EMAIL = 'ecogrid.ai@gmail.com';
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
+    setError('');
+    
     try {
-      if (email !== ADMIN_EMAIL) {
-        setError('Only the admin can log in here.');
-        setLoading(false);
-        return;
+      // Simple admin authentication (in production, use proper authentication)
+      if (formData.email === 'admin@pvmart.com' && formData.password === 'admin123') {
+        // Store admin session (in production, use proper JWT tokens)
+        localStorage.setItem('adminAuth', 'true');
+        navigate('/admin');
+      } else {
+        setError('Invalid admin credentials');
       }
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/admin/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Login failed.');
+    } catch (err) {
+      setError('Login failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Layout className="bg-gradient-to-br from-[#797a83] to-[#4f4f56] min-h-screen">
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-md mx-auto bg-[#f7f7f6] rounded-lg shadow-lg p-8">
+    <Layout>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#171a21] mb-2">Admin Login</h1>
-            <p className="text-[#4f4f56]">Sign in to manage the platform</p>
+            <h1 className="text-3xl font-bold text-gray-900">Admin Login</h1>
+            <p className="text-gray-600 mt-2">Access the admin dashboard</p>
           </div>
+          
           <form onSubmit={handleSubmit} className="space-y-6">
-            {error && <div className="text-red-600 font-semibold text-center">{error}</div>}
             <div>
-              <Label htmlFor="email" className="text-[#171a21]">Email Address</Label>
+              <Label htmlFor="email">Admin Email</Label>
               <Input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-                placeholder="Admin email"
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                placeholder="admin@pvmart.com"
                 required
               />
             </div>
+            
             <div>
-              <Label htmlFor="password" className="text-[#171a21]">Password</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-                placeholder="Password"
+                value={formData.password}
+                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                placeholder="Enter admin password"
                 required
               />
             </div>
-            <Button type="submit" className="w-full bg-[#797a83] hover:bg-[#4f4f56] text-[#f7f7f6] font-semibold" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
+            
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
+                {error}
+              </div>
+            )}
+            
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? 'Logging in...' : 'Login as Admin'}
             </Button>
           </form>
+          
+          <div className="mt-6 text-center text-sm text-gray-500">
+            Demo credentials: admin@pvmart.com / admin123
+          </div>
         </div>
       </div>
     </Layout>
   );
-} 
+}

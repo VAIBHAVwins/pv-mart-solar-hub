@@ -1,173 +1,208 @@
-// ENHANCED BY CURSOR AI: Admin Dashboard with route protection
+
+import { useState } from 'react';
 import Layout from '@/components/layout/Layout';
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
-import { db } from '@/firebase';
-import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { Users, FileText, MessageSquare, Settings, BarChart3 } from 'lucide-react';
 
-const ADMIN_EMAIL = 'ecogrid.ai@gmail.com';
-
-// CURSOR AI: Modern, professional Admin Dashboard redesign with common color palette and UI patterns
 export default function AdminDashboard() {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-  // CURSOR AI: State for users, vendors, quotes, responses
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [vendors, setVendors] = useState<any[]>([]);
-  const [quotes, setQuotes] = useState<any[]>([]);
-  const [responses, setResponses] = useState<any[]>([]);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [loadingData, setLoadingData] = useState(true);
-
-  useEffect(() => {
-    if (!loading) {
-      if (!user || user.email !== ADMIN_EMAIL) {
-        navigate('/admin/login');
-      }
-    }
-  }, [user, loading, navigate]);
-
-  useEffect(() => {
-    async function fetchData() {
-      setLoadingData(true);
-      try {
-        // CURSOR AI: Fetch all users
-        const custSnap = await getDocs(collection(db, 'users'));
-        setCustomers(custSnap.docs.map(doc => doc.data()));
-        const vendSnap = await getDocs(collection(db, 'vendors'));
-        setVendors(vendSnap.docs.map(doc => doc.data()));
-        // CURSOR AI: Fetch all quote requests
-        const quoteSnap = await getDocs(collection(db, 'quoteRequests'));
-        setQuotes(quoteSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        // CURSOR AI: Fetch all quote responses
-        const respSnap = await getDocs(collection(db, 'quoteResponses'));
-        setResponses(respSnap.docs.map(doc => doc.data()));
-      } catch (err: any) {
-        setError(err.message || 'Failed to load admin data.');
-      } finally {
-        setLoadingData(false);
-      }
-    }
-    if (user && user.email === ADMIN_EMAIL) fetchData();
-  }, [user]);
-
-  const handleStatusUpdate = async (quoteId: string, status: string) => {
-    setError('');
-    setSuccess('');
-    try {
-      await updateDoc(doc(db, 'quoteRequests', quoteId), { status });
-      setSuccess('Status updated!');
-      setQuotes(prev => prev.map(q => q.id === quoteId ? { ...q, status } : q));
-    } catch (err: any) {
-      setError(err.message || 'Failed to update status.');
-    }
-  };
-
-  if (loading || !user || user.email !== ADMIN_EMAIL) {
-    return <div className="text-center py-20">Loading or unauthorized...</div>;
-  }
-  if (loadingData) {
-    return <div className="text-center py-20">Loading admin data...</div>;
-  }
+  const { user, logout } = useAuth();
+  const [stats] = useState({
+    totalUsers: 156,
+    totalQuotes: 89,
+    pendingQuotes: 23,
+    totalVendors: 34,
+    totalCustomers: 122
+  });
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto py-12 px-4 min-h-screen bg-[#f6fafd]">
-        {/* CURSOR AI: Only admin can see this dashboard */}
-        <h1 className="text-4xl font-extrabold mb-10 text-center text-[#444e59] drop-shadow-lg">Admin Dashboard</h1>
-        {error && <div className="text-red-600 font-semibold text-center mb-4">{error}</div>}
-        {success && <div className="text-green-600 font-semibold text-center mb-4">{success}</div>}
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-gray-600">Welcome back, {user?.email}</p>
+            </div>
+            {logout && (
+              <Button onClick={logout} variant="outline">
+                Logout
+              </Button>
+            )}
+          </div>
 
-        {/* CURSOR AI: Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center animate-fade-in">
-            <div className="text-2xl font-bold text-[#589bee] mb-2">{customers.length}</div>
-            <div className="text-[#444e59] font-semibold">Customers</div>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalCustomers}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Vendors</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalVendors}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Quotes</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalQuotes}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending Quotes</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.pendingQuotes}</div>
+              </CardContent>
+            </Card>
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center animate-fade-in delay-100">
-            <div className="text-2xl font-bold text-[#5279ac] mb-2">{vendors.length}</div>
-            <div className="text-[#444e59] font-semibold">Vendors</div>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center animate-fade-in delay-200">
-            <div className="text-2xl font-bold text-[#576779] mb-2">{quotes.length}</div>
-            <div className="text-[#444e59] font-semibold">Quote Requests</div>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center animate-fade-in delay-300">
-            <div className="text-2xl font-bold text-[#434647] mb-2">{responses.length}</div>
-            <div className="text-[#444e59] font-semibold">Quote Responses</div>
-          </div>
+
+          {/* Admin Tabs */}
+          <Tabs defaultValue="users" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="users">User Management</TabsTrigger>
+              <TabsTrigger value="quotes">Quote Management</TabsTrigger>
+              <TabsTrigger value="content">Content Management</TabsTrigger>
+              <TabsTrigger value="messages">Messages</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="users">
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Management</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold">Recent Users</h3>
+                      <Button>View All Users</Button>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <p className="text-gray-600">User management functionality will be implemented here.</p>
+                      <p className="text-sm text-gray-500 mt-2">Features: View users, verify vendors, manage accounts, user analytics</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="quotes">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quote Management</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold">Quote Requests</h3>
+                      <Button>View All Quotes</Button>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <p className="text-gray-600">Quote management system will be implemented here.</p>
+                      <p className="text-sm text-gray-500 mt-2">Features: Assign quotes to vendors, track progress, quality control</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="content">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Content Management</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Hero Section Management</h3>
+                      <div className="border rounded-lg p-4">
+                        <Button className="mb-3">Upload New Hero Image</Button>
+                        <p className="text-gray-600">Manage homepage hero images and content.</p>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Blog Management</h3>
+                      <div className="border rounded-lg p-4">
+                        <div className="flex gap-3 mb-3">
+                          <Button>Add New Post</Button>
+                          <Button variant="outline">Manage Posts</Button>
+                        </div>
+                        <p className="text-gray-600">Create and manage blog posts about solar energy.</p>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Advertisement Management</h3>
+                      <div className="border rounded-lg p-4">
+                        <Button className="mb-3">Manage Ads</Button>
+                        <p className="text-gray-600">Control advertisements displayed on the platform.</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="messages">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Messages & Communication</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="border rounded-lg p-4">
+                    <p className="text-gray-600">Message management system will be implemented here.</p>
+                    <p className="text-sm text-gray-500 mt-2">Features: View all messages, moderate communications, send announcements</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="settings">
+              <Card>
+                <CardHeader>
+                  <CardTitle>System Settings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Platform Settings</h3>
+                      <div className="border rounded-lg p-4">
+                        <p className="text-gray-600">System configuration and settings.</p>
+                        <p className="text-sm text-gray-500 mt-2">Features: Email settings, platform fees, vendor verification criteria</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
-
-        {/* CURSOR AI: Customers List */}
-        <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4 text-[#589bee]">Customers</h2>
-          <div className="overflow-x-auto bg-white rounded-xl shadow p-4 animate-fade-in">
-            <table className="min-w-full border text-sm">
-              <thead><tr><th className="border px-2 py-2">Name</th><th className="border px-2 py-2">Email</th></tr></thead>
-              <tbody>
-                {customers.map((c, i) => (
-                  <tr key={i}><td className="border px-2 py-2">{c.name}</td><td className="border px-2 py-2">{c.email}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-        {/* CURSOR AI: Vendors List */}
-        <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4 text-[#589bee]">Vendors</h2>
-          <div className="overflow-x-auto bg-white rounded-xl shadow p-4 animate-fade-in">
-            <table className="min-w-full border text-sm">
-              <thead><tr><th className="border px-2 py-2">Company</th><th className="border px-2 py-2">Email</th><th className="border px-2 py-2">License</th></tr></thead>
-              <tbody>
-                {vendors.map((v, i) => (
-                  <tr key={i}><td className="border px-2 py-2">{v.companyName}</td><td className="border px-2 py-2">{v.email}</td><td className="border px-2 py-2">{v.licenseNumber}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-        {/* CURSOR AI: Quote Requests List */}
-        <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4 text-[#589bee]">Quote Requests</h2>
-          <div className="overflow-x-auto bg-white rounded-xl shadow p-4 animate-fade-in">
-            <table className="min-w-full border text-sm">
-              <thead><tr><th className="border px-2 py-2">Address</th><th className="border px-2 py-2">Customer</th><th className="border px-2 py-2">Status</th><th className="border px-2 py-2">Actions</th></tr></thead>
-              <tbody>
-                {quotes.map((q, i) => (
-                  <tr key={i}>
-                    <td className="border px-2 py-2">{q.address}</td>
-                    <td className="border px-2 py-2">{q.userEmail}</td>
-                    <td className="border px-2 py-2">{q.status}</td>
-                    <td className="border px-2 py-2">
-                      <select value={q.status} onChange={e => handleStatusUpdate(q.id, e.target.value)} className="border rounded px-1">
-                        <option value="pending">Pending</option>
-                        <option value="assigned">Assigned</option>
-                        <option value="completed">Completed</option>
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-        {/* CURSOR AI: Quote Responses List */}
-        <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4 text-[#589bee]">Quote Responses</h2>
-          <div className="overflow-x-auto bg-white rounded-xl shadow p-4 animate-fade-in">
-            <table className="min-w-full border text-sm">
-              <thead><tr><th className="border px-2 py-2">Request</th><th className="border px-2 py-2">Vendor</th><th className="border px-2 py-2">Response</th></tr></thead>
-              <tbody>
-                {responses.map((r, i) => (
-                  <tr key={i}><td className="border px-2 py-2">{r.requestId}</td><td className="border px-2 py-2">{r.vendorEmail}</td><td className="border px-2 py-2">{r.response}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
       </div>
     </Layout>
   );
-} 
+}
