@@ -1,12 +1,18 @@
+
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-// ENHANCED BY CURSOR AI: Real customer registration form using Firebase Auth
 export default function CustomerRegister() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [form, setForm] = useState({ 
+    name: '', 
+    email: '', 
+    phone: '',
+    password: '',
+    confirmPassword: ''
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -69,6 +75,17 @@ export default function CustomerRegister() {
             type="email"
             name="email"
             value={form.email}
+            onChange={handleChange}
+            required
+            className="w-full border px-3 py-2 rounded"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-1 font-semibold">Phone</label>
+          <input
+            type="tel"
+            name="phone"
+            value={form.phone}
             onChange={handleChange}
             required
             className="w-full border px-3 py-2 rounded"
