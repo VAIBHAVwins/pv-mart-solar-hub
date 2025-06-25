@@ -18,6 +18,10 @@ import AdminLogin from './pages/admin/Login';
 import AdminPanel from './pages/admin/Dashboard';
 import NotFound from './pages/NotFound';
 import Game from './pages/Game';
+import InstallationType from './pages/InstallationType';
+import GridConnectivity from './pages/GridConnectivity';
+import Blogs from './pages/Blogs';
+import BlogDetail from './pages/BlogDetail';
 
 export default function App() {
   return (
@@ -28,6 +32,10 @@ export default function App() {
           <Route path="/services" element={<Services />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/installation-type" element={<InstallationType />} />
+          <Route path="/grid-connectivity" element={<GridConnectivity />} />
+          <Route path="/blogs" element={<Blogs />} />
+          <Route path="/blog/:id" element={<BlogDetail />} />
           <Route path="/customer/register" element={<CustomerRegister />} />
           <Route path="/vendor/register" element={<VendorRegister />} />
           <Route path="/customer/login" element={<CustomerLogin />} />

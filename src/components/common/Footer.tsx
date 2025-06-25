@@ -1,39 +1,37 @@
-import { Link, useLocation } from 'react-router-dom';
-import { useTheme } from 'next-themes';
 
-// ENHANCED/ADDED BY CURSOR AI: Footer Component placeholder
+import { Link, useLocation } from 'react-router-dom';
+
 const Footer = () => {
   const location = useLocation();
-  const { theme, setTheme } = useTheme();
   const isCustomerRoute = location.pathname.includes('/customer');
   const isVendorRoute = location.pathname.includes('/vendor');
   
   // Determine theme based on route
   const getThemeClasses = () => {
     if (isCustomerRoute) {
-      return 'bg-[#3d1604] text-[#f8b200]'; // Customer theme
+      return 'bg-licorice text-jonquil'; // Customer theme
     } else if (isVendorRoute) {
-      return 'bg-[#171a21] text-[#f7f7f6]'; // Vendor theme
+      return 'bg-vendor_gray-100 text-seasalt'; // Vendor theme
     }
-    return 'bg-[#444e59] text-[#deebfc]'; // Default theme
+    return 'bg-charcoal text-cornflower_blue-900'; // Default theme
   };
 
   const getLinkClasses = () => {
     if (isCustomerRoute) {
-      return 'text-[#fecb00] hover:text-[#f8b200]';
+      return 'text-jonquil-600 hover:text-jonquil';
     } else if (isVendorRoute) {
-      return 'text-[#d2cec8] hover:text-[#f7f7f6]';
+      return 'text-chamoisee hover:text-seasalt';
     }
-    return 'text-[#c5c1ba] hover:text-white';
+    return 'text-slate_gray hover:text-white';
   };
 
   return (
     <footer className={`${getThemeClasses()} py-8 mt-auto`}>
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Company Info */}
           <div>
-            <h3 className="text-xl font-bold mb-3">PVMART</h3>
+            <h3 className="text-xl font-bold mb-3">PV_MART</h3>
             <p className="text-sm opacity-80">
               Your trusted platform for solar energy solutions. Connecting customers with verified solar vendors.
             </p>
@@ -45,29 +43,10 @@ const Footer = () => {
             <ul className="space-y-2 text-sm">
               <li><Link to="/" className={`${getLinkClasses()} transition-colors`}>Home</Link></li>
               <li><Link to="/about" className={`${getLinkClasses()} transition-colors`}>About Us</Link></li>
-              <li><Link to="/blog" className={`${getLinkClasses()} transition-colors`}>Blog</Link></li>
+              <li><Link to="/services" className={`${getLinkClasses()} transition-colors`}>Services</Link></li>
+              <li><Link to="/blogs" className={`${getLinkClasses()} transition-colors`}>Blogs</Link></li>
               <li><Link to="/contact" className={`${getLinkClasses()} transition-colors`}>Contact</Link></li>
             </ul>
-            <div className="mt-4 flex flex-col gap-2">
-              <span className="font-semibold text-xs mb-1">Theme</span>
-              <div className="flex gap-2">
-                <button
-                  className={`px-3 py-1 rounded ${theme === 'light' ? 'bg-white text-black font-bold' : 'bg-transparent border border-white text-white'}`}
-                  onClick={() => setTheme('light')}
-                  aria-label="Switch to light mode"
-                >Light</button>
-                <button
-                  className={`px-3 py-1 rounded ${theme === 'dark' ? 'bg-black text-white font-bold' : 'bg-transparent border border-white text-white'}`}
-                  onClick={() => setTheme('dark')}
-                  aria-label="Switch to dark mode"
-                >Dark</button>
-                <button
-                  className={`px-3 py-1 rounded ${theme === 'system' ? 'bg-gray-300 text-black font-bold' : 'bg-transparent border border-white text-white'}`}
-                  onClick={() => setTheme('system')}
-                  aria-label="Switch to system default mode"
-                >System</button>
-              </div>
-            </div>
           </div>
 
           {/* For Customers */}
@@ -76,7 +55,7 @@ const Footer = () => {
             <ul className="space-y-2 text-sm">
               <li><Link to="/customer/register" className={`${getLinkClasses()} transition-colors`}>Sign Up</Link></li>
               <li><Link to="/customer/login" className={`${getLinkClasses()} transition-colors`}>Login</Link></li>
-              <li><Link to="/customer/requirements" className={`${getLinkClasses()} transition-colors`}>Submit Requirements</Link></li>
+              <li><Link to="/installation-type" className={`${getLinkClasses()} transition-colors`}>Get Quote</Link></li>
             </ul>
           </div>
 
@@ -91,9 +70,10 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-opacity-20 mt-6 pt-6 text-center text-sm opacity-80">
-          <p>&copy; 2024 <span className="font-bold">PVMART</span>. All rights reserved. | 
-            <Link to="/privacy" className={`${getLinkClasses()} ml-2`}>Privacy Policy</Link> | 
-            <Link to="/terms" className={`${getLinkClasses()} ml-2`}>Terms of Service</Link>
+          <p>&copy; 2024 <span className="font-bold">PV_MART</span>. All rights reserved.</p>
+          <p className="mt-2">
+            <span className="font-semibold">Contact:</span> 8986985927 | info@pvmart.com | 
+            xyz building, solpur, kolkata, west bengal - 700112
           </p>
         </div>
       </div>

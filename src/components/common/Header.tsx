@@ -1,13 +1,12 @@
+
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
-import { useTheme } from 'next-themes';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const { theme, setTheme } = useTheme();
 
   const isCustomerRoute = location.pathname.includes('/customer');
   const isVendorRoute = location.pathname.includes('/vendor');
@@ -15,29 +14,29 @@ const Header = () => {
   // Determine theme based on route
   const getThemeClasses = () => {
     if (isCustomerRoute) {
-      return 'bg-[#fecb00] text-[#190a02]'; // Customer theme
+      return 'bg-jonquil text-licorice'; // Customer theme
     } else if (isVendorRoute) {
-      return 'bg-[#797a83] text-[#f7f7f6]'; // Vendor theme
+      return 'bg-vendor_gray text-seasalt'; // Vendor theme
     }
-    return 'bg-[#589bee] text-white'; // Default theme
+    return 'bg-cornflower_blue text-white'; // Default theme
   };
 
   const getLinkClasses = () => {
     if (isCustomerRoute) {
-      return 'text-[#8b4a08] hover:text-[#3d1604]';
+      return 'text-brown hover:text-licorice';
     } else if (isVendorRoute) {
-      return 'text-[#f7f7f6] hover:text-[#d2cec8]';
+      return 'text-seasalt hover:text-chamoisee';
     }
-    return 'text-white hover:text-[#deebfc]';
+    return 'text-white hover:text-cornflower_blue-200';
   };
 
   return (
-    <header className={`${getThemeClasses()} shadow-lg`}>
+    <header className={`${getThemeClasses()} shadow-lg sticky top-0 z-50`}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="text-2xl font-bold">
-            PVMART
+            PV_MART
           </Link>
 
           {/* Desktop Navigation */}
@@ -48,41 +47,30 @@ const Header = () => {
             <Link to="/about" className={`${getLinkClasses()} transition-colors`}>
               About
             </Link>
-            <Link to="/blog" className={`${getLinkClasses()} transition-colors`}>
-              Blog
+            <Link to="/services" className={`${getLinkClasses()} transition-colors`}>
+              Services
+            </Link>
+            <Link to="/blogs" className={`${getLinkClasses()} transition-colors`}>
+              Blogs
             </Link>
             <Link to="/contact" className={`${getLinkClasses()} transition-colors`}>
               Contact
             </Link>
+            <Link to="/game" className={`${getLinkClasses()} transition-colors`}>
+              Game
+            </Link>
           </nav>
 
-          {/* ENHANCED BY CURSOR AI: Theme toggle button (desktop) */}
+          {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-3">
-            <div className="flex gap-2 mr-4">
-              <button
-                className={`px-3 py-1 rounded ${theme === 'light' ? 'bg-white text-black font-bold' : 'bg-transparent border border-white text-white'}`}
-                onClick={() => setTheme('light')}
-                aria-label="Switch to light mode"
-              >Light</button>
-              <button
-                className={`px-3 py-1 rounded ${theme === 'dark' ? 'bg-black text-white font-bold' : 'bg-transparent border border-white text-white'}`}
-                onClick={() => setTheme('dark')}
-                aria-label="Switch to dark mode"
-              >Dark</button>
-              <button
-                className={`px-3 py-1 rounded ${theme === 'system' ? 'bg-gray-300 text-black font-bold' : 'bg-transparent border border-white text-white'}`}
-                onClick={() => setTheme('system')}
-                aria-label="Switch to system default mode"
-              >System</button>
-            </div>
             <Link to="/customer/login">
               <Button
                 variant={isCustomerRoute ? 'outline' : 'default'}
                 size="sm"
                 className={
                   isCustomerRoute
-                    ? 'border-[#8b4a08] text-[#8b4a08] hover:bg-[#8b4a08] hover:text-white'
-                    : 'bg-[#8b4a08] text-white hover:bg-[#3d1604] hover:text-white border-none'
+                    ? 'border-brown text-brown hover:bg-brown hover:text-white'
+                    : 'bg-brown text-white hover:bg-brown-600 border-none'
                 }
               >
                 Customer Login
@@ -94,8 +82,8 @@ const Header = () => {
                 size="sm"
                 className={
                   isVendorRoute
-                    ? 'border-[#b07e66] text-[#b07e66] hover:bg-[#b07e66] hover:text-white'
-                    : 'bg-[#b07e66] text-white hover:bg-[#6f4a39] hover:text-white border-none'
+                    ? 'border-chamoisee text-chamoisee hover:bg-chamoisee hover:text-white'
+                    : 'bg-chamoisee text-white hover:bg-chamoisee-600 border-none'
                 }
               >
                 Vendor Login
@@ -114,37 +102,25 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 space-y-3">
+          <div className="md:hidden mt-4 space-y-3 animate-fade-in">
             <Link to="/" className={`block ${getLinkClasses()} transition-colors`}>
               Home
             </Link>
             <Link to="/about" className={`block ${getLinkClasses()} transition-colors`}>
               About
             </Link>
-            <Link to="/blog" className={`block ${getLinkClasses()} transition-colors`}>
-              Blog
+            <Link to="/services" className={`block ${getLinkClasses()} transition-colors`}>
+              Services
+            </Link>
+            <Link to="/blogs" className={`block ${getLinkClasses()} transition-colors`}>
+              Blogs
             </Link>
             <Link to="/contact" className={`block ${getLinkClasses()} transition-colors`}>
               Contact
             </Link>
-            {/* ENHANCED BY CURSOR AI: Theme toggle button (mobile) */}
-            <div className="flex gap-2 pt-3">
-              <button
-                className={`px-3 py-1 rounded ${theme === 'light' ? 'bg-white text-black font-bold' : 'bg-transparent border border-white text-white'}`}
-                onClick={() => setTheme('light')}
-                aria-label="Switch to light mode"
-              >Light</button>
-              <button
-                className={`px-3 py-1 rounded ${theme === 'dark' ? 'bg-black text-white font-bold' : 'bg-transparent border border-white text-white'}`}
-                onClick={() => setTheme('dark')}
-                aria-label="Switch to dark mode"
-              >Dark</button>
-              <button
-                className={`px-3 py-1 rounded ${theme === 'system' ? 'bg-gray-300 text-black font-bold' : 'bg-transparent border border-white text-white'}`}
-                onClick={() => setTheme('system')}
-                aria-label="Switch to system default mode"
-              >System</button>
-            </div>
+            <Link to="/game" className={`block ${getLinkClasses()} transition-colors`}>
+              Game
+            </Link>
             <div className="flex flex-col space-y-2 pt-3">
               <Link to="/customer/login">
                 <Button variant="outline" size="sm" className="w-full">
