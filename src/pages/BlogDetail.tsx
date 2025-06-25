@@ -38,7 +38,9 @@ export default function BlogDetail() {
     }
   };
 
-  const blog = blogContent[id as keyof typeof blogContent] || blogContent[1];
+  // Convert string id to number and find the blog post, fallback to first post
+  const numericId = parseInt(id || '1', 10);
+  const blog = blogContent[numericId as keyof typeof blogContent] || blogContent[1];
 
   return (
     <Layout>
