@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
   const { code } = req.body;
   const client_id = 'Ov23liCGBSSR8oe8qMtZ'; // Your GitHub OAuth Client ID
-  const client_secret = 'YOUR_CLIENT_SECRET'; // TODO: Fill in your GitHub OAuth Client Secret
+  const client_secret = '0197b87376fde217fae4421b8aef4f96e560da71'; // Filled in GitHub OAuth Client Secret
 
   if (!code) {
     res.status(400).json({ error: 'Missing code' });
