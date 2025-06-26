@@ -18,20 +18,12 @@ export default function AdminGitHubCallback() {
         navigate('/admin');
         return;
       }
-      // Exchange code for access token (requires a backend proxy for security in production)
+      // Exchange code for access token using our backend API
       try {
-        // For demo/dev only: Use a public CORS proxy for GitHub token exchange (not for production!)
-        const res = await fetch('https://cors-anywhere.herokuapp.com/https://github.com/login/oauth/access_token', {
+        const res = await fetch('/api/github-oauth', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({
-            client_id: GITHUB_CLIENT_ID,
-            code,
-            redirect_uri: REDIRECT_URI,
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
         });
         const data = await res.json();
         if (data.access_token) {
