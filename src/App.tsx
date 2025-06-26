@@ -1,8 +1,6 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Home from './pages/Index';
-import Services from './pages/Services';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import CustomerRegister from './pages/customer/Register';
@@ -14,6 +12,8 @@ import CustomerDashboard from './pages/customer/Dashboard';
 import VendorDashboard from './pages/vendor/Dashboard';
 import CustomerRequirements from './pages/customer/Requirements';
 import RequirementForm from './pages/customer/RequirementForm';
+import VendorQuotationSubmission from './pages/vendor/QuotationSubmission';
+import VendorQuotationList from './pages/vendor/QuotationList';
 import AdminLogin from './pages/admin/Login';
 import AdminPanel from './pages/admin/Dashboard';
 import NotFound from './pages/NotFound';
@@ -29,7 +29,6 @@ export default function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/services" element={<Services />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/installation-type" element={<InstallationType />} />
@@ -45,6 +44,8 @@ export default function App() {
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
           <Route path="/customer/requirements" element={<CustomerRequirements />} />
           <Route path="/customer/quote-request" element={<RequirementForm />} />
+          <Route path="/vendor/quotation-submission" element={<VendorQuotationSubmission />} />
+          <Route path="/vendor/quotation-list" element={<VendorQuotationList />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/game" element={<Game />} />

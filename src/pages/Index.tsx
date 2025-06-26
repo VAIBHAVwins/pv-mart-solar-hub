@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
@@ -70,10 +69,10 @@ export default function Home() {
       {/* Tagline Section */}
       <section className="py-12 bg-cornflower_blue-900 text-white text-center">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl md:text-4xl font-bold mb-4">
+          <h2 className="text-2xl md:text-4xl font-bold mb-4 text-white">
             Empowering India's Solar Revolution
           </h2>
-          <p className="text-base md:text-lg opacity-90 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg text-white opacity-95 max-w-3xl mx-auto">
             PVMart connects you with trusted solar vendors for affordable, high-quality solar installations. 
             Start your journey to clean energy today.
           </p>
@@ -86,12 +85,12 @@ export default function Home() {
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-charcoal">Get Started Today</h2>
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link to="/installation-type">
-              <Button size="lg" className="bg-cornflower_blue text-white hover:bg-cornflower_blue-600 font-bold shadow-md w-full sm:w-auto">
+              <Button size="lg" className="bg-cornflower_blue text-white hover:bg-cornflower_blue-600 font-bold shadow-md w-full sm:w-auto px-8 py-3">
                 Get Solar Quote
               </Button>
             </Link>
             <Link to="/vendor/register">
-              <Button size="lg" variant="outline" className="border-cornflower_blue text-cornflower_blue hover:bg-cornflower_blue hover:text-white font-bold shadow-md w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="border-cornflower_blue text-cornflower_blue hover:bg-cornflower_blue hover:text-white font-bold shadow-md w-full sm:w-auto px-8 py-3">
                 Join as Vendor
               </Button>
             </Link>
@@ -129,8 +128,8 @@ export default function Home() {
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-12 text-charcoal">Our Solar Services</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white p-8 rounded-xl shadow-lg text-center transition-transform hover:-translate-y-2 hover:shadow-2xl">
-              <img src="https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=300&h=200&fit=crop" alt="Residential Solar" className="w-full h-48 object-cover rounded-lg mb-4" />
-              <h3 className="text-xl font-semibold mb-2 text-charcoal">Residential Solar</h3>
+              <img src="https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=300&h=200&fit=crop" alt="Residential Solar Installation" className="w-full h-48 object-cover rounded-lg mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-charcoal">Residential Solar Installation</h3>
               <p className="text-slate_gray mb-4">Custom solar solutions for homes with rooftop and ground-mount systems.</p>
               <Link to="/installation-type">
                 <Button className="bg-cornflower_blue text-white hover:bg-cornflower_blue-600">
@@ -139,8 +138,8 @@ export default function Home() {
               </Link>
             </div>
             <div className="bg-white p-8 rounded-xl shadow-lg text-center transition-transform hover:-translate-y-2 hover:shadow-2xl">
-              <img src="https://images.unsplash.com/photo-1497440001374-f26997328c1b?w=300&h=200&fit=crop" alt="Commercial Solar" className="w-full h-48 object-cover rounded-lg mb-4" />
-              <h3 className="text-xl font-semibold mb-2 text-charcoal">Commercial Solar</h3>
+              <img src="https://images.unsplash.com/photo-1497440001374-f26997328c1b?w=300&h=200&fit=crop" alt="Commercial Solar Installation" className="w-full h-48 object-cover rounded-lg mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-charcoal">Commercial Solar Installation</h3>
               <p className="text-slate_gray mb-4">Scalable solar installations for businesses and offices.</p>
               <Link to="/installation-type">
                 <Button className="bg-cornflower_blue text-white hover:bg-cornflower_blue-600">
@@ -149,8 +148,8 @@ export default function Home() {
               </Link>
             </div>
             <div className="bg-white p-8 rounded-xl shadow-lg text-center transition-transform hover:-translate-y-2 hover:shadow-2xl">
-              <img src="https://images.unsplash.com/photo-1509391366360-2e959784a276?w=300&h=200&fit=crop" alt="Industrial Solar" className="w-full h-48 object-cover rounded-lg mb-4" />
-              <h3 className="text-xl font-semibold mb-2 text-charcoal">Industrial Solar</h3>
+              <img src="https://images.unsplash.com/photo-1509391366360-2e959784a276?w=300&h=200&fit=crop" alt="Industrial Solar Installation" className="w-full h-48 object-cover rounded-lg mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-charcoal">Industrial Solar Installation</h3>
               <p className="text-slate_gray mb-4">Large-scale solar solutions for industrial facilities.</p>
               <Link to="/installation-type">
                 <Button className="bg-cornflower_blue text-white hover:bg-cornflower_blue-600">
@@ -166,7 +165,7 @@ export default function Home() {
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-12 text-charcoal">Quick Links</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <Link to="/contact" className="bg-cornflower_blue-50 p-6 rounded-lg text-center hover:bg-cornflower_blue-100 transition-colors">
               <h3 className="font-semibold text-charcoal">Contact Us</h3>
             </Link>
@@ -178,6 +177,9 @@ export default function Home() {
             </Link>
             <Link to="/game" className="bg-cornflower_blue-50 p-6 rounded-lg text-center hover:bg-cornflower_blue-100 transition-colors">
               <h3 className="font-semibold text-charcoal">Solar Game</h3>
+            </Link>
+            <Link to="/admin/login" className="bg-cornflower_blue-50 p-6 rounded-lg text-center hover:bg-cornflower_blue-100 transition-colors">
+              <h3 className="font-semibold text-charcoal">Admin Login</h3>
             </Link>
           </div>
         </div>

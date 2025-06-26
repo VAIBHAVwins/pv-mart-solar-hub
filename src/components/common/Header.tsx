@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -46,9 +45,6 @@ const Header = () => {
             </Link>
             <Link to="/about" className={`${getLinkClasses()} transition-colors`}>
               About
-            </Link>
-            <Link to="/services" className={`${getLinkClasses()} transition-colors`}>
-              Services
             </Link>
             <Link to="/blogs" className={`${getLinkClasses()} transition-colors`}>
               Blogs
@@ -108,9 +104,6 @@ const Header = () => {
             </Link>
             <Link to="/about" className={`block ${getLinkClasses()} transition-colors`}>
               About
-            </Link>
-            <Link to="/services" className={`block ${getLinkClasses()} transition-colors`}>
-              Services
             </Link>
             <Link to="/blogs" className={`block ${getLinkClasses()} transition-colors`}>
               Blogs

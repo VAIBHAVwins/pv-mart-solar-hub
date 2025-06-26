@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
@@ -19,7 +18,7 @@ export default function InstallationType() {
             {/* Residential */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-transform hover:-translate-y-2 hover:shadow-2xl">
               <img 
-                src="https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=250&fit=crop" 
+                src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=250&fit=crop" 
                 alt="Residential Solar" 
                 className="w-full h-48 object-cover"
               />
@@ -46,7 +45,7 @@ export default function InstallationType() {
             {/* Commercial */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-transform hover:-translate-y-2 hover:shadow-2xl">
               <img 
-                src="https://images.unsplash.com/photo-1497440001374-f26997328c1b?w=400&h=250&fit=crop" 
+                src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=250&fit=crop" 
                 alt="Commercial Solar" 
                 className="w-full h-48 object-cover"
               />
@@ -73,7 +72,7 @@ export default function InstallationType() {
             {/* Industrial */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-transform hover:-translate-y-2 hover:shadow-2xl">
               <img 
-                src="https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=250&fit=crop" 
+                src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=250&fit=crop" 
                 alt="Industrial Solar" 
                 className="w-full h-48 object-cover"
               />
