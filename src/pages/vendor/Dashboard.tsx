@@ -31,18 +31,11 @@ export default function VendorDashboard() {
               <span className="inline-block bg-[#b07e66] text-[#f7f7f6] px-4 py-2 rounded-full font-semibold shadow">Vendor Account</span>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="mb-8">
               <Link to="/vendor/quotation-submission">
-                <div className="bg-[#b07e66] p-6 rounded-xl hover:bg-[#797a83] transition-colors cursor-pointer">
+                <div className="bg-[#b07e66] p-6 rounded-xl hover:bg-[#797a83] transition-colors cursor-pointer max-w-md mx-auto">
                   <h3 className="text-xl font-bold text-[#f7f7f6] mb-2">Submit Quotation</h3>
                   <p className="text-[#f7f7f6] opacity-90">Submit quotations for customer requirements</p>
-                </div>
-              </Link>
-              
-              <Link to="/vendor/quotation-list">
-                <div className="bg-[#797a83] p-6 rounded-xl hover:bg-[#b07e66] transition-colors cursor-pointer">
-                  <h3 className="text-xl font-bold text-[#f7f7f6] mb-2">View Quotations</h3>
-                  <p className="text-[#f7f7f6] opacity-90">Check your submitted quotations</p>
                 </div>
               </Link>
             </div>

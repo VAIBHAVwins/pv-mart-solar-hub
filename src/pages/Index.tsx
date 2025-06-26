@@ -85,12 +85,12 @@ export default function Home() {
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-charcoal">Get Started Today</h2>
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link to="/installation-type">
-              <Button size="lg" className="bg-cornflower_blue text-white hover:bg-cornflower_blue-600 font-bold shadow-md w-full sm:w-auto px-8 py-3">
+              <Button size="lg" className="bg-cornflower_blue text-white hover:bg-cornflower_blue-600 font-bold shadow-md w-full sm:w-auto px-8 py-3 text-lg">
                 Get Solar Quote
               </Button>
             </Link>
             <Link to="/vendor/register">
-              <Button size="lg" variant="outline" className="border-cornflower_blue text-cornflower_blue hover:bg-cornflower_blue hover:text-white font-bold shadow-md w-full sm:w-auto px-8 py-3">
+              <Button size="lg" variant="outline" className="border-cornflower_blue text-cornflower_blue hover:bg-cornflower_blue hover:text-white font-bold shadow-md w-full sm:w-auto px-8 py-3 text-lg">
                 Join as Vendor
               </Button>
             </Link>
@@ -128,30 +128,30 @@ export default function Home() {
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-12 text-charcoal">Our Solar Services</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white p-8 rounded-xl shadow-lg text-center transition-transform hover:-translate-y-2 hover:shadow-2xl">
-              <img src="https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=300&h=200&fit=crop" alt="Residential Solar Installation" className="w-full h-48 object-cover rounded-lg mb-4" />
+              <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=300&h=200&fit=crop" alt="Residential Solar Installation" className="w-full h-48 object-cover rounded-lg mb-4" />
               <h3 className="text-xl font-semibold mb-2 text-charcoal">Residential Solar Installation</h3>
               <p className="text-slate_gray mb-4">Custom solar solutions for homes with rooftop and ground-mount systems.</p>
-              <Link to="/installation-type">
+              <Link to="/grid-connectivity?type=residential">
                 <Button className="bg-cornflower_blue text-white hover:bg-cornflower_blue-600">
                   Get Quote
                 </Button>
               </Link>
             </div>
             <div className="bg-white p-8 rounded-xl shadow-lg text-center transition-transform hover:-translate-y-2 hover:shadow-2xl">
-              <img src="https://images.unsplash.com/photo-1497440001374-f26997328c1b?w=300&h=200&fit=crop" alt="Commercial Solar Installation" className="w-full h-48 object-cover rounded-lg mb-4" />
+              <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=300&h=200&fit=crop" alt="Commercial Solar Installation" className="w-full h-48 object-cover rounded-lg mb-4" />
               <h3 className="text-xl font-semibold mb-2 text-charcoal">Commercial Solar Installation</h3>
               <p className="text-slate_gray mb-4">Scalable solar installations for businesses and offices.</p>
-              <Link to="/installation-type">
+              <Link to="/grid-connectivity?type=commercial">
                 <Button className="bg-cornflower_blue text-white hover:bg-cornflower_blue-600">
                   Get Quote
                 </Button>
               </Link>
             </div>
             <div className="bg-white p-8 rounded-xl shadow-lg text-center transition-transform hover:-translate-y-2 hover:shadow-2xl">
-              <img src="https://images.unsplash.com/photo-1509391366360-2e959784a276?w=300&h=200&fit=crop" alt="Industrial Solar Installation" className="w-full h-48 object-cover rounded-lg mb-4" />
+              <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&h=200&fit=crop" alt="Industrial Solar Installation" className="w-full h-48 object-cover rounded-lg mb-4" />
               <h3 className="text-xl font-semibold mb-2 text-charcoal">Industrial Solar Installation</h3>
               <p className="text-slate_gray mb-4">Large-scale solar solutions for industrial facilities.</p>
-              <Link to="/installation-type">
+              <Link to="/grid-connectivity?type=industrial">
                 <Button className="bg-cornflower_blue text-white hover:bg-cornflower_blue-600">
                   Get Quote
                 </Button>

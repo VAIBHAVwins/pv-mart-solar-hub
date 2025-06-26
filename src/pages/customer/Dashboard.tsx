@@ -30,18 +30,11 @@ export default function CustomerDashboard() {
               <span className="inline-block bg-[#fecb00] text-[#190a02] px-4 py-2 rounded-full font-semibold shadow">Customer Account</span>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="mb-8">
               <Link to="/customer/quote-request">
-                <div className="bg-[#fecb00] p-6 rounded-xl hover:bg-[#f8b200] transition-colors cursor-pointer">
+                <div className="bg-[#fecb00] p-6 rounded-xl hover:bg-[#f8b200] transition-colors cursor-pointer max-w-md mx-auto">
                   <h3 className="text-xl font-bold text-[#190a02] mb-2">Submit Requirement</h3>
                   <p className="text-[#8b4a08]">Fill out your solar installation requirements</p>
-                </div>
-              </Link>
-              
-              <Link to="/customer/requirements">
-                <div className="bg-[#f8b200] p-6 rounded-xl hover:bg-[#fecb00] transition-colors cursor-pointer">
-                  <h3 className="text-xl font-bold text-[#190a02] mb-2">View Requirements</h3>
-                  <p className="text-[#8b4a08]">Check your submitted requirements and quotes</p>
                 </div>
               </Link>
             </div>
