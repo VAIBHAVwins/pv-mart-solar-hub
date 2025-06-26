@@ -1,18 +1,15 @@
-
 import { useState } from 'react';
 import Layout from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { Users, FileText, MessageSquare, Settings, BarChart3 } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [stats] = useState({
     totalUsers: 156,
     totalQuotes: 89,
-    pendingQuotes: 23,
     totalVendors: 34,
     totalCustomers: 122
   });
@@ -26,11 +23,6 @@ export default function AdminDashboard() {
               <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
               <p className="text-gray-600">Welcome back, {user?.email}</p>
             </div>
-            {logout && (
-              <Button onClick={logout} variant="outline">
-                Logout
-              </Button>
-            )}
           </div>
 
           {/* Stats Cards */}
@@ -71,15 +63,6 @@ export default function AdminDashboard() {
                 <div className="text-2xl font-bold">{stats.totalQuotes}</div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Quotes</CardTitle>
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.pendingQuotes}</div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Admin Tabs */}
@@ -101,7 +84,6 @@ export default function AdminDashboard() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <h3 className="text-lg font-semibold">Recent Users</h3>
-                      <Button>View All Users</Button>
                     </div>
                     <div className="border rounded-lg p-4">
                       <p className="text-gray-600">User management functionality will be implemented here.</p>
@@ -121,7 +103,6 @@ export default function AdminDashboard() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <h3 className="text-lg font-semibold">Quote Requests</h3>
-                      <Button>View All Quotes</Button>
                     </div>
                     <div className="border rounded-lg p-4">
                       <p className="text-gray-600">Quote management system will be implemented here.</p>

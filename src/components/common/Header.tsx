@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
@@ -9,6 +9,11 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    setIsAdmin(!!localStorage.getItem('adminAuth'));
+  }, [location]);
 
   const isCustomerRoute = location.pathname.includes('/customer');
   const isVendorRoute = location.pathname.includes('/vendor');
@@ -33,8 +38,14 @@ const Header = () => {
   };
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/');
+    if (isAdmin) {
+      localStorage.removeItem('adminAuth');
+      setIsAdmin(false);
+      navigate('/admin/login');
+    } else {
+      await logout();
+      navigate('/');
+    }
   };
 
   return (
@@ -67,7 +78,11 @@ const Header = () => {
 
           {/* Desktop Auth Buttons or Logout */}
           <div className="hidden md:flex items-center space-x-2">
-            {!user ? (
+            {isAdmin ? (
+              <Button onClick={handleLogout} size="sm" className="bg-red-600 text-white px-3 py-1 text-xs hover:bg-red-700">
+                Logout
+              </Button>
+            ) : !user ? (
               <>
                 <Link to="/customer/login">
                   <Button
@@ -131,7 +146,11 @@ const Header = () => {
               Game
             </Link>
             <div className="flex flex-col space-y-2 pt-3">
-              {!user ? (
+              {isAdmin ? (
+                <Button onClick={handleLogout} size="sm" className="w-full text-xs bg-red-600 text-white hover:bg-red-700">
+                  Logout
+                </Button>
+              ) : !user ? (
                 <>
                   <Link to="/customer/login">
                     <Button variant="outline" size="sm" className="w-full text-xs">
