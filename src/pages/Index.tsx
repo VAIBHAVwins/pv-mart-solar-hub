@@ -67,12 +67,12 @@ export default function Home() {
       </section>
 
       {/* Tagline Section */}
-      <section className="py-12 bg-cornflower_blue-900 text-white text-center">
+      <section className="py-12 bg-cornflower_blue-900 text-center">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl md:text-4xl font-bold mb-4 text-white">
+          <h2 className="text-2xl md:text-4xl font-bold mb-4 text-jonquil">
             Empowering India's Solar Revolution
           </h2>
-          <p className="text-base md:text-lg text-white opacity-95 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg text-jonquil opacity-95 max-w-3xl mx-auto">
             PVMart connects you with trusted solar vendors for affordable, high-quality solar installations. 
             Start your journey to clean energy today.
           </p>

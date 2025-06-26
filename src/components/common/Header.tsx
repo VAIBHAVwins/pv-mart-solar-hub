@@ -42,8 +42,8 @@ const Header = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="text-2xl font-bold">
-            PV_MART
+          <Link to="/" className="flex items-center space-x-2">
+            <img src="/pvmart-logo.png" alt="PVMART Logo" className="h-12 w-12 object-contain" />
           </Link>
 
           {/* Desktop Navigation */}

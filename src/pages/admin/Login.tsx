@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,11 +18,13 @@ export default function AdminLogin() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
     try {
-      // Simple admin authentication (in production, use proper authentication)
-      if (formData.email === 'admin@pvmart.com' && formData.password === 'admin123') {
-        // Store admin session (in production, use proper JWT tokens)
+      // Accept both old and new admin credentials
+      const validCreds = (
+        (formData.email === 'admin@pvmart.com' && formData.password === 'admin123') ||
+        (formData.email === 'ecogrid.ai@gmail.com' && formData.password === 'ECOGRID_AI-28/02/2025')
+      );
+      if (validCreds) {
         localStorage.setItem('adminAuth', 'true');
         navigate('/admin');
       } else {
@@ -44,7 +45,6 @@ export default function AdminLogin() {
             <h1 className="text-3xl font-bold text-gray-900">Admin Login</h1>
             <p className="text-gray-600 mt-2">Access the admin dashboard</p>
           </div>
-          
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <Label htmlFor="email">Admin Email</Label>
@@ -53,11 +53,10 @@ export default function AdminLogin() {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                placeholder="admin@pvmart.com"
+                placeholder="admin@pvmart.com or ecogrid.ai@gmail.com"
                 required
               />
             </div>
-            
             <div>
               <Label htmlFor="password">Password</Label>
               <Input
@@ -69,13 +68,11 @@ export default function AdminLogin() {
                 required
               />
             </div>
-            
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
                 {error}
               </div>
             )}
-            
             <Button
               type="submit"
               className="w-full"
@@ -84,9 +81,9 @@ export default function AdminLogin() {
               {loading ? 'Logging in...' : 'Login as Admin'}
             </Button>
           </form>
-          
           <div className="mt-6 text-center text-sm text-gray-500">
-            Demo credentials: admin@pvmart.com / admin123
+            Demo credentials: admin@pvmart.com / admin123<br/>
+            Or: ecogrid.ai@gmail.com / ECOGRID_AI-28/02/2025
           </div>
         </div>
       </div>
