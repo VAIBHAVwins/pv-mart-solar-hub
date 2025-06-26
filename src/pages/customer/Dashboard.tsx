@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
 
 // CURSOR AI: Modern, professional Customer Dashboard redesign with customer color palette and UI patterns
 export default function CustomerDashboard() {
@@ -19,6 +18,10 @@ export default function CustomerDashboard() {
   if (loading) return <div className="text-center py-20">Loading...</div>;
   if (!user) return null;
 
+  const handleRequirementClick = () => {
+    window.open('https://docs.google.com/forms/d/e/1FAIpQLSdbuVmhwpsO4LYaUv4v9TDKPL_FxPBNAOquU6SLUhnf72NuWQ/viewform?usp=header', '_blank');
+  };
+
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-[#fecb00] to-[#f8b200] py-16 px-4">
@@ -31,12 +34,10 @@ export default function CustomerDashboard() {
             </div>
             
             <div className="mb-8">
-              <Link to="/customer/quote-request">
-                <div className="bg-[#fecb00] p-6 rounded-xl hover:bg-[#f8b200] transition-colors cursor-pointer max-w-md mx-auto">
-                  <h3 className="text-xl font-bold text-[#190a02] mb-2">Submit Requirement</h3>
-                  <p className="text-[#8b4a08]">Fill out your solar installation requirements</p>
-                </div>
-              </Link>
+              <button onClick={handleRequirementClick} className="bg-[#fecb00] p-6 rounded-xl hover:bg-[#f8b200] transition-colors cursor-pointer max-w-md mx-auto w-full">
+                <h3 className="text-xl font-bold text-[#190a02] mb-2">Submit Requirement</h3>
+                <p className="text-[#8b4a08]">Fill out your solar installation requirements</p>
+              </button>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -46,11 +47,7 @@ export default function CustomerDashboard() {
               >
                 Logout
               </Button>
-              <Link to="/">
-                <Button variant="outline" className="border-[#8b4a08] text-[#8b4a08] hover:bg-[#8b4a08] hover:text-white">
-                  Back to Home
-                </Button>
-              </Link>
+              <Button variant="outline" className="border-[#8b4a08] text-[#8b4a08] hover:bg-[#8b4a08] hover:text-white" onClick={() => navigate('/')}>Back to Home</Button>
             </div>
           </div>
         </div>

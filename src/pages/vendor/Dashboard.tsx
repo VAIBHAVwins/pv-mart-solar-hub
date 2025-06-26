@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
 
 // CURSOR AI: Modern, professional Vendor Dashboard redesign with vendor color palette and UI patterns
 export default function VendorDashboard() {
@@ -20,6 +19,10 @@ export default function VendorDashboard() {
   if (loading) return <div className="text-center py-20">Loading...</div>;
   if (!user) return null;
 
+  const handleQuotationClick = () => {
+    window.open('https://docs.google.com/forms/d/e/1FAIpQLSdjkFe1q934yAptp69UlOghFzFwrYrk7IQpOI101axO3M4WXQ/viewform?usp=header', '_blank');
+  };
+
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-[#797a83] to-[#4f4f56] py-16 px-4">
@@ -32,12 +35,10 @@ export default function VendorDashboard() {
             </div>
             
             <div className="mb-8">
-              <Link to="/vendor/quotation-submission">
-                <div className="bg-[#b07e66] p-6 rounded-xl hover:bg-[#797a83] transition-colors cursor-pointer max-w-md mx-auto">
-                  <h3 className="text-xl font-bold text-[#f7f7f6] mb-2">Submit Quotation</h3>
-                  <p className="text-[#f7f7f6] opacity-90">Submit quotations for customer requirements</p>
-                </div>
-              </Link>
+              <button onClick={handleQuotationClick} className="bg-[#b07e66] p-6 rounded-xl hover:bg-[#797a83] transition-colors cursor-pointer max-w-md mx-auto w-full">
+                <h3 className="text-xl font-bold text-[#f7f7f6] mb-2">Submit Quotation</h3>
+                <p className="text-[#f7f7f6] opacity-90">Submit quotations for customer requirements</p>
+              </button>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -47,11 +48,7 @@ export default function VendorDashboard() {
               >
                 Logout
               </Button>
-              <Link to="/">
-                <Button variant="outline" className="border-[#797a83] text-[#797a83] hover:bg-[#797a83] hover:text-white">
-                  Back to Home
-                </Button>
-              </Link>
+              <Button variant="outline" className="border-[#797a83] text-[#797a83] hover:bg-[#797a83] hover:text-white" onClick={() => navigate('/')}>Back to Home</Button>
             </div>
           </div>
         </div>

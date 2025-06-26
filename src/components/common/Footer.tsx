@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from 'react-router-dom';
 
 const Footer = () => {
@@ -43,7 +42,6 @@ const Footer = () => {
             <ul className="space-y-2 text-sm">
               <li><Link to="/" className={`${getLinkClasses()} transition-colors`}>Home</Link></li>
               <li><Link to="/about" className={`${getLinkClasses()} transition-colors`}>About Us</Link></li>
-              <li><Link to="/services" className={`${getLinkClasses()} transition-colors`}>Services</Link></li>
               <li><Link to="/blogs" className={`${getLinkClasses()} transition-colors`}>Blogs</Link></li>
               <li><Link to="/contact" className={`${getLinkClasses()} transition-colors`}>Contact</Link></li>
             </ul>
