@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Phone, Mail, MapPin } from 'lucide-react';
+import { Menu, X, Phone, Mail, MapPin, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
@@ -105,6 +106,10 @@ const Header = () => {
               <Link to="/game" className={getLinkClasses()}>
                 Game
               </Link>
+              <Link to="/admin/login" className={`${getLinkClasses()} flex items-center gap-1`}>
+                <Shield className="w-4 h-4" />
+                Admin
+              </Link>
             </nav>
 
             {/* Desktop Auth Buttons or Logout */}
@@ -187,6 +192,14 @@ const Header = () => {
                 >
                   Game
                 </Link>
+                <Link 
+                  to="/admin/login" 
+                  className={`${getLinkClasses()} flex items-center gap-1`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Shield className="w-4 h-4" />
+                  Admin Login
+                </Link>
                 
                 <div className="pt-4 border-t border-gray-200">
                   {isAdmin ? (
@@ -240,3 +253,4 @@ const Header = () => {
 };
 
 export default Header;
+

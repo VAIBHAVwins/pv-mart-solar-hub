@@ -140,19 +140,19 @@ export default function Home() {
         <div className="solar-container">
           <div className="text-center mb-16">
             <h2 className="solar-heading">Why Choose PV Mart?</h2>
-            <p className="solar-subheading">
+            <p className="solar-subheading max-w-3xl mx-auto">
               We provide comprehensive solar solutions with unmatched quality, expertise, and customer support.
             </p>
           </div>
           
-          <div className="grid-responsive">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {features.map((feature, index) => (
-              <div key={index} className="feature-card group">
-                <div className="feature-icon">
+              <div key={index} className="feature-card group text-center">
+                <div className="feature-icon mx-auto mb-6">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-bold text-solar-dark mb-3">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <h3 className="text-xl font-bold text-solar-dark mb-4">{feature.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
