@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Play, ArrowRight, CheckCircle, Users, Award, Clock, MapPin, Phone, Mail } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight, CheckCircle, Users, Award, MapPin, Phone, Mail } from 'lucide-react';
 
 export default function Home() {
   const [currentBanner, setCurrentBanner] = useState(0);
@@ -26,7 +26,7 @@ export default function Home() {
       title: "Free Site Assessment",
       subtitle: "Get professional evaluation of your solar potential",
       description: "Our experts analyze your location, energy consumption, and roof structure to design the perfect solar solution for your needs.",
-      image: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=1200&h=600&fit=crop",
+      image: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?auto=format&fit=crop&w=1200&q=80",
       cta: "Book Assessment"
     }
   ];
@@ -44,21 +44,9 @@ export default function Home() {
     },
     {
       icon: <Award className="w-8 h-8" />,
-      title: "Government Approved",
-      description: "All installations comply with government regulations and qualify for subsidies."
-    },
-    {
-      icon: <Clock className="w-8 h-8" />,
-      title: "Quick Installation",
-      description: "Complete installation within 2-3 days with minimal disruption to your daily routine."
+      title: "Vendor Compliance",
+      description: "Our vendors comply with all government regulations and quality standards."
     }
-  ];
-
-  const stats = [
-    { number: "500+", label: "Happy Customers" },
-    { number: "1000+", label: "Installations" },
-    { number: "25+", label: "Years Warranty" },
-    { number: "24/7", label: "Support" }
   ];
 
   useEffect(() => {
@@ -66,7 +54,7 @@ export default function Home() {
       setCurrentBanner((prev) => (prev + 1) % banners.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [banners.length]);
 
   const nextBanner = () => {
     setCurrentBanner((prev) => (prev + 1) % banners.length);
@@ -78,6 +66,16 @@ export default function Home() {
 
   return (
     <Layout>
+      {/* Camouflaged Admin Login Link */}
+      <div className="text-center mt-8 mb-4 select-none">
+        <Link to="/admin/login" style={{ textDecoration: 'none', color: 'inherit' }} tabIndex={-1} aria-label="Admin Login">
+          <span className="text-lg font-bold tracking-wide cursor-pointer hover:opacity-80" style={{ opacity: 0.5 }}>
+            PV_MART<br />
+            <span className="text-base font-normal">Your trusted platform for solar energy solutions. Connecting customers with verified solar vendors.</span>
+          </span>
+        </Link>
+      </div>
+
       {/* Hero Section */}
       <section className="relative h-screen overflow-hidden">
         <div className="absolute inset-0">
@@ -102,14 +100,17 @@ export default function Home() {
                 {banners[currentBanner].description}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button className="solar-button text-lg px-8 py-4">
-                  {banners[currentBanner].cta}
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-                <Button variant="outline" className="btn-outline text-white border-white hover:bg-white hover:text-solar-dark text-lg px-8 py-4">
-                  <Play className="mr-2 w-5 h-5" />
-                  Watch Video
-                </Button>
+                <Link to="/vendor/register">
+                  <Button className="solar-button text-lg px-8 py-4">
+                    Join as Vendor
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </Link>
+                <Link to="/customer/quote-request">
+                  <Button variant="outline" className="btn-outline text-white border-white hover:bg-white hover:text-solar-dark text-lg px-8 py-4">
+                    Get Quotes
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -141,22 +142,6 @@ export default function Home() {
         >
           <ChevronRight className="w-6 h-6" />
         </button>
-      </section>
-
-      {/* Stats Section */}
-      <section className="solar-section bg-solar-light">
-        <div className="solar-container">
-          <div className="grid-responsive">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="solar-card">
-                  <div className="text-4xl font-bold text-solar-primary mb-2">{stat.number}</div>
-                  <div className="text-gray-600 font-medium">{stat.label}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/* Features Section */}
@@ -209,24 +194,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Contact Info Section */}
+      {/* Contact Info Section (centered) */}
       <section className="solar-section bg-gray-50">
         <div className="solar-container">
-          <div className="grid-responsive">
-            <div className="solar-card text-center">
+          <div className="flex flex-col md:flex-row justify-center items-center gap-8">
+            <div className="solar-card text-center w-full md:w-1/3">
               <MapPin className="w-8 h-8 text-solar-primary mx-auto mb-4" />
               <h3 className="text-xl font-bold text-solar-dark mb-2">Visit Us</h3>
-              <p className="text-gray-600">123 Solar Street, Green City, India</p>
+              <p className="text-gray-600">(Hidden for privacy)</p>
             </div>
-            <div className="solar-card text-center">
+            <div className="solar-card text-center w-full md:w-1/3">
               <Phone className="w-8 h-8 text-solar-primary mx-auto mb-4" />
               <h3 className="text-xl font-bold text-solar-dark mb-2">Call Us</h3>
-              <p className="text-gray-600">+91 98765 43210</p>
+              <p className="text-gray-600">(Hidden for privacy)</p>
             </div>
-            <div className="solar-card text-center">
+            <div className="solar-card text-center w-full md:w-1/3">
               <Mail className="w-8 h-8 text-solar-primary mx-auto mb-4" />
               <h3 className="text-xl font-bold text-solar-dark mb-2">Email Us</h3>
-              <p className="text-gray-600">info@pvmart.com</p>
+              <p className="text-gray-600">(Hidden for privacy)</p>
             </div>
           </div>
         </div>
