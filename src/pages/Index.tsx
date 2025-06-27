@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowRight, CheckCircle, Users, Award, MapPin, Phone, Mail } from 'lucide-react';
+import Footer from '@/components/common/Footer';
 
 export default function Home() {
   const [currentBanner, setCurrentBanner] = useState(0);
@@ -66,16 +67,6 @@ export default function Home() {
 
   return (
     <Layout>
-      {/* Camouflaged Admin Login Link */}
-      <div className="text-center mt-8 mb-4 select-none">
-        <Link to="/admin/login" style={{ textDecoration: 'none', color: 'inherit' }} tabIndex={-1} aria-label="Admin Login">
-          <span className="text-lg font-bold tracking-wide cursor-pointer hover:opacity-80" style={{ opacity: 0.5 }}>
-            PV_MART<br />
-            <span className="text-base font-normal">Your trusted platform for solar energy solutions. Connecting customers with verified solar vendors.</span>
-          </span>
-        </Link>
-      </div>
-
       {/* Hero Section */}
       <section className="relative h-screen overflow-hidden">
         <div className="absolute inset-0">
@@ -216,6 +207,16 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {/* Camouflaged Admin Login Link in Footer */}
+      <div className="text-center mt-8 mb-4 select-none">
+        <Link to="/admin/login" style={{ textDecoration: 'none', color: 'inherit' }} tabIndex={-1} aria-label="Admin Login">
+          <span className="text-lg font-bold tracking-wide cursor-pointer hover:opacity-80" style={{ opacity: 0.5 }}>
+            PV_MART<br />
+            <span className="text-base font-normal">Your trusted platform for solar energy solutions. Connecting customers with verified solar vendors.</span>
+          </span>
+        </Link>
+      </div>
+      <Footer />
     </Layout>
   );
 }
