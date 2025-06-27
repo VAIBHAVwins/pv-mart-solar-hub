@@ -27,17 +27,19 @@ const Footer = () => {
   return (
     <footer className={`${getThemeClasses()} py-8 mt-auto`}>
       <div className="container mx-auto px-4 text-center">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 justify-center items-center">
+        <div className="flex flex-col md:flex-row gap-6 justify-center items-start text-center">
           {/* Company Info */}
-          <div>
-            <h3 className="text-xl font-bold mb-3">PV MART</h3>
+          <div className="flex-1 min-w-[180px]">
+            <h3 className="text-xl font-bold mb-3">
+              <Link to="/admin/login" className="hover:underline focus:underline" tabIndex={0} aria-label="Admin Login via PV MART">PV MART</Link>
+            </h3>
             <p className="text-sm opacity-80">
               Your trusted platform for solar energy solutions. Connecting customers with verified solar vendors.
             </p>
           </div>
 
           {/* Quick Links */}
-          <div>
+          <div className="flex-1 min-w-[180px]">
             <h4 className="font-semibold mb-3">Quick Links</h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/" className={`${getLinkClasses()} transition-colors`}>Home</Link></li>
@@ -59,7 +61,7 @@ const Footer = () => {
           </div>
 
           {/* For Customers */}
-          <div>
+          <div className="flex-1 min-w-[180px]">
             <h4 className="font-semibold mb-3">For Customers</h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/customer/register" className={`${getLinkClasses()} transition-colors`}>Sign Up</Link></li>
@@ -69,7 +71,7 @@ const Footer = () => {
           </div>
 
           {/* For Vendors */}
-          <div>
+          <div className="flex-1 min-w-[180px]">
             <h4 className="font-semibold mb-3">For Vendors</h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/vendor/register" className={`${getLinkClasses()} transition-colors`}>Join as Vendor</Link></li>
