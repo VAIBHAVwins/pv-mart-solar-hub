@@ -90,19 +90,43 @@ export default {
 				},
 				// Customer theme colors (yellow/brown/blue-green palette)
 				jonquil: { 
-					DEFAULT: '#fecb00', 
-					100: '#332900', 200: '#665200', 300: '#997a00', 400: '#cca300', 
-					500: '#fecb00', 600: '#ffd633', 700: '#ffe066', 800: '#ffeb99', 900: '#fff5cc' 
+					DEFAULT: '#F4D03F',
+					50: '#FEFBF0',
+					100: '#FDF7E0',
+					200: '#FBF0C0',
+					300: '#F9E8A0',
+					400: '#F7E180',
+					500: '#F4D03F',
+					600: '#F2C61F',
+					700: '#E6B800',
+					800: '#B38F00',
+					900: '#806600'
 				},
 				licorice: { 
-					DEFAULT: '#190a02', 
-					100: '#050200', 200: '#090401', 300: '#0e0601', 400: '#130802', 
-					500: '#190a02', 600: '#712e09', 700: '#cb5210', 800: '#f0854c', 900: '#f8c2a5' 
+					DEFAULT: '#1A1A1A',
+					50: '#F5F5F5',
+					100: '#EBEBEB',
+					200: '#D7D7D7',
+					300: '#C3C3C3',
+					400: '#AFAFAF',
+					500: '#1A1A1A',
+					600: '#171717',
+					700: '#141414',
+					800: '#111111',
+					900: '#0E0E0E'
 				},
 				brown: { 
-					DEFAULT: '#8b4a08', 
-					100: '#1c0f02', 200: '#381e03', 300: '#542c05', 400: '#703b07', 
-					500: '#8b4a08', 600: '#d06e0c', 700: '#f39232', 800: '#f7b776', 900: '#fbdbbb' 
+					DEFAULT: '#8B4513',
+					50: '#F5F0EB',
+					100: '#EBE1D7',
+					200: '#D7C3AF',
+					300: '#C3A587',
+					400: '#AF875F',
+					500: '#8B4513',
+					600: '#7A3D11',
+					700: '#69350F',
+					800: '#582D0D',
+					900: '#47250B'
 				},
 				selective_yellow: { 
 					DEFAULT: '#f8b200', 
@@ -126,19 +150,43 @@ export default {
 				},
 				// Vendor theme colors (gray/chamoisee/khaki palette)
 				vendor_gray: { 
-					DEFAULT: '#797a83', 
-					100: '#18181a', 200: '#303034', 300: '#48494e', 400: '#606168', 
-					500: '#797a83', 600: '#93949b', 700: '#aeaeb4', 800: '#c9c9cd', 900: '#e4e4e6' 
+					DEFAULT: '#6B7280',
+					50: '#F9FAFB',
+					100: '#F3F4F6',
+					200: '#E5E7EB',
+					300: '#D1D5DB',
+					400: '#9CA3AF',
+					500: '#6B7280',
+					600: '#4B5563',
+					700: '#374151',
+					800: '#1F2937',
+					900: '#111827'
 				},
 				chamoisee: { 
-					DEFAULT: '#b07e66', 
-					100: '#251913', 200: '#4a3226', 300: '#6f4a39', 400: '#94634c', 
-					500: '#b07e66', 600: '#c19886', 700: '#d0b2a4', 800: '#e0ccc2', 900: '#efe5e1' 
+					DEFAULT: '#A0785A',
+					50: '#F7F4F1',
+					100: '#EFE9E3',
+					200: '#DFD3C7',
+					300: '#CFBDAB',
+					400: '#BFA78F',
+					500: '#A0785A',
+					600: '#8B6A4E',
+					700: '#765C42',
+					800: '#614E36',
+					900: '#4C402A'
 				},
 				seasalt: { 
-					DEFAULT: '#f7f7f6', 
-					100: '#34342f', 200: '#69695d', 300: '#9b9b8e', 400: '#c9c9c2', 
-					500: '#f7f7f6', 600: '#f9f9f9', 700: '#fbfbfa', 800: '#fcfcfc', 900: '#fefefd' 
+					DEFAULT: '#F8F9FA',
+					50: '#FFFFFF',
+					100: '#FEFEFE',
+					200: '#FDFDFD',
+					300: '#FCFCFC',
+					400: '#FAFAFA',
+					500: '#F8F9FA',
+					600: '#E9ECEF',
+					700: '#DEE2E6',
+					800: '#CED4DA',
+					900: '#ADB5BD'
 				},
 				vendor_silver: { 
 					DEFAULT: '#c4c2be', 
@@ -151,9 +199,17 @@ export default {
 					500: '#d2cec8', 600: '#dad7d2', 700: '#e3e1dd', 800: '#edebe9', 900: '#f6f5f4' 
 				},
 				khaki: { 
-					DEFAULT: '#b5a49b', 
-					100: '#27201d', 200: '#4d4039', 300: '#746056', 400: '#998175', 
-					500: '#b5a49b', 600: '#c4b7af', 700: '#d3c9c3', 800: '#e2dbd7', 900: '#f0edeb' 
+					DEFAULT: '#C3B091',
+					50: '#F8F6F2',
+					100: '#F1EDE5',
+					200: '#E3DBCB',
+					300: '#D5C9B1',
+					400: '#C7B797',
+					500: '#C3B091',
+					600: '#B19D7F',
+					700: '#9F8A6D',
+					800: '#8D775B',
+					900: '#7B6449'
 				},
 				timberwolf_2: { 
 					DEFAULT: '#dbd9d6', 
@@ -174,6 +230,14 @@ export default {
 					DEFAULT: '#251c1b', 
 					100: '#080606', 200: '#0f0c0b', 300: '#171111', 400: '#1f1716', 
 					500: '#251c1b', 600: '#5a4441', 700: '#8d6a66', 800: '#b49b98', 900: '#dacdcc' 
+				},
+				// Modern Solar Website Colors (from template)
+				solar: {
+					primary: "#32C36C",
+					light: "#F6F7F8", 
+					dark: "#1A2A36",
+					secondary: "#FF6B35",
+					accent: "#4A90E2",
 				},
 			},
 			borderRadius: {
@@ -215,14 +279,34 @@ export default {
 					'100%': {
 						transform: 'translateX(0)'
 					}
-				}
+				},
+				'slide-in': {
+					'0%': { transform: 'translateX(-100%)' },
+					'100%': { transform: 'translateX(0)' },
+				},
+				'bounce-in': {
+					'0%': { transform: 'scale(0.3)', opacity: '0' },
+					'50%': { transform: 'scale(1.05)' },
+					'70%': { transform: 'scale(0.9)' },
+					'100%': { transform: 'scale(1)', opacity: '1' },
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.3s ease-out',
-				'slide-right': 'slide-right 0.3s ease-out'
-			}
+				'slide-right': 'slide-right 0.3s ease-out',
+				'slide-in': 'slide-in 0.3s ease-out',
+				'bounce-in': 'bounce-in 0.6s ease-out',
+			},
+			fontFamily: {
+				sans: ['Open Sans', 'Roboto', 'system-ui', 'sans-serif'],
+				heading: ['Roboto', 'system-ui', 'sans-serif'],
+			},
+			boxShadow: {
+				'solar': '0 10px 25px -3px rgba(50, 195, 108, 0.1), 0 4px 6px -2px rgba(50, 195, 108, 0.05)',
+				'solar-lg': '0 20px 25px -3px rgba(50, 195, 108, 0.1), 0 10px 10px -5px rgba(50, 195, 108, 0.04)',
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

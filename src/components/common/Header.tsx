@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Phone, Mail, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
@@ -21,20 +21,20 @@ const Header = () => {
   // Determine theme based on route
   const getThemeClasses = () => {
     if (isCustomerRoute) {
-      return 'bg-jonquil text-licorice'; // Customer theme
+      return 'bg-jonquil text-licorice shadow-lg'; // Customer theme
     } else if (isVendorRoute) {
-      return 'bg-vendor_gray text-seasalt'; // Vendor theme
+      return 'bg-vendor_gray text-seasalt shadow-lg'; // Vendor theme
     }
-    return 'bg-cornflower_blue text-white'; // Default theme
+    return 'bg-white text-solar-dark shadow-solar'; // Default modern theme
   };
 
   const getLinkClasses = () => {
     if (isCustomerRoute) {
-      return 'text-brown hover:text-licorice';
+      return 'nav-link text-brown hover:text-licorice';
     } else if (isVendorRoute) {
-      return 'text-seasalt hover:text-chamoisee';
+      return 'nav-link text-seasalt hover:text-chamoisee';
     }
-    return 'text-white hover:text-cornflower_blue-200';
+    return 'nav-link text-solar-dark hover:text-solar-primary';
   };
 
   const handleLogout = async () => {
@@ -49,130 +49,193 @@ const Header = () => {
   };
 
   return (
-    <header className={`${getThemeClasses()} shadow-lg sticky top-0 z-50`}>
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <img src="/pvmart-logo.png" alt="PVMART Logo" className="h-12 w-12 object-contain" />
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/" className={`${getLinkClasses()} transition-colors`}>
-              Home
-            </Link>
-            <Link to="/about" className={`${getLinkClasses()} transition-colors`}>
-              About
-            </Link>
-            <Link to="/blogs" className={`${getLinkClasses()} transition-colors`}>
-              Blogs
-            </Link>
-            <Link to="/contact" className={`${getLinkClasses()} transition-colors`}>
-              Contact
-            </Link>
-            <Link to="/game" className={`${getLinkClasses()} transition-colors`}>
-              Game
-            </Link>
-          </nav>
-
-          {/* Desktop Auth Buttons or Logout */}
-          <div className="hidden md:flex items-center space-x-2">
-            {isAdmin ? (
-              <Button onClick={handleLogout} size="sm" className="bg-red-600 text-white px-3 py-1 text-xs hover:bg-red-700">
-                Logout
-              </Button>
-            ) : !user ? (
-              <>
-                <Link to="/customer/login">
-                  <Button
-                    variant={isCustomerRoute ? 'outline' : 'default'}
-                    size="sm"
-                    className={
-                      isCustomerRoute
-                        ? 'border-brown text-brown hover:bg-brown hover:text-white px-3 py-1 text-xs'
-                        : 'bg-brown text-white hover:bg-brown-600 border-none px-3 py-1 text-xs'
-                    }
-                  >
-                    Customer Login
-                  </Button>
-                </Link>
-                <Link to="/vendor/login">
-                  <Button
-                    variant={isVendorRoute ? 'outline' : 'default'}
-                    size="sm"
-                    className={
-                      isVendorRoute
-                        ? 'border-chamoisee text-chamoisee hover:bg-chamoisee hover:text-white px-3 py-1 text-xs'
-                        : 'bg-chamoisee text-white hover:bg-chamoisee-600 border-none px-3 py-1 text-xs'
-                    }
-                  >
-                    Vendor Login
-                  </Button>
-                </Link>
-              </>
-            ) : (
-              <Button onClick={handleLogout} size="sm" className="bg-red-600 text-white px-3 py-1 text-xs hover:bg-red-700">
-                Logout
-              </Button>
-            )}
+    <>
+      {/* Top Bar */}
+      <div className="bg-solar-dark text-white py-2 hidden lg:block">
+        <div className="container-responsive">
+          <div className="flex justify-between items-center text-sm">
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-2">
+                <MapPin className="w-4 h-4 text-solar-primary" />
+                <span>123 Solar Street, Green City, India</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Phone className="w-4 h-4 text-solar-primary" />
+                <span>+91 98765 43210</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Mail className="w-4 h-4 text-solar-primary" />
+                <span>info@pvmart.com</span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span>Mon - Fri: 9:00 AM - 6:00 PM</span>
+            </div>
           </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
         </div>
+      </div>
 
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden mt-4 space-y-3 animate-fade-in">
-            <Link to="/" className={`block ${getLinkClasses()} transition-colors`}>
-              Home
+      {/* Main Header */}
+      <header className={`${getThemeClasses()} sticky top-0 z-50 transition-all duration-300`}>
+        <div className="container-responsive">
+          <div className="flex items-center justify-between py-4">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-3 group">
+              <img src="/pvmart-logo.png" alt="PVMART Logo" className="h-12 w-12 object-contain transition-transform group-hover:scale-110" />
+              <div className="hidden sm:block">
+                <h1 className="text-2xl font-bold text-solar-primary">PV Mart</h1>
+                <p className="text-xs text-gray-600">Solar Solutions</p>
+              </div>
             </Link>
-            <Link to="/about" className={`block ${getLinkClasses()} transition-colors`}>
-              About
-            </Link>
-            <Link to="/blogs" className={`block ${getLinkClasses()} transition-colors`}>
-              Blogs
-            </Link>
-            <Link to="/contact" className={`block ${getLinkClasses()} transition-colors`}>
-              Contact
-            </Link>
-            <Link to="/game" className={`block ${getLinkClasses()} transition-colors`}>
-              Game
-            </Link>
-            <div className="flex flex-col space-y-2 pt-3">
+
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center space-x-8">
+              <Link to="/" className={getLinkClasses()}>
+                Home
+              </Link>
+              <Link to="/about" className={getLinkClasses()}>
+                About
+              </Link>
+              <Link to="/blogs" className={getLinkClasses()}>
+                Blogs
+              </Link>
+              <Link to="/contact" className={getLinkClasses()}>
+                Contact
+              </Link>
+              <Link to="/game" className={getLinkClasses()}>
+                Game
+              </Link>
+            </nav>
+
+            {/* Desktop Auth Buttons or Logout */}
+            <div className="hidden lg:flex items-center space-x-4">
               {isAdmin ? (
-                <Button onClick={handleLogout} size="sm" className="w-full text-xs bg-red-600 text-white hover:bg-red-700">
+                <Button 
+                  onClick={handleLogout} 
+                  className="solar-button-outline border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                >
                   Logout
                 </Button>
               ) : !user ? (
                 <>
                   <Link to="/customer/login">
-                    <Button variant="outline" size="sm" className="w-full text-xs">
+                    <Button className="solar-button-outline">
                       Customer Login
                     </Button>
                   </Link>
                   <Link to="/vendor/login">
-                    <Button variant="outline" size="sm" className="w-full text-xs">
+                    <Button className="solar-button">
                       Vendor Login
                     </Button>
                   </Link>
                 </>
               ) : (
-                <Button onClick={handleLogout} size="sm" className="w-full text-xs bg-red-600 text-white hover:bg-red-700">
+                <Button 
+                  onClick={handleLogout} 
+                  className="solar-button-outline border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                >
                   Logout
                 </Button>
               )}
             </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
-        )}
-      </div>
-    </header>
+
+          {/* Mobile Menu */}
+          {isMenuOpen && (
+            <div className="lg:hidden py-4 border-t border-gray-200 animate-fade-in">
+              <nav className="flex flex-col space-y-4">
+                <Link 
+                  to="/" 
+                  className={getLinkClasses()}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Home
+                </Link>
+                <Link 
+                  to="/about" 
+                  className={getLinkClasses()}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  About
+                </Link>
+                <Link 
+                  to="/blogs" 
+                  className={getLinkClasses()}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Blogs
+                </Link>
+                <Link 
+                  to="/contact" 
+                  className={getLinkClasses()}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Contact
+                </Link>
+                <Link 
+                  to="/game" 
+                  className={getLinkClasses()}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Game
+                </Link>
+                
+                <div className="pt-4 border-t border-gray-200">
+                  {isAdmin ? (
+                    <Button 
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }} 
+                      className="w-full solar-button-outline border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                    >
+                      Logout
+                    </Button>
+                  ) : !user ? (
+                    <div className="flex flex-col space-y-3">
+                      <Link to="/customer/login">
+                        <Button 
+                          className="w-full solar-button-outline"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          Customer Login
+                        </Button>
+                      </Link>
+                      <Link to="/vendor/login">
+                        <Button 
+                          className="w-full solar-button"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          Vendor Login
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <Button 
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }} 
+                      className="w-full solar-button-outline border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                    >
+                      Logout
+                    </Button>
+                  )}
+                </div>
+              </nav>
+            </div>
+          )}
+        </div>
+      </header>
+    </>
   );
 };
 

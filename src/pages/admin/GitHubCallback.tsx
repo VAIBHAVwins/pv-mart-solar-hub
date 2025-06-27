@@ -13,6 +13,8 @@ export default function AdminGitHubCallback() {
       const code = params.get('code');
       const state = params.get('state');
       const storedState = localStorage.getItem('github_oauth_state');
+      // Security: Remove OAuth state from storage after use
+      localStorage.removeItem('github_oauth_state');
       if (!code || !state || state !== storedState) {
         alert('OAuth state mismatch or missing code.');
         navigate('/admin');
@@ -34,7 +36,8 @@ export default function AdminGitHubCallback() {
           navigate('/admin');
         }
       } catch (err) {
-        alert('OAuth error: ' + err);
+        // Security: Do not expose error details
+        alert('OAuth error. Please try again.');
         navigate('/admin');
       }
     }

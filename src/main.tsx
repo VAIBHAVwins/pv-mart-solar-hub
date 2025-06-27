@@ -4,9 +4,9 @@ import './index.css'
 import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from './contexts/AuthContext'
 
-// ENHANCED BY CURSOR AI: Added ThemeProvider for dark/light/system mode
+// ENHANCED BY CURSOR AI: Force light mode only
 createRoot(document.getElementById("root")!).render(
-  <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} forcedTheme="light">
     <AuthProvider>
       <App />
     </AuthProvider>
