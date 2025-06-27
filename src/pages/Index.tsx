@@ -171,7 +171,7 @@ export default function Home() {
           
           <div className="grid-responsive">
             {features.map((feature, index) => (
-              <div key={index} className="feature-card">
+              <div key={index} className="feature-card group">
                 <div className="feature-icon">
                   {feature.icon}
                 </div>

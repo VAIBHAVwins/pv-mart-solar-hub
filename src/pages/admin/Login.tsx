@@ -82,8 +82,7 @@ export default function AdminLogin() {
             </Button>
           </form>
           <div className="mt-6 text-center text-sm text-gray-500">
-            Demo credentials: admin@pvmart.com / admin123<br/>
-            Or: ecogrid.ai@gmail.com / ECOGRID_AI-28/02/2025
+            Demo credentials: admin@pvmart.com / admin123
           </div>
         </div>
       </div>

@@ -161,7 +161,7 @@
   
   /* Enhanced Cards */
   .feature-card {
-    @apply solar-card text-center group;
+    @apply solar-card text-center;
   }
   
   .feature-card:hover {
