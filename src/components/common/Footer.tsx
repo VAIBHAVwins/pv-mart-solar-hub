@@ -26,11 +26,11 @@ const Footer = () => {
 
   return (
     <footer className={`${getThemeClasses()} py-8 mt-auto`}>
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="container mx-auto px-4 text-center">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 justify-center items-center">
           {/* Company Info */}
           <div>
-            <h3 className="text-xl font-bold mb-3">PV_MART</h3>
+            <h3 className="text-xl font-bold mb-3">PV MART</h3>
             <p className="text-sm opacity-80">
               Your trusted platform for solar energy solutions. Connecting customers with verified solar vendors.
             </p>
@@ -44,6 +44,17 @@ const Footer = () => {
               <li><Link to="/about" className={`${getLinkClasses()} transition-colors`}>About Us</Link></li>
               <li><Link to="/blogs" className={`${getLinkClasses()} transition-colors`}>Blogs</Link></li>
               <li><Link to="/contact" className={`${getLinkClasses()} transition-colors`}>Contact</Link></li>
+              {/* Camouflaged Admin Login Link */}
+              <li>
+                <Link
+                  to="/admin/login"
+                  className={`transition-opacity opacity-10 hover:opacity-80 focus:opacity-80 cursor-pointer ${getLinkClasses()}`}
+                  tabIndex={0}
+                  aria-label="Admin Login"
+                >
+                  Admin Login
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -68,7 +79,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-opacity-20 mt-6 pt-6 text-center text-sm opacity-80">
-          <p>&copy; 2024 <span className="font-bold">PV_MART</span>. All rights reserved.</p>
+          <p>&copy; 2024 <span className="font-bold">PV MART</span>. All rights reserved.</p>
           <p className="mt-2">
             <span className="font-semibold">Contact:</span> 8986985927 | info@pvmart.com | 
             xyz building, solpur, kolkata, west bengal - 700112

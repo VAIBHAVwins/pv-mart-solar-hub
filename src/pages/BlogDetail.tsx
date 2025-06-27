@@ -1,4 +1,3 @@
-
 import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 
@@ -34,7 +33,7 @@ export default function BlogDetail() {
       image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&h=400&fit=crop",
       date: "2024-01-15",
       category: "Technology",
-      author: "PV_MART Team"
+      author: "PV MART Team"
     }
   };
 
