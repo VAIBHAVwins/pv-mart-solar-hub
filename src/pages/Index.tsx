@@ -207,15 +207,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-      {/* Camouflaged Admin Login Link in Footer */}
-      <div className="text-center mt-8 mb-4 select-none">
-        <Link to="/admin/login" style={{ textDecoration: 'none', color: 'inherit' }} tabIndex={-1} aria-label="Admin Login">
-          <span className="text-lg font-bold tracking-wide cursor-pointer hover:opacity-80" style={{ opacity: 0.5 }}>
-            PV_MART<br />
-            <span className="text-base font-normal">Your trusted platform for solar energy solutions. Connecting customers with verified solar vendors.</span>
-          </span>
-        </Link>
-      </div>
       <Footer />
     </Layout>
   );
