@@ -1,3 +1,4 @@
+
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
@@ -22,6 +23,10 @@ export default function CustomerDashboard() {
     window.open('https://docs.google.com/forms/d/e/1FAIpQLSdbuVmhwpsO4LYaUv4v9TDKPL_FxPBNAOquU6SLUhnf72NuWQ/viewform?usp=header', '_blank');
   };
 
+  const handleSupabaseRequirementClick = () => {
+    navigate('/customer/supabase-requirement');
+  };
+
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-[#fecb00] to-[#f8b200] py-16 px-4">
@@ -33,10 +38,15 @@ export default function CustomerDashboard() {
               <span className="inline-block bg-[#fecb00] text-[#190a02] px-4 py-2 rounded-full font-semibold shadow">Customer Account</span>
             </div>
             
-            <div className="mb-8">
-              <button onClick={handleRequirementClick} className="bg-[#fecb00] p-6 rounded-xl hover:bg-[#f8b200] transition-colors cursor-pointer max-w-md mx-auto w-full">
-                <h3 className="text-xl font-bold text-[#190a02] mb-2">Submit Requirement</h3>
-                <p className="text-[#8b4a08]">Fill out your solar installation requirements</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <button onClick={handleRequirementClick} className="bg-[#fecb00] p-6 rounded-xl hover:bg-[#f8b200] transition-colors cursor-pointer">
+                <h3 className="text-xl font-bold text-[#190a02] mb-2">Google Form Requirement</h3>
+                <p className="text-[#8b4a08]">Fill out requirements using Google Forms</p>
+              </button>
+              
+              <button onClick={handleSupabaseRequirementClick} className="bg-[#8b4a08] p-6 rounded-xl hover:bg-[#3d1604] transition-colors cursor-pointer">
+                <h3 className="text-xl font-bold text-white mb-2">Supabase Customer Requirement Form</h3>
+                <p className="text-[#fecb00]">Submit detailed requirements for better matching</p>
               </button>
             </div>
             
@@ -54,4 +64,4 @@ export default function CustomerDashboard() {
       </div>
     </Layout>
   );
-} 
+}

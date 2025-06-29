@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Home from './pages/Index';
@@ -12,7 +13,9 @@ import CustomerDashboard from './pages/customer/Dashboard';
 import VendorDashboard from './pages/vendor/Dashboard';
 import CustomerRequirements from './pages/customer/Requirements';
 import RequirementForm from './pages/customer/RequirementForm';
+import SupabaseRequirementForm from './pages/customer/SupabaseRequirementForm';
 import VendorQuotationSubmission from './pages/vendor/QuotationSubmission';
+import SupabaseQuotationForm from './pages/vendor/SupabaseQuotationForm';
 import VendorQuotationList from './pages/vendor/QuotationList';
 import AdminLogin from './pages/admin/Login';
 import AdminPanel from './pages/admin/Dashboard';
@@ -45,7 +48,9 @@ export default function App() {
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
           <Route path="/customer/requirements" element={<CustomerRequirements />} />
           <Route path="/customer/quote-request" element={<RequirementForm />} />
+          <Route path="/customer/supabase-requirement" element={<SupabaseRequirementForm />} />
           <Route path="/vendor/quotation-submission" element={<VendorQuotationSubmission />} />
+          <Route path="/vendor/supabase-quotation" element={<SupabaseQuotationForm />} />
           <Route path="/vendor/quotation-list" element={<VendorQuotationList />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminPanel />} />

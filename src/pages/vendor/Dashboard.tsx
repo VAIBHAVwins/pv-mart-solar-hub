@@ -1,3 +1,4 @@
+
 // ENHANCED BY CURSOR AI: Vendor Dashboard with proper navigation
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,10 @@ export default function VendorDashboard() {
     window.open('https://docs.google.com/forms/d/e/1FAIpQLSdjkFe1q934yAptp69UlOghFzFwrYrk7IQpOI101axO3M4WXQ/viewform?usp=header', '_blank');
   };
 
+  const handleSupabaseQuotationClick = () => {
+    navigate('/vendor/supabase-quotation');
+  };
+
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-[#797a83] to-[#4f4f56] py-16 px-4">
@@ -34,10 +39,15 @@ export default function VendorDashboard() {
               <span className="inline-block bg-[#b07e66] text-[#f7f7f6] px-4 py-2 rounded-full font-semibold shadow">Vendor Account</span>
             </div>
             
-            <div className="mb-8">
-              <button onClick={handleQuotationClick} className="bg-[#b07e66] p-6 rounded-xl hover:bg-[#797a83] transition-colors cursor-pointer max-w-md mx-auto w-full">
-                <h3 className="text-xl font-bold text-[#f7f7f6] mb-2">Submit Quotation</h3>
-                <p className="text-[#f7f7f6] opacity-90">Submit quotations for customer requirements</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <button onClick={handleQuotationClick} className="bg-[#b07e66] p-6 rounded-xl hover:bg-[#797a83] transition-colors cursor-pointer">
+                <h3 className="text-xl font-bold text-[#f7f7f6] mb-2">Google Form Quotation</h3>
+                <p className="text-[#f7f7f6] opacity-90">Submit quotations using Google Forms</p>
+              </button>
+              
+              <button onClick={handleSupabaseQuotationClick} className="bg-[#797a83] p-6 rounded-xl hover:bg-[#4f4f56] transition-colors cursor-pointer">
+                <h3 className="text-xl font-bold text-[#f7f7f6] mb-2">Supabase Vendor Quotation</h3>
+                <p className="text-[#f7f7f6] opacity-90">Submit detailed quotations with components</p>
               </button>
             </div>
             
@@ -55,4 +65,4 @@ export default function VendorDashboard() {
       </div>
     </Layout>
   );
-} 
+}
