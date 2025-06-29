@@ -49,13 +49,13 @@ export default function SupabaseRequirementForm() {
     try {
       const { error } = await supabase
         .from('customer_requirements')
-        .insert({
+        .insert([{
           customer_id: user.uid,
           customer_name: formData.customer_name,
           customer_email: user.email!,
           customer_phone: formData.customer_phone,
-          installation_type: formData.installation_type,
-          system_type: formData.system_type,
+          installation_type: formData.installation_type as any,
+          system_type: formData.system_type as any,
           property_type: formData.property_type,
           roof_type: formData.roof_type,
           address: formData.address,
@@ -66,7 +66,7 @@ export default function SupabaseRequirementForm() {
           timeline: formData.timeline,
           budget_range: formData.budget_range,
           additional_requirements: formData.additional_requirements
-        });
+        }]);
 
       if (error) throw error;
 

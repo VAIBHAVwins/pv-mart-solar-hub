@@ -96,18 +96,18 @@ export default function SupabaseQuotationForm() {
       // Insert quotation
       const { data: quotation, error: quotationError } = await supabase
         .from('vendor_quotations')
-        .insert({
+        .insert([{
           vendor_id: user.uid,
           vendor_name: formData.vendor_name,
           vendor_email: user.email!,
           vendor_phone: formData.vendor_phone,
-          installation_type: formData.installation_type,
-          system_type: formData.system_type,
+          installation_type: formData.installation_type as any,
+          system_type: formData.system_type as any,
           total_price: calculateTotalPrice(),
           installation_charge: parseFloat(formData.installation_charge) || null,
           warranty_years: parseInt(formData.warranty_years) || null,
           description: formData.description
-        })
+        }])
         .select()
         .single();
 
@@ -116,7 +116,7 @@ export default function SupabaseQuotationForm() {
       // Insert components
       const componentInserts = components.map(comp => ({
         quotation_id: quotation.id,
-        component_type: comp.component_type,
+        component_type: comp.component_type as any,
         brand: comp.brand,
         model: comp.model,
         specifications: comp.specifications,
