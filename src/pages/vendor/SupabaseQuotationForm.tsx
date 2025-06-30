@@ -7,8 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useVendorQuotationForm } from '@/hooks/useVendorQuotationForm';
 import { VendorInfoSection } from '@/components/vendor/VendorInfoSection';
 import { ComponentsSection } from '@/components/vendor/ComponentsSection';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { SupabaseAuthForm } from '@/components/auth/SupabaseAuthForm';
 
 export default function SupabaseQuotationForm() {
+  const { user } = useSupabaseAuth();
   const {
     formData,
     setFormData,
@@ -21,6 +24,22 @@ export default function SupabaseQuotationForm() {
     loading
   } = useVendorQuotationForm();
 
+  if (!user) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-gradient-to-br from-[#797a83] to-[#4f4f56] py-8 px-4">
+          <div className="container mx-auto max-w-md">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold text-white mb-2">Authentication Required</h1>
+              <p className="text-gray-300">Please log in to submit a quotation</p>
+            </div>
+            <SupabaseAuthForm />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-[#797a83] to-[#4f4f56] py-8 px-4">
@@ -28,8 +47,9 @@ export default function SupabaseQuotationForm() {
           <Card className="bg-[#f7f7f6] shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl font-bold text-[#797a83] text-center">
-                Supabase Vendor Quotation Form
+                Vendor Quotation Form
               </CardTitle>
+              <p className="text-center text-gray-600">Logged in as: {user.email}</p>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">

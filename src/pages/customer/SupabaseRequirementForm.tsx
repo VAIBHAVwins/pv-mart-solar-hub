@@ -8,9 +8,28 @@ import { SystemRequirementsSection } from '@/components/customer/SystemRequireme
 import { PropertyInfoSection } from '@/components/customer/PropertyInfoSection';
 import { AddressSection } from '@/components/customer/AddressSection';
 import { AdditionalInfoSection } from '@/components/customer/AdditionalInfoSection';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { SupabaseAuthForm } from '@/components/auth/SupabaseAuthForm';
 
 export default function SupabaseRequirementForm() {
+  const { user } = useSupabaseAuth();
   const { formData, setFormData, loading, handleSubmit } = useCustomerRequirementForm();
+
+  if (!user) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-gradient-to-br from-[#fecb00] to-[#f8b200] py-8 px-4">
+          <div className="container mx-auto max-w-md">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold text-[#8b4a08] mb-2">Authentication Required</h1>
+              <p className="text-[#8b4a08]">Please log in to submit a requirement</p>
+            </div>
+            <SupabaseAuthForm />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -19,8 +38,9 @@ export default function SupabaseRequirementForm() {
           <Card className="bg-white shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl font-bold text-[#8b4a08] text-center">
-                Supabase Customer Requirement Form
+                Customer Requirement Form
               </CardTitle>
+              <p className="text-center text-gray-600">Logged in as: {user.email}</p>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">

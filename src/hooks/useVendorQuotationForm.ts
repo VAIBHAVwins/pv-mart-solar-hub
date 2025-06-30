@@ -1,12 +1,12 @@
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Component, VendorQuotationFormData } from '@/types/vendorQuotation';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 export const useVendorQuotationForm = () => {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   
@@ -84,16 +84,48 @@ export const useVendorQuotationForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to submit a quotation",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate required fields
+    if (!formData.vendor_name || !formData.installation_type || !formData.system_type) {
+      toast({
+        title: "Missing Required Fields",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate components
+    const validComponents = components.filter(comp => comp.brand && comp.component_type);
+    if (validComponents.length === 0) {
+      toast({
+        title: "No Valid Components",
+        description: "Please add at least one component with brand and type",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setLoading(true);
     
     try {
+      console.log('Submitting quotation with user:', user.id);
+      console.log('Form data:', formData);
+      
       // Insert quotation
       const { data: quotation, error: quotationError } = await supabase
         .from('vendor_quotations')
         .insert([{
-          vendor_id: user.uid,
+          vendor_id: user.id,
           vendor_name: formData.vendor_name,
           vendor_email: user.email!,
           vendor_phone: formData.vendor_phone,
@@ -107,27 +139,35 @@ export const useVendorQuotationForm = () => {
         .select()
         .single();
 
-      if (quotationError) throw quotationError;
+      if (quotationError) {
+        console.error('Quotation error:', quotationError);
+        throw quotationError;
+      }
+
+      console.log('Quotation created:', quotation);
 
       // Insert components
-      const componentInserts = components.map(comp => ({
+      const componentInserts = validComponents.map(comp => ({
         quotation_id: quotation.id,
         component_type: comp.component_type as any,
         brand: comp.brand,
-        model: comp.model,
-        specifications: comp.specifications,
+        model: comp.model || null,
+        specifications: comp.specifications || null,
         quantity: comp.quantity,
         unit_price: comp.unit_price,
         total_price: comp.unit_price * comp.quantity,
-        included_length_meters: comp.included_length_meters,
-        warranty_years: comp.warranty_years
+        included_length_meters: comp.included_length_meters || null,
+        warranty_years: comp.warranty_years || null
       }));
 
       const { error: componentsError } = await supabase
         .from('quotation_components')
         .insert(componentInserts);
 
-      if (componentsError) throw componentsError;
+      if (componentsError) {
+        console.error('Components error:', componentsError);
+        throw componentsError;
+      }
 
       toast({
         title: "Success!",
@@ -137,6 +177,7 @@ export const useVendorQuotationForm = () => {
       resetForm();
 
     } catch (error: any) {
+      console.error('Full error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to submit quotation",

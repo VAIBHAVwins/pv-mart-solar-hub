@@ -1,6 +1,7 @@
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext';
 import Home from './pages/Index';
 import About from './pages/About';
 import Contact from './pages/Contact';
@@ -29,36 +30,38 @@ import AdminGitHubCallback from './pages/admin/GitHubCallback';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/installation-type" element={<InstallationType />} />
-          <Route path="/grid-connectivity" element={<GridConnectivity />} />
-          <Route path="/blogs" element={<Blogs />} />
-          <Route path="/blog/:id" element={<BlogDetail />} />
-          <Route path="/customer/register" element={<CustomerRegister />} />
-          <Route path="/vendor/register" element={<VendorRegister />} />
-          <Route path="/customer/login" element={<CustomerLogin />} />
-          <Route path="/vendor/login" element={<VendorLogin />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/customer/dashboard" element={<CustomerDashboard />} />
-          <Route path="/vendor/dashboard" element={<VendorDashboard />} />
-          <Route path="/customer/requirements" element={<CustomerRequirements />} />
-          <Route path="/customer/quote-request" element={<RequirementForm />} />
-          <Route path="/customer/supabase-requirement" element={<SupabaseRequirementForm />} />
-          <Route path="/vendor/quotation-submission" element={<VendorQuotationSubmission />} />
-          <Route path="/vendor/supabase-quotation" element={<SupabaseQuotationForm />} />
-          <Route path="/vendor/quotation-list" element={<VendorQuotationList />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/admin/github-callback" element={<AdminGitHubCallback />} />
-          <Route path="/game" element={<Game />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+    <SupabaseAuthProvider>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/installation-type" element={<InstallationType />} />
+            <Route path="/grid-connectivity" element={<GridConnectivity />} />
+            <Route path="/blogs" element={<Blogs />} />
+            <Route path="/blog/:id" element={<BlogDetail />} />
+            <Route path="/customer/register" element={<CustomerRegister />} />
+            <Route path="/vendor/register" element={<VendorRegister />} />
+            <Route path="/customer/login" element={<CustomerLogin />} />
+            <Route path="/vendor/login" element={<VendorLogin />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/customer/dashboard" element={<CustomerDashboard />} />
+            <Route path="/vendor/dashboard" element={<VendorDashboard />} />
+            <Route path="/customer/requirements" element={<CustomerRequirements />} />
+            <Route path="/customer/quote-request" element={<RequirementForm />} />
+            <Route path="/customer/supabase-requirement" element={<SupabaseRequirementForm />} />
+            <Route path="/vendor/quotation-submission" element={<VendorQuotationSubmission />} />
+            <Route path="/vendor/supabase-quotation" element={<SupabaseQuotationForm />} />
+            <Route path="/vendor/quotation-list" element={<VendorQuotationList />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/admin/github-callback" element={<AdminGitHubCallback />} />
+            <Route path="/game" element={<Game />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </SupabaseAuthProvider>
   );
 }

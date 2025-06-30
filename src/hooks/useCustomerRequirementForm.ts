@@ -1,9 +1,9 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerRequirementFormData } from '@/types/customerRequirement';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 const initialFormData: CustomerRequirementFormData = {
   customer_name: '',
@@ -23,22 +23,45 @@ const initialFormData: CustomerRequirementFormData = {
 };
 
 export const useCustomerRequirementForm = () => {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CustomerRequirementFormData>(initialFormData);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to submit a requirement",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate required fields
+    if (!formData.customer_name || !formData.installation_type || !formData.system_type || 
+        !formData.property_type || !formData.roof_type || !formData.address || 
+        !formData.city || !formData.state || !formData.pincode) {
+      toast({
+        title: "Missing Required Fields",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setLoading(true);
     
     try {
+      console.log('Submitting requirement with user:', user.id);
+      console.log('Form data:', formData);
+      
       const { error } = await supabase
         .from('customer_requirements')
         .insert([{
-          customer_id: user.uid,
+          customer_id: user.id,
           customer_name: formData.customer_name,
           customer_email: user.email!,
           customer_phone: formData.customer_phone,
@@ -56,7 +79,10 @@ export const useCustomerRequirementForm = () => {
           additional_requirements: formData.additional_requirements
         }]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Requirement error:', error);
+        throw error;
+      }
 
       toast({
         title: "Success!",
@@ -66,6 +92,7 @@ export const useCustomerRequirementForm = () => {
       setFormData(initialFormData);
 
     } catch (error: any) {
+      console.error('Full error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to submit requirement",
