@@ -1,14 +1,13 @@
-
 // ENHANCED BY CURSOR AI: Vendor Dashboard with proper navigation
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 // CURSOR AI: Modern, professional Vendor Dashboard redesign with vendor color palette and UI patterns
 export default function VendorDashboard() {
-  const { user, logout, loading } = useAuth();
+  const { user, signOut, loading } = useSupabaseAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -53,7 +52,7 @@ export default function VendorDashboard() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
-                onClick={logout}
+                onClick={signOut}
                 className="bg-[#797a83] text-white px-6 py-2 rounded-lg font-bold hover:bg-[#4f4f56] transition shadow-md"
               >
                 Logout

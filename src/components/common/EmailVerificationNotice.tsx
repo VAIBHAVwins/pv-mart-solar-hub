@@ -1,8 +1,6 @@
 // ENHANCED BY CURSOR AI: Reusable email verification notice component
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { sendEmailVerification } from 'firebase/auth';
-import { auth } from '@/firebase';
 
 export default function EmailVerificationNotice({ user }: { user: any }) {
   const [sent, setSent] = useState(false);
@@ -13,8 +11,7 @@ export default function EmailVerificationNotice({ user }: { user: any }) {
     setError('');
     setLoading(true);
     try {
-      await sendEmailVerification(user);
-      setSent(true);
+      // Placeholder for the removed sendEmailVerification function
     } catch (err: any) {
       setError(err.message || 'Failed to send verification email.');
     } finally {

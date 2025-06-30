@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
-import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '@/firebase';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function VendorForgotPassword() {
   const [email, setEmail] = useState('');
@@ -19,7 +18,8 @@ export default function VendorForgotPassword() {
     setSuccess('');
     setLoading(true);
     try {
-      await sendPasswordResetEmail(auth, email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw error;
       setSuccess('Password reset email sent! Please check your inbox.');
     } catch (err: any) {
       setError(err.message || 'Failed to send password reset email.');

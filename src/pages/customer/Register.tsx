@@ -1,10 +1,9 @@
-
 import { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function CustomerRegister() {
-  const { register } = useAuth();
+  const { signUp } = useSupabaseAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ 
     name: '', 
@@ -45,7 +44,7 @@ export default function CustomerRegister() {
     }
     setLoading(true);
     try {
-      await register(form.name, form.email, form.password);
+      await signUp(form.name, form.email, form.password);
       navigate('/customer/dashboard');
     } catch (err: any) {
       setError(err.message || 'Registration failed');

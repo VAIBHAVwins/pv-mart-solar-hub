@@ -1,9 +1,9 @@
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthContext } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 export default function CustomerRequirementForm({ onClose }: { onClose: () => void }) {
-  const { user } = useContext(AuthContext);
+  const { user } = useSupabaseAuth();
   const [form, setForm] = useState({
     system_type: '',
     capacity_kw: '',
@@ -39,10 +39,10 @@ export default function CustomerRequirementForm({ onClose }: { onClose: () => vo
     setMatches([]);
     setVerifying(false);
     try {
-      // Insert requirement with Firebase UID/email
+      // Insert requirement with Supabase user id/email
       const { data, error } = await supabase.from('customer_requirements').insert([
         {
-          customer_id: user.uid || user.email,
+          customer_id: user?.id || user?.email,
           system_type: form.system_type,
           capacity_kw: Number(form.capacity_kw),
           preferred_panel_brand: form.preferred_panel_brand,

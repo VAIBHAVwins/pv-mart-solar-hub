@@ -1,13 +1,12 @@
 // ENHANCED BY CURSOR AI: Customer messaging page (send/receive messages)
 import { useState, useEffect } from 'react';
-import { db } from '@/firebase';
-import { collection, addDoc, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function CustomerMessages() {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const [messages, setMessages] = useState<any[]>([]);
   const [newMsg, setNewMsg] = useState('');
   const [loading, setLoading] = useState(true);
@@ -17,9 +16,13 @@ export default function CustomerMessages() {
     async function fetchMessages() {
       setLoading(true);
       try {
-        const q = query(collection(db, 'messages'), where('to', '==', user?.uid), orderBy('createdAt', 'desc'));
-        const snap = await getDocs(q);
-        setMessages(snap.docs.map(doc => doc.data()));
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('to', user?.id)
+          .order('createdAt', { ascending: false });
+        if (error) throw error;
+        setMessages(data || []);
       } catch (err: any) {
         setError(err.message || 'Failed to load messages.');
       } finally {
@@ -33,13 +36,16 @@ export default function CustomerMessages() {
     if (!newMsg) return;
     setError('');
     try {
-      await addDoc(collection(db, 'messages'), {
-        from: user?.uid,
-        fromEmail: user?.email,
-        to: 'admin', // CURSOR AI: For demo, send to admin
-        message: newMsg,
-        createdAt: Timestamp.now(),
-      });
+      const { error } = await supabase.from('messages').insert([
+        {
+          from: user?.id,
+          fromEmail: user?.email,
+          to: 'admin',
+          message: newMsg,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+      if (error) throw error;
       setNewMsg('');
     } catch (err: any) {
       setError(err.message || 'Failed to send message.');

@@ -1,14 +1,13 @@
 // ENHANCED BY CURSOR AI: Vendor quote opportunities page (view/respond to quote requests)
 import Layout from '@/components/layout/Layout';
 import { useEffect, useState } from 'react';
-import { db } from '@/firebase';
-import { collection, getDocs, addDoc, Timestamp } from 'firebase/firestore';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 // CURSOR AI: Modern, professional Vendor Quotation List redesign with vendor color palette and UI patterns
 export default function QuotationList() {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [response, setResponse] = useState<{ [key: string]: string }>({});
@@ -19,8 +18,9 @@ export default function QuotationList() {
     async function fetchRequests() {
       setLoading(true);
       try {
-        const snap = await getDocs(collection(db, 'quoteRequests'));
-        setRequests(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const { data, error } = await supabase.from('quote_requests').select('*');
+        if (error) throw error;
+        setRequests(data || []);
       } catch (err: any) {
         setError(err.message || 'Failed to load quote requests.');
       } finally {
@@ -38,13 +38,16 @@ export default function QuotationList() {
     setError('');
     setSuccess('');
     try {
-      await addDoc(collection(db, 'quoteResponses'), {
-        requestId: req.id,
-        vendorId: user?.uid,
-        vendorEmail: user?.email,
-        response: response[req.id],
-        createdAt: Timestamp.now(),
-      });
+      const { error } = await supabase.from('quote_responses').insert([
+        {
+          requestId: req.id,
+          vendorId: user?.id,
+          vendorEmail: user?.email,
+          response: response[req.id],
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+      if (error) throw error;
       setSuccess('Response sent!');
       setResponse(prev => ({ ...prev, [req.id]: '' }));
     } catch (err: any) {

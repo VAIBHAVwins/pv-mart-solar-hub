@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';
 
-// ENHANCED BY CURSOR AI: Customer login page using Firebase Auth
+// ENHANCED BY CURSOR AI: Customer login page using Supabase Auth
 export default function Login() {
-  const { login } = useAuth();
+  const { signIn } = useSupabaseAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -19,7 +19,7 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      await login(form.email, form.password);
+      await signIn(form.email, form.password);
       navigate('/customer/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed');

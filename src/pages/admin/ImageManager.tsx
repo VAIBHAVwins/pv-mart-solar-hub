@@ -1,12 +1,8 @@
 // ENHANCED BY CURSOR AI: Admin image management page (upload/list/delete images)
 import { useState, useEffect } from 'react';
-import { db } from '@/firebase';
-import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
-
-const storage = getStorage();
 
 export default function ImageManager() {
   const [images, setImages] = useState<any[]>([]);
@@ -19,8 +15,9 @@ export default function ImageManager() {
     async function fetchImages() {
       setLoading(true);
       try {
-        const snap = await getDocs(collection(db, 'images'));
-        setImages(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const { data, error } = await supabase.from('images').select('*');
+        if (error) throw error;
+        setImages(data || []);
       } catch (err: any) {
         setError(err.message || 'Failed to load images.');
       } finally {
@@ -36,10 +33,14 @@ export default function ImageManager() {
     setSuccess('');
     setLoading(true);
     try {
-      const storageRef = ref(storage, `siteImages/${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      await addDoc(collection(db, 'images'), { url, name: file.name, uploadedAt: new Date().toISOString() });
+      const { data, error: uploadError } = await supabase.storage.from('siteImages').upload(file.name, file);
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from('siteImages').getPublicUrl(file.name);
+      const url = urlData.publicUrl;
+      const { error: dbError } = await supabase.from('images').insert([
+        { url, name: file.name, uploadedAt: new Date().toISOString() },
+      ]);
+      if (dbError) throw dbError;
       setFile(null);
       setSuccess('Image uploaded!');
     } catch (err: any) {
@@ -54,9 +55,10 @@ export default function ImageManager() {
     setSuccess('');
     setLoading(true);
     try {
-      const storageRef = ref(storage, `siteImages/${img.name}`);
-      await deleteObject(storageRef);
-      await deleteDoc(doc(db, 'images', img.id));
+      const { error: storageError } = await supabase.storage.from('siteImages').remove([img.name]);
+      if (storageError) throw storageError;
+      const { error: dbError } = await supabase.from('images').delete().eq('id', img.id);
+      if (dbError) throw dbError;
       setSuccess('Image deleted!');
     } catch (err: any) {
       setError(err.message || 'Failed to delete image.');

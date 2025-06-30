@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import TopBar from './TopBar';
 import Logo from './Logo';
 import Navigation from './Navigation';
@@ -13,7 +12,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useSupabaseAuth();
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -48,7 +47,7 @@ const Header = () => {
       setIsAdmin(false);
       navigate('/admin/login');
     } else {
-      await logout();
+      await signOut();
       navigate('/');
     }
   };

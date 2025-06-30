@@ -1,7 +1,6 @@
 // ENHANCED BY CURSOR AI: Admin blog manager (create/edit/delete posts)
 import { useState, useEffect } from 'react';
-import { db } from '@/firebase';
-import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 
@@ -17,8 +16,9 @@ export default function BlogManager() {
     async function fetchPosts() {
       setLoading(true);
       try {
-        const snap = await getDocs(collection(db, 'blogPosts'));
-        setPosts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const { data, error } = await supabase.from('blog_posts').select('*');
+        if (error) throw error;
+        setPosts(data || []);
       } catch (err: any) {
         setError(err.message || 'Failed to load posts.');
       } finally {
@@ -33,7 +33,10 @@ export default function BlogManager() {
     setSuccess('');
     setLoading(true);
     try {
-      await addDoc(collection(db, 'blogPosts'), { title, content, createdAt: new Date().toISOString() });
+      const { error } = await supabase.from('blog_posts').insert([
+        { title, content, createdAt: new Date().toISOString() },
+      ]);
+      if (error) throw error;
       setTitle(''); setContent(''); setSuccess('Post created!');
     } catch (err: any) {
       setError(err.message || 'Failed to create post.');
@@ -47,7 +50,8 @@ export default function BlogManager() {
     setSuccess('');
     setLoading(true);
     try {
-      await deleteDoc(doc(db, 'blogPosts', id));
+      const { error } = await supabase.from('blog_posts').delete().eq('id', id);
+      if (error) throw error;
       setSuccess('Post deleted!');
     } catch (err: any) {
       setError(err.message || 'Failed to delete post.');

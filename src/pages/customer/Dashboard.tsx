@@ -1,13 +1,12 @@
-
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 // CURSOR AI: Modern, professional Customer Dashboard redesign with customer color palette and UI patterns
 export default function CustomerDashboard() {
-  const { user, logout, loading } = useAuth();
+  const { user, signOut, loading } = useSupabaseAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,7 +51,7 @@ export default function CustomerDashboard() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
-                onClick={logout}
+                onClick={signOut}
                 className="bg-[#8b4a08] text-white px-6 py-2 rounded-lg font-bold hover:bg-[#3d1604] transition shadow-md"
               >
                 Logout

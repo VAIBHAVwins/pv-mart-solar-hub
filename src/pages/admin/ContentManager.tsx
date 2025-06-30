@@ -1,7 +1,6 @@
 // ENHANCED BY CURSOR AI: Admin content management page (edit homepage/about/services)
 import { useState, useEffect } from 'react';
-import { db } from '@/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 
@@ -19,8 +18,9 @@ export default function ContentManager() {
     async function fetchContent() {
       setLoading(true);
       try {
-        const snap = await getDoc(doc(db, 'siteContent', 'main'));
-        if (snap.exists()) setContent(snap.data() as any);
+        const { data, error } = await supabase.from('site_content').select('*').eq('id', 'main').single();
+        if (error) throw error;
+        if (data) setContent(data);
       } catch (err: any) {
         setError(err.message || 'Failed to load content.');
       } finally {
@@ -39,7 +39,8 @@ export default function ContentManager() {
     setSuccess('');
     setLoading(true);
     try {
-      await setDoc(doc(db, 'siteContent', 'main'), content);
+      const { error } = await supabase.from('site_content').upsert({ id: 'main', ...content });
+      if (error) throw error;
       setSuccess('Content updated!');
     } catch (err: any) {
       setError(err.message || 'Failed to update content.');

@@ -4,12 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { auth, db } from '@/firebase';
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 // CURSOR AI: Modern, professional Vendor Registration redesign with vendor color palette and UI patterns
 const VendorRegister = () => {
+  const { signUp } = useSupabaseAuth();
   const [formData, setFormData] = useState({
     companyName: '',
     contactPerson: '',
@@ -59,21 +59,9 @@ const VendorRegister = () => {
     }
     setLoading(true);
     try {
-      const cred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      await setDoc(doc(db, 'vendors', cred.user.uid), {
-        uid: cred.user.uid,
-        companyName: formData.companyName,
-        contactPerson: formData.contactPerson,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        licenseNumber: formData.licenseNumber,
-        serviceAreas: formData.serviceAreas,
-        specializations: formData.specializations,
-        createdAt: new Date().toISOString(),
-        verified: false,
-      });
-      await sendEmailVerification(cred.user);
+      const { error: signUpError } = await signUp(formData.email, formData.password);
+      if (signUpError) throw signUpError;
+      // TODO: After registration, user must verify email and log in. Insert vendor data after login, or use session user id if available.
       setSuccess('Registration successful! Please check your email to verify your account.');
     } catch (err: any) {
       setError(err.message || 'Registration failed.');

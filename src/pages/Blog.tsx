@@ -1,7 +1,6 @@
 // ENHANCED BY CURSOR AI: Public blog listing page
 import { useState, useEffect } from 'react';
-import { db } from '@/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/layout/Layout';
 import { Link } from 'react-router-dom';
 
@@ -15,8 +14,9 @@ export default function Blog() {
     async function fetchPosts() {
       setLoading(true);
       try {
-        const snap = await getDocs(collection(db, 'blogPosts'));
-        setPosts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const { data, error } = await supabase.from('blog_posts').select('*');
+        if (error) throw error;
+        setPosts(data || []);
       } catch (err: any) {
         setError(err.message || 'Failed to load posts.');
       } finally {
