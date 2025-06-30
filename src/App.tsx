@@ -15,6 +15,8 @@ import VendorDashboard from './pages/vendor/Dashboard';
 import CustomerRequirements from './pages/customer/Requirements';
 import RequirementForm from './pages/customer/RequirementForm';
 import SupabaseRequirementForm from './pages/customer/SupabaseRequirementForm';
+import QuotationDetails from './pages/customer/QuotationDetails';
+import QuotationList from './pages/customer/QuotationList';
 import VendorQuotationSubmission from './pages/vendor/QuotationSubmission';
 import SupabaseQuotationForm from './pages/vendor/SupabaseQuotationForm';
 import VendorQuotationList from './pages/vendor/QuotationList';
@@ -51,6 +53,8 @@ export default function App() {
             <Route path="/customer/requirements" element={<CustomerRequirements />} />
             <Route path="/customer/quote-request" element={<RequirementForm />} />
             <Route path="/customer/supabase-requirement" element={<SupabaseRequirementForm />} />
+            <Route path="/customer/quotation/:id" element={<QuotationDetails />} />
+            <Route path="/customer/quotations" element={<QuotationList />} />
             <Route path="/vendor/quotation-submission" element={<VendorQuotationSubmission />} />
             <Route path="/vendor/supabase-quotation" element={<SupabaseQuotationForm />} />
             <Route path="/vendor/quotation-list" element={<VendorQuotationList />} />
