@@ -1,16 +1,15 @@
+
 // ENHANCED BY CURSOR AI: Vendor Dashboard with proper navigation
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import VendorQuotationForm from '@/components/vendor/VendorQuotationForm';
+import { useEffect } from 'react';
 
 // CURSOR AI: Modern, professional Vendor Dashboard redesign with vendor color palette and UI patterns
 export default function VendorDashboard() {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
-  const [showVendorForm, setShowVendorForm] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -51,13 +50,6 @@ export default function VendorDashboard() {
                 <p className="text-[#f7f7f6] opacity-90">Submit detailed quotations with components</p>
               </button>
             </div>
-            
-            <Button className="mb-4" onClick={() => setShowVendorForm(true)}>
-              SuperBase Vendor Quotation
-            </Button>
-            {showVendorForm && (
-              <VendorQuotationForm onClose={() => setShowVendorForm(false)} />
-            )}
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button

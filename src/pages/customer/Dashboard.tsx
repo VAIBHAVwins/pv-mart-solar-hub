@@ -1,15 +1,14 @@
+
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import CustomerRequirementForm from '@/components/customer/CustomerRequirementForm';
+import { useEffect } from 'react';
 
 // CURSOR AI: Modern, professional Customer Dashboard redesign with customer color palette and UI patterns
 export default function CustomerDashboard() {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
-  const [showCustomerForm, setShowCustomerForm] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -50,13 +49,6 @@ export default function CustomerDashboard() {
                 <p className="text-[#fecb00]">Submit detailed requirements for better matching</p>
               </button>
             </div>
-            
-            <Button className="mb-4" onClick={() => setShowCustomerForm(true)}>
-              SuperBase Consumer Requirement Form
-            </Button>
-            {showCustomerForm && (
-              <CustomerRequirementForm onClose={() => setShowCustomerForm(false)} />
-            )}
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
