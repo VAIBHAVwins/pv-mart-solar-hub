@@ -58,11 +58,11 @@ export default function Home() {
   }, [banners.length]);
 
   const nextBanner = () => {
-    setCurrentBanner((prev) => (prev + 1) % banners.length);
+    setCurrentBanner(prev => (prev + 1) % banners.length);
   };
 
   const prevBanner = () => {
-    setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length);
+    setCurrentBanner(prev => (prev - 1 + banners.length) % banners.length);
   };
 
   return (
