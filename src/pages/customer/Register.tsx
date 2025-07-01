@@ -1,9 +1,10 @@
+
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function CustomerRegister() {
-  const { signUp } = useAuth();
+  const { signUp } = useSupabaseAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ 
     name: '', 
@@ -44,11 +45,11 @@ export default function CustomerRegister() {
     }
     setLoading(true);
     try {
-      const { error } = await signUp(form.email, form.password, form.name);
+      const { error } = await signUp(form.email, form.password);
       if (error) {
         setError(error.message || 'Registration failed');
       } else {
-      navigate('/customer/dashboard');
+        navigate('/customer/dashboard');
       }
     } catch (err: any) {
       setError(err.message || 'Registration failed');

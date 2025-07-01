@@ -1,5 +1,6 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext';
 import Home from './pages/Index';
 import About from './pages/About';
 import Contact from './pages/Contact';
@@ -11,11 +12,9 @@ import Login from './pages/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
 import VendorDashboard from './pages/vendor/Dashboard';
 import CustomerRequirements from './pages/customer/Requirements';
-import RequirementForm from './pages/customer/RequirementForm';
 import SupabaseRequirementForm from './pages/customer/SupabaseRequirementForm';
 import QuotationDetails from './pages/customer/QuotationDetails';
 import QuotationList from './pages/customer/QuotationList';
-import VendorQuotationSubmission from './pages/vendor/QuotationSubmission';
 import SupabaseQuotationForm from './pages/vendor/SupabaseQuotationForm';
 import VendorQuotationList from './pages/vendor/QuotationList';
 import AdminLogin from './pages/admin/Login';
@@ -30,7 +29,7 @@ import AdminGitHubCallback from './pages/admin/GitHubCallback';
 
 export default function App() {
   return (
-    <AuthProvider>
+    <SupabaseAuthProvider>
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -48,11 +47,9 @@ export default function App() {
           <Route path="/customer/dashboard" element={<CustomerDashboard />} />
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
           <Route path="/customer/requirements" element={<CustomerRequirements />} />
-          <Route path="/customer/quote-request" element={<RequirementForm />} />
           <Route path="/customer/supabase-requirement" element={<SupabaseRequirementForm />} />
           <Route path="/customer/quotation/:id" element={<QuotationDetails />} />
           <Route path="/customer/quotations" element={<QuotationList />} />
-          <Route path="/vendor/quotation-submission" element={<VendorQuotationSubmission />} />
           <Route path="/vendor/supabase-quotation" element={<SupabaseQuotationForm />} />
           <Route path="/vendor/quotation-list" element={<VendorQuotationList />} />
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -62,6 +59,6 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
-    </AuthProvider>
+    </SupabaseAuthProvider>
   );
 }

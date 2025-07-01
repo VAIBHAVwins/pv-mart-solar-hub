@@ -1,12 +1,12 @@
+
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
-// CURSOR AI: Modern, professional Customer Dashboard redesign with customer color palette and UI patterns
 export default function CustomerDashboard() {
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut, loading } = useSupabaseAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,10 +19,6 @@ export default function CustomerDashboard() {
   if (!user) return null;
 
   const handleRequirementClick = () => {
-    window.open('https://docs.google.com/forms/d/e/1FAIpQLSdbuVmhwpsO4LYaUv4v9TDKPL_FxPBNAOquU6SLUhnf72NuWQ/viewform?usp=header', '_blank');
-  };
-
-  const handleSupabaseRequirementClick = () => {
     navigate('/customer/supabase-requirement');
   };
 
@@ -41,13 +37,13 @@ export default function CustomerDashboard() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <button onClick={handleRequirementClick} className="bg-[#fecb00] p-6 rounded-xl hover:bg-[#f8b200] transition-colors cursor-pointer">
-                <h3 className="text-xl font-bold text-[#190a02] mb-2">Google Form Requirement</h3>
-                <p className="text-[#8b4a08]">Fill out requirements using Google Forms</p>
+                <h3 className="text-xl font-bold text-[#190a02] mb-2">Submit Solar Requirement</h3>
+                <p className="text-[#8b4a08]">Submit detailed requirements for better matching</p>
               </button>
               
-              <button onClick={handleSupabaseRequirementClick} className="bg-[#8b4a08] p-6 rounded-xl hover:bg-[#3d1604] transition-colors cursor-pointer">
-                <h3 className="text-xl font-bold text-white mb-2">Supabase Customer Requirement Form</h3>
-                <p className="text-[#fecb00]">Submit detailed requirements for better matching</p>
+              <button onClick={() => navigate('/customer/quotations')} className="bg-[#8b4a08] p-6 rounded-xl hover:bg-[#3d1604] transition-colors cursor-pointer">
+                <h3 className="text-xl font-bold text-white mb-2">View Quotations</h3>
+                <p className="text-[#fecb00]">Check received quotations from vendors</p>
               </button>
             </div>
             
