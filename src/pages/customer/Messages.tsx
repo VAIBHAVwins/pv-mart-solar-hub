@@ -1,81 +1,33 @@
-// ENHANCED BY CURSOR AI: Customer messaging page (send/receive messages)
-import { useState, useEffect } from 'react';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+
+// ENHANCED BY CURSOR AI: Customer messaging page with static content display
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 
 export default function CustomerMessages() {
-  const { user } = useSupabaseAuth();
-  const [messages, setMessages] = useState<any[]>([]);
-  const [newMsg, setNewMsg] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    async function fetchMessages() {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('to', user?.id)
-          .order('createdAt', { ascending: false });
-        if (error) throw error;
-        setMessages(data || []);
-      } catch (err: any) {
-        setError(err.message || 'Failed to load messages.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (user) fetchMessages();
-  }, [user]);
-
-  const handleSend = async () => {
-    if (!newMsg) return;
-    setError('');
-    try {
-      const { error } = await supabase.from('messages').insert([
-        {
-          from: user?.id,
-          fromEmail: user?.email,
-          to: 'admin',
-          message: newMsg,
-          createdAt: new Date().toISOString(),
-        },
-      ]);
-      if (error) throw error;
-      setNewMsg('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to send message.');
-    }
-  };
-
   return (
     <Layout>
-      <div className="max-w-xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-12">
-        <h1 className="text-3xl font-bold mb-6 text-center text-[#444e59]">Messages</h1>
-        {loading && <div className="text-center">Loading...</div>}
-        {error && <div className="text-red-600 font-semibold text-center mb-4">{error}</div>}
-        <div className="space-y-4 mb-6">
-          {messages.map((msg, i) => (
-            <div key={i} className="border rounded p-2">
-              <div className="text-xs text-gray-500 mb-1">From: {msg.fromEmail || msg.from}</div>
-              <div>{msg.message}</div>
-            </div>
-          ))}
+      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-12">
+        <h1 className="text-3xl font-bold mb-6 text-center text-[#444e59]">Customer Messages</h1>
+        <div className="text-center text-gray-600 mb-6">
+          <p>Messaging functionality requires additional database setup.</p>
+          <p>This feature is currently unavailable but will be implemented with proper database schema.</p>
         </div>
-        <div className="flex gap-2">
-          <input
-            className="border rounded px-2 py-1 flex-1"
-            placeholder="Type a message..."
-            value={newMsg}
-            onChange={e => setNewMsg(e.target.value)}
-          />
-          <Button onClick={handleSend} className="bg-[#589bee] hover:bg-[#5279ac] text-white font-semibold">Send</Button>
+        <div className="border rounded p-4 bg-gray-50">
+          <h2 className="font-semibold mb-4">Messaging Features:</h2>
+          <ul className="space-y-2">
+            <li>• Send Messages to Vendors</li>
+            <li>• Receive Messages from Vendors</li>
+            <li>• Message History</li>
+            <li>• Message Notifications</li>
+            <li>• Support Chat</li>
+          </ul>
+        </div>
+        <div className="mt-6 text-center">
+          <Button disabled className="bg-gray-400 text-white">
+            Messaging System Coming Soon
+          </Button>
         </div>
       </div>
     </Layout>
   );
-} 
+}
