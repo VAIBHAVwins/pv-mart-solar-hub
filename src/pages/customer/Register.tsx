@@ -48,7 +48,7 @@ export default function CustomerRegister() {
       if (error) {
         setError(error.message || 'Registration failed');
       } else {
-        navigate('/customer/dashboard');
+      navigate('/customer/dashboard');
       }
     } catch (err: any) {
       setError(err.message || 'Registration failed');

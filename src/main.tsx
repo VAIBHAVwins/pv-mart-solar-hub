@@ -5,6 +5,6 @@ import { ThemeProvider } from 'next-themes'
 // ENHANCED BY CURSOR AI: Force light mode only
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} forcedTheme="light">
-    <App />
+      <App />
   </ThemeProvider>
 );
