@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerRequirementFormData } from '@/types/customerRequirement';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const initialFormData: CustomerRequirementFormData = {
   customer_name: '',
@@ -23,7 +22,7 @@ const initialFormData: CustomerRequirementFormData = {
 };
 
 export const useCustomerRequirementForm = () => {
-  const { user } = useSupabaseAuth();
+  const { user, authType } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CustomerRequirementFormData>(initialFormData);
@@ -55,15 +54,20 @@ export const useCustomerRequirementForm = () => {
     setLoading(true);
     
     try {
-      console.log('Submitting requirement with user:', user.id);
+      console.log('Submitting requirement with user:', user);
+      console.log('Auth type:', authType);
       console.log('Form data:', formData);
+      
+      // Use user ID or email based on auth type
+      const customerId = authType === 'firebase' ? user.uid : user.id;
+      const customerEmail = user.email;
       
       const { error } = await supabase
         .from('customer_requirements')
         .insert([{
-          customer_id: user.id,
+          customer_id: customerId,
           customer_name: formData.customer_name,
-          customer_email: user.email!,
+          customer_email: customerEmail,
           customer_phone: formData.customer_phone,
           installation_type: formData.installation_type as any,
           system_type: formData.system_type as any,

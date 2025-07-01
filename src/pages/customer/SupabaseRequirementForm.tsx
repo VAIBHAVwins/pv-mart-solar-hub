@@ -1,4 +1,3 @@
-
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,14 +7,17 @@ import { SystemRequirementsSection } from '@/components/customer/SystemRequireme
 import { PropertyInfoSection } from '@/components/customer/PropertyInfoSection';
 import { AddressSection } from '@/components/customer/AddressSection';
 import { AdditionalInfoSection } from '@/components/customer/AdditionalInfoSection';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { SupabaseAuthForm } from '@/components/auth/SupabaseAuthForm';
 
 export default function SupabaseRequirementForm() {
-  const { user } = useSupabaseAuth();
+  const { user, authType } = useAuth();
   const { formData, setFormData, loading, handleSubmit } = useCustomerRequirementForm();
 
-  if (!user) {
+  // Check if user is authenticated (either Firebase or Supabase)
+  const isAuthenticated = user && (authType === 'firebase' || authType === 'supabase');
+
+  if (!isAuthenticated) {
     return (
       <Layout>
         <div className="min-h-screen bg-gradient-to-br from-[#fecb00] to-[#f8b200] py-8 px-4">
@@ -40,7 +42,9 @@ export default function SupabaseRequirementForm() {
               <CardTitle className="text-2xl font-bold text-[#8b4a08] text-center">
                 Customer Requirement Form
               </CardTitle>
-              <p className="text-center text-gray-600">Logged in as: {user.email}</p>
+              <p className="text-center text-gray-600">
+                Logged in as: {user.email} ({authType === 'firebase' ? 'Firebase' : 'Supabase'})
+              </p>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">

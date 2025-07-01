@@ -39,9 +39,9 @@ export default function AdminMessages() {
       const { error } = await supabase.from('messages').insert([
         {
           from: user?.id,
-          fromEmail: user?.email,
-          to,
-          message: newMsg,
+        fromEmail: user?.email,
+        to,
+        message: newMsg,
           createdAt: new Date().toISOString(),
         },
       ]);

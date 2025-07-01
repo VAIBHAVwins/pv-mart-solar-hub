@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import Home from './pages/Index';
 import About from './pages/About';
 import Contact from './pages/Contact';
@@ -30,7 +30,7 @@ import AdminGitHubCallback from './pages/admin/GitHubCallback';
 
 export default function App() {
   return (
-    <SupabaseAuthProvider>
+    <AuthProvider>
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -62,6 +62,6 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
-    </SupabaseAuthProvider>
+    </AuthProvider>
   );
 }

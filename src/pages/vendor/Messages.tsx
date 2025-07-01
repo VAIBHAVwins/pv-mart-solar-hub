@@ -39,9 +39,9 @@ export default function VendorMessages() {
       const { error } = await supabase.from('messages').insert([
         {
           from: user?.id,
-          fromEmail: user?.email,
+        fromEmail: user?.email,
           to: 'admin',
-          message: newMsg,
+        message: newMsg,
           createdAt: new Date().toISOString(),
         },
       ]);

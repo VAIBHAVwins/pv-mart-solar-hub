@@ -4,14 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CustomerLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signIn } = useSupabaseAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,8 +20,13 @@ const CustomerLogin = () => {
     setError('');
 
     try {
-      await signIn(email, password);
-      navigate('/customer/dashboard');
+      const { error } = await signIn(email, password);
+      if (error) {
+        setError('Failed to login. Please check your credentials.');
+        console.error('Login error:', error);
+      } else {
+        navigate('/customer/dashboard');
+      }
     } catch (error) {
       setError('Failed to login. Please check your credentials.');
       console.error('Login error:', error);

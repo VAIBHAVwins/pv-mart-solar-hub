@@ -1,12 +1,12 @@
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 // CURSOR AI: Modern, professional Customer Dashboard redesign with customer color palette and UI patterns
 export default function CustomerDashboard() {
-  const { user, signOut, loading } = useSupabaseAuth();
+  const { user, signOut, loading, authType } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,7 +32,10 @@ export default function CustomerDashboard() {
         <div className="container mx-auto">
           <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-4xl mx-auto text-center animate-fade-in">
             <h1 className="text-4xl font-extrabold mb-4 text-[#8b4a08] drop-shadow">Customer Dashboard</h1>
-            <p className="mb-6 text-[#52796f] text-lg">Welcome, <span className="font-semibold text-[#3d1604]">{user.email}</span></p>
+            <p className="mb-6 text-[#52796f] text-lg">
+              Welcome, <span className="font-semibold text-[#3d1604]">{user.email}</span>
+              {authType && <span className="text-sm text-gray-500 ml-2">({authType})</span>}
+            </p>
             <div className="mb-8">
               <span className="inline-block bg-[#fecb00] text-[#190a02] px-4 py-2 rounded-full font-semibold shadow">Customer Account</span>
             </div>
