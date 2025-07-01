@@ -1,93 +1,33 @@
-// ENHANCED BY CURSOR AI: Admin image management page (upload/list/delete images)
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+
+// ENHANCED BY CURSOR AI: Admin image management page with static content display
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 
 export default function ImageManager() {
-  const [images, setImages] = useState<any[]>([]);
-  const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  useEffect(() => {
-    async function fetchImages() {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase.from('images').select('*');
-        if (error) throw error;
-        setImages(data || []);
-      } catch (err: any) {
-        setError(err.message || 'Failed to load images.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchImages();
-  }, [success]);
-
-  const handleUpload = async () => {
-    if (!file) return;
-    setError('');
-    setSuccess('');
-    setLoading(true);
-    try {
-      const { data, error: uploadError } = await supabase.storage.from('siteImages').upload(file.name, file);
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from('siteImages').getPublicUrl(file.name);
-      const url = urlData.publicUrl;
-      const { error: dbError } = await supabase.from('images').insert([
-        { url, name: file.name, uploadedAt: new Date().toISOString() },
-      ]);
-      if (dbError) throw dbError;
-      setFile(null);
-      setSuccess('Image uploaded!');
-    } catch (err: any) {
-      setError(err.message || 'Failed to upload image.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (img: any) => {
-    setError('');
-    setSuccess('');
-    setLoading(true);
-    try {
-      const { error: storageError } = await supabase.storage.from('siteImages').remove([img.name]);
-      if (storageError) throw storageError;
-      const { error: dbError } = await supabase.from('images').delete().eq('id', img.id);
-      if (dbError) throw dbError;
-      setSuccess('Image deleted!');
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete image.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <Layout>
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-12">
         <h1 className="text-3xl font-bold mb-6 text-center text-[#444e59]">Image Management</h1>
-        {loading && <div className="text-center">Loading...</div>}
-        {error && <div className="text-red-600 font-semibold text-center mb-4">{error}</div>}
-        {success && <div className="text-green-600 font-semibold text-center mb-4">{success}</div>}
-        <div className="mb-4 flex gap-2 items-center">
-          <input type="file" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} />
-          <Button onClick={handleUpload} className="bg-[#589bee] hover:bg-[#5279ac] text-white font-semibold" disabled={loading || !file}>Upload</Button>
+        <div className="text-center text-gray-600 mb-6">
+          <p>Image management functionality requires additional database setup.</p>
+          <p>This feature is currently unavailable but will be implemented with proper database schema.</p>
         </div>
-        <div>
-          <h2 className="font-semibold mb-2">Uploaded Images</h2>
-          {images.map(img => (
-            <div key={img.id} className="border rounded p-2 mb-2 flex justify-between items-center">
-              <a href={img.url} target="_blank" rel="noopener noreferrer" className="text-[#589bee] hover:underline">{img.name}</a>
-              <Button onClick={() => handleDelete(img)} className="bg-red-500 hover:bg-red-600 text-white font-semibold" disabled={loading}>Delete</Button>
-            </div>
-          ))}
+        <div className="border rounded p-4 bg-gray-50">
+          <h2 className="font-semibold mb-4">Image Management Features:</h2>
+          <ul className="space-y-2">
+            <li>• Upload Images to Storage</li>
+            <li>• Organize Image Collections</li>
+            <li>• Resize and Optimize Images</li>
+            <li>• Generate Public URLs</li>
+            <li>• Delete Unused Images</li>
+          </ul>
+        </div>
+        <div className="mt-6 text-center">
+          <Button disabled className="bg-gray-400 text-white">
+            Image Management Coming Soon
+          </Button>
         </div>
       </div>
     </Layout>
   );
-} 
+}
