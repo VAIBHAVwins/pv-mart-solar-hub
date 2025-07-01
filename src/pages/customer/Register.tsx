@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';

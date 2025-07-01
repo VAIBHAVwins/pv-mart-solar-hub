@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Shield } from 'lucide-react';
@@ -8,7 +7,7 @@ interface MobileMenuProps {
   setIsMenuOpen: (open: boolean) => void;
   getLinkClasses: () => string;
   isAdmin: boolean;
-  user: any;
+  user: { email?: string; id?: string } | null;
   handleLogout: () => void;
 }
 

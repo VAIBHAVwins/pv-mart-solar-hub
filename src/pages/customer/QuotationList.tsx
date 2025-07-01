@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
@@ -9,7 +8,7 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 export default function QuotationList() {
   const { user } = useSupabaseAuth();
-  const [quotations, setQuotations] = useState<any[]>([]);
+  const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

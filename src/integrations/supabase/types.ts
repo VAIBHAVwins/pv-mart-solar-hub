@@ -179,6 +179,33 @@ export type Database = {
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          id: string;
+          from_id: string;
+          to_id: string;
+          message: string;
+          created_at: string;
+          read: boolean;
+        };
+        Insert: {
+          id?: string;
+          from_id: string;
+          to_id: string;
+          message: string;
+          created_at?: string;
+          read?: boolean;
+        };
+        Update: {
+          id?: string;
+          from_id?: string;
+          to_id?: string;
+          message?: string;
+          created_at?: string;
+          read?: boolean;
+        };
+        Relationships: [];
+      };
     }
     Views: {
       [_ in never]: never

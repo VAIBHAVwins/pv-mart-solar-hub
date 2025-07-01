@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
-export default function EmailVerificationNotice({ user }: { user: any }) {
+export default function EmailVerificationNotice({ user }: { user: { email?: string; id?: string } | null }) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -12,8 +12,12 @@ export default function EmailVerificationNotice({ user }: { user: any }) {
     setLoading(true);
     try {
       // Placeholder for the removed sendEmailVerification function
-    } catch (err: any) {
-      setError(err.message || 'Failed to send verification email.');
+    } catch (err: unknown) {
+      let message = 'Failed to send verification email.';
+      if (err && typeof err === 'object' && 'message' in err && typeof (err as any).message === 'string') {
+        message = (err as { message: string }).message;
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,10 +42,14 @@ export const SupabaseAuthForm = ({ onClose }: SupabaseAuthFormProps) => {
         });
         if (onClose) onClose();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      let message = 'Authentication failed';
+      if (error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string') {
+        message = (error as { message: string }).message;
+      }
       toast({
         title: "Error",
-        description: error.message || "Authentication failed",
+        description: message,
         variant: "destructive"
       });
     } finally {

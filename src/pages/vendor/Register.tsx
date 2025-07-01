@@ -63,8 +63,8 @@ const VendorRegister = () => {
       if (signUpError) throw signUpError;
       // TODO: After registration, user must verify email and log in. Insert vendor data after login, or use session user id if available.
       setSuccess('Registration successful! Please check your email to verify your account.');
-    } catch (err: any) {
-      setError(err.message || 'Registration failed.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Registration failed.');
     } finally {
       setLoading(false);
     }

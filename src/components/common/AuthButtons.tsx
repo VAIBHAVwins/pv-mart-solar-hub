@@ -1,10 +1,9 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 interface AuthButtonsProps {
   isAdmin: boolean;
-  user: any;
+  user: { email?: string; id?: string } | null;
   handleLogout: () => void;
 }
 
