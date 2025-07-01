@@ -11,13 +11,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { SupabaseAuthForm } from '@/components/auth/SupabaseAuthForm';
 
 export default function SupabaseRequirementForm() {
-  const { user, authType } = useAuth();
+  const { user } = useAuth();
   const { formData, setFormData, loading, handleSubmit } = useCustomerRequirementForm();
 
-  // Check if user is authenticated (either Firebase or Supabase)
-  const isAuthenticated = user && (authType === 'firebase' || authType === 'supabase');
-
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <Layout>
         <div className="min-h-screen bg-gradient-to-br from-[#fecb00] to-[#f8b200] py-8 px-4">
@@ -43,7 +40,7 @@ export default function SupabaseRequirementForm() {
                 Customer Requirement Form
               </CardTitle>
               <p className="text-center text-gray-600">
-                Logged in as: {user.email} ({authType === 'firebase' ? 'Firebase' : 'Supabase'})
+                Logged in as: {user.email}
               </p>
             </CardHeader>
             <CardContent>

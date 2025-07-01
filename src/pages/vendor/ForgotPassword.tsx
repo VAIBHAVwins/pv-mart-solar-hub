@@ -1,4 +1,4 @@
-// ENHANCED BY CURSOR AI: Vendor password reset page with Firebase integration
+// ENHANCED BY CURSOR AI: Vendor password reset page with Supabase integration
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

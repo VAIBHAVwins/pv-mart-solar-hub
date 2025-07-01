@@ -47,7 +47,6 @@
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.3.0",
-    "firebase": "^11.9.1",
     "input-otp": "^1.2.4",
     "react-day-picker": "^8.10.1",
     "react-helmet": "^6.1.0",

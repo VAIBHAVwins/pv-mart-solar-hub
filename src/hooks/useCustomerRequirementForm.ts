@@ -22,7 +22,7 @@ const initialFormData: CustomerRequirementFormData = {
 };
 
 export const useCustomerRequirementForm = () => {
-  const { user, authType } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CustomerRequirementFormData>(initialFormData);
@@ -55,19 +55,14 @@ export const useCustomerRequirementForm = () => {
     
     try {
       console.log('Submitting requirement with user:', user);
-      console.log('Auth type:', authType);
       console.log('Form data:', formData);
-      
-      // Use user ID or email based on auth type
-      const customerId = authType === 'firebase' ? user.uid : user.id;
-      const customerEmail = user.email;
       
       const { error } = await supabase
         .from('customer_requirements')
         .insert([{
-          customer_id: customerId,
+          customer_id: user.id,
           customer_name: formData.customer_name,
-          customer_email: customerEmail,
+          customer_email: user.email!,
           customer_phone: formData.customer_phone,
           installation_type: formData.installation_type as any,
           system_type: formData.system_type as any,

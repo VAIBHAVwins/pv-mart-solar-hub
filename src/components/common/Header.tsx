@@ -12,7 +12,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut, authType } = useAuth();
+  const { user, signOut } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {

@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function CustomerRegister() {
-  const { signUp, createFirebaseUser } = useAuth();
+  const { signUp } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ 
     name: '', 
@@ -44,19 +44,12 @@ export default function CustomerRegister() {
     }
     setLoading(true);
     try {
-      // Try to create Firebase user first (for Firestore storage)
-      const { error: firebaseError } = await createFirebaseUser(form.email, form.password, form.name, form.phone);
-      
-      if (firebaseError) {
-        // If Firebase fails, try Supabase
-        const { error: supabaseError } = await signUp(form.email, form.password, form.name);
-        if (supabaseError) {
-          setError(supabaseError.message || 'Registration failed');
-          return;
-        }
+      const { error } = await signUp(form.email, form.password, form.name);
+      if (error) {
+        setError(error.message || 'Registration failed');
+      } else {
+        navigate('/customer/dashboard');
       }
-      
-      navigate('/customer/dashboard');
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     } finally {
