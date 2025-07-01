@@ -5,11 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { QuotationDetails as QuotationDetailsType } from '@/types/quotation';
 
 export default function QuotationDetails() {
   const { id } = useParams();
   const { user } = useSupabaseAuth();
-  const [quotation, setQuotation] = useState<QuotationDetails | null>(null);
+  const [quotation, setQuotation] = useState<QuotationDetailsType | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
