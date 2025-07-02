@@ -1,4 +1,3 @@
-
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
@@ -36,14 +35,13 @@ export default function CustomerDashboard() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <button onClick={handleRequirementClick} className="bg-[#fecb00] p-6 rounded-xl hover:bg-[#f8b200] transition-colors cursor-pointer">
-                <h3 className="text-xl font-bold text-[#190a02] mb-2">Submit Solar Requirement</h3>
-                <p className="text-[#8b4a08]">Submit detailed requirements for better matching</p>
-              </button>
-              
-              <button onClick={() => navigate('/customer/quotations')} className="bg-[#8b4a08] p-6 rounded-xl hover:bg-[#3d1604] transition-colors cursor-pointer">
-                <h3 className="text-xl font-bold text-white mb-2">View Quotations</h3>
-                <p className="text-[#fecb00]">Check received quotations from vendors</p>
+              <a href="https://docs.google.com/forms/d/e/1FAIpQLSdbuVmhwpsO4LYaUv4v9TDKPL_FxPBNAOquU6SLUhnf72NuWQ/viewform" target="_blank" rel="noopener noreferrer" className="bg-[#fecb00] p-6 rounded-xl hover:bg-[#f8b200] transition-colors cursor-pointer flex flex-col items-center justify-center">
+                <h3 className="text-xl font-bold text-[#190a02] mb-2">Consumer Requirement Form (Google Form)</h3>
+                <p className="text-[#8b4a08]">Submit your requirement via Google Form</p>
+              </a>
+              <button onClick={handleRequirementClick} className="bg-[#fecb00] p-6 rounded-xl hover:bg-[#f8b200] transition-colors cursor-pointer flex flex-col items-center justify-center">
+                <h3 className="text-xl font-bold text-[#190a02] mb-2">Consumer Requirement Form (Supabase)</h3>
+                <p className="text-[#8b4a08]">Submit your requirement via Supabase</p>
               </button>
             </div>
             

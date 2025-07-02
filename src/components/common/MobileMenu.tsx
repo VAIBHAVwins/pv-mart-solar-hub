@@ -1,12 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield } from 'lucide-react';
 
 interface MobileMenuProps {
   isMenuOpen: boolean;
   setIsMenuOpen: (open: boolean) => void;
   getLinkClasses: () => string;
-  isAdmin: boolean;
   user: { email?: string; id?: string } | null;
   handleLogout: () => void;
 }
@@ -15,7 +13,6 @@ const MobileMenu = ({
   isMenuOpen, 
   setIsMenuOpen, 
   getLinkClasses, 
-  isAdmin, 
   user, 
   handleLogout 
 }: MobileMenuProps) => {
@@ -59,27 +56,9 @@ const MobileMenu = ({
         >
           Game
         </Link>
-        <Link 
-          to="/admin/login" 
-          className={`${getLinkClasses()} flex items-center gap-1`}
-          onClick={() => setIsMenuOpen(false)}
-        >
-          <Shield className="w-4 h-4" />
-          Admin Login
-        </Link>
         
         <div className="pt-4 border-t border-gray-200">
-          {isAdmin ? (
-            <Button 
-              onClick={() => {
-                handleLogout();
-                setIsMenuOpen(false);
-              }} 
-              className="w-full solar-button-outline border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-            >
-              Logout
-            </Button>
-          ) : !user ? (
+          {!user ? (
             <div className="flex flex-col space-y-3">
               <Link to="/customer/login">
                 <Button 

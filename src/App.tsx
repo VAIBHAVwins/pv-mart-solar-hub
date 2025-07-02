@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext';
 import Home from './pages/Index';
@@ -25,7 +24,6 @@ import InstallationType from './pages/InstallationType';
 import GridConnectivity from './pages/GridConnectivity';
 import Blogs from './pages/Blogs';
 import BlogDetail from './pages/BlogDetail';
-import AdminGitHubCallback from './pages/admin/GitHubCallback';
 
 export default function App() {
   return (
@@ -54,7 +52,6 @@ export default function App() {
           <Route path="/vendor/quotation-list" element={<VendorQuotationList />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/admin/github-callback" element={<AdminGitHubCallback />} />
           <Route path="/game" element={<Game />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -97,7 +97,7 @@ export default function Home() {
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
-                <Link to="/customer/quote-request">
+                <Link to="/installation-type">
                   <Button variant="outline" className="btn-outline text-white border-white hover:bg-white hover:text-solar-dark text-lg px-8 py-4">
                     Get Quotes
                   </Button>
@@ -170,7 +170,7 @@ export default function Home() {
             Get your free consultation today!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/customer/quote-request">
+            <Link to="/installation-type">
               <Button className="bg-white text-solar-primary hover:bg-gray-100 text-lg px-8 py-4">
                 Get Free Quote
                 <ArrowRight className="ml-2 w-5 h-5" />

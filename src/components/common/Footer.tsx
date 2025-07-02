@@ -46,17 +46,6 @@ const Footer = () => {
               <li><Link to="/about" className={`${getLinkClasses()} transition-colors`}>About Us</Link></li>
               <li><Link to="/blogs" className={`${getLinkClasses()} transition-colors`}>Blogs</Link></li>
               <li><Link to="/contact" className={`${getLinkClasses()} transition-colors`}>Contact</Link></li>
-              {/* Camouflaged Admin Login Link */}
-              <li>
-                <Link
-                  to="/admin/login"
-                  className={`transition-opacity opacity-10 hover:opacity-80 focus:opacity-80 cursor-pointer ${getLinkClasses()}`}
-                  tabIndex={0}
-                  aria-label="Admin Login"
-                >
-                  Admin Login
-                </Link>
-              </li>
             </ul>
           </div>
 

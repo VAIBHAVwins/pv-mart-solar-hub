@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 
@@ -23,10 +22,6 @@ const Navigation = ({ getLinkClasses }: NavigationProps) => {
       </Link>
       <Link to="/game" className={getLinkClasses()}>
         Game
-      </Link>
-      <Link to="/admin/login" className={`${getLinkClasses()} flex items-center gap-1`}>
-        <Shield className="w-4 h-4" />
-        Admin
       </Link>
     </nav>
   );

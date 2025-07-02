@@ -9,10 +9,15 @@ import { AddressSection } from '@/components/customer/AddressSection';
 import { AdditionalInfoSection } from '@/components/customer/AdditionalInfoSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { SupabaseAuthForm } from '@/components/auth/SupabaseAuthForm';
+import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function SupabaseRequirementForm() {
   const { user } = useAuth();
   const { formData, setFormData, loading, handleSubmit, analysisResult, resultRef } = useCustomerRequirementForm();
+  const navigate = useNavigate();
+  const [showPopup, setShowPopup] = useState(false);
+  const popupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   if (!user) {
     return (
@@ -29,6 +34,14 @@ export default function SupabaseRequirementForm() {
       </Layout>
     );
   }
+
+  const handleConnectVendor = () => {
+    setShowPopup(true);
+    popupTimeoutRef.current = setTimeout(() => {
+      setShowPopup(false);
+      navigate('/');
+    }, 15000);
+  };
 
   return (
     <Layout>
@@ -82,13 +95,21 @@ export default function SupabaseRequirementForm() {
                     </div>
                   )}
                   <Button
-                    asChild
                     className="mt-4 bg-[#fecb00] hover:bg-[#f8b200] text-[#190a02] px-6 py-2 font-bold"
+                    onClick={handleConnectVendor}
                   >
-                    <a href="https://docs.google.com/forms/d/e/1FAIpQLSdbuVmhwpsO4LYaUv4v9TDKPL_FxPBNAOquU6SLUhnf72NuWQ/viewform" target="_blank" rel="noopener noreferrer">
-                      Connect me to a vendor
-                    </a>
+                    Connect me to a vendor
                   </Button>
+                </div>
+              )}
+              {/* Popup Message */}
+              {showPopup && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
+                  <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+                    <h3 className="text-2xl font-bold mb-4 text-[#8b4a08]">Thank you for showing your interest</h3>
+                    <p className="text-lg text-gray-700 mb-2">Our team will contact you soon.</p>
+                    <p className="text-sm text-gray-500">You will be redirected to the homepage shortly.</p>
+                  </div>
                 </div>
               )}
             </CardContent>

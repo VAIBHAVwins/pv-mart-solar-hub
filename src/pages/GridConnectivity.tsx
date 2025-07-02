@@ -103,12 +103,20 @@ export default function GridConnectivity() {
                   <li>• Perfect for remote areas</li>
                   <li>• No grid dependency</li>
                 </ul>
-                <Button 
-                  onClick={handleNonResidentialOnGrid}
-                  className="w-full bg-cornflower_blue text-white hover:bg-cornflower_blue-600 font-semibold"
-                >
-                  Choose Off-Grid
-                </Button>
+                {installationType === 'residential' ? (
+                  <Link to="/customer/login">
+                    <Button className="w-full bg-cornflower_blue text-white hover:bg-cornflower_blue-600 font-semibold">
+                      Choose Off-Grid
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button 
+                    onClick={handleNonResidentialOnGrid}
+                    className="w-full bg-cornflower_blue text-white hover:bg-cornflower_blue-600 font-semibold"
+                  >
+                    Choose Off-Grid
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -131,12 +139,20 @@ export default function GridConnectivity() {
                   <li>• Smart energy management</li>
                   <li>• Maximum reliability</li>
                 </ul>
-                <Button 
-                  onClick={handleNonResidentialOnGrid}
-                  className="w-full bg-cornflower_blue text-white hover:bg-cornflower_blue-600 font-semibold"
-                >
-                  Choose Hybrid
-                </Button>
+                {installationType === 'residential' ? (
+                  <Link to="/customer/login">
+                    <Button className="w-full bg-cornflower_blue text-white hover:bg-cornflower_blue-600 font-semibold">
+                      Choose Hybrid
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button 
+                    onClick={handleNonResidentialOnGrid}
+                    className="w-full bg-cornflower_blue text-white hover:bg-cornflower_blue-600 font-semibold"
+                  >
+                    Choose Hybrid
+                  </Button>
+                )}
               </div>
             </div>
           </div>

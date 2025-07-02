@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
@@ -14,11 +13,6 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useSupabaseAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    setIsAdmin(!!localStorage.getItem('adminAuth'));
-  }, [location]);
 
   const isCustomerRoute = location.pathname.includes('/customer');
   const isVendorRoute = location.pathname.includes('/vendor');
@@ -43,14 +37,8 @@ const Header = () => {
   };
 
   const handleLogout = async () => {
-    if (isAdmin) {
-      localStorage.removeItem('adminAuth');
-      setIsAdmin(false);
-      navigate('/admin/login');
-    } else {
-      await signOut();
-      navigate('/');
-    }
+    await signOut();
+    navigate('/');
   };
 
   return (
@@ -66,7 +54,6 @@ const Header = () => {
             <Navigation getLinkClasses={getLinkClasses} />
             
             <AuthButtons 
-              isAdmin={isAdmin} 
               user={user} 
               handleLogout={handleLogout} 
             />
@@ -84,7 +71,6 @@ const Header = () => {
             isMenuOpen={isMenuOpen}
             setIsMenuOpen={setIsMenuOpen}
             getLinkClasses={getLinkClasses}
-            isAdmin={isAdmin}
             user={user}
             handleLogout={handleLogout}
           />
