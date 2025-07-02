@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { validation, sanitize, validationMessages } from '@/lib/validation';
 
 // CURSOR AI: Modern, professional Vendor Registration redesign with vendor color palette and UI patterns
 const VendorRegister = () => {
@@ -27,44 +28,107 @@ const VendorRegister = () => {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    let sanitizedValue = value;
+    
+    // Sanitize input based on field type
+    if (name === 'phone') {
+      sanitizedValue = sanitize.phone(value);
+    } else {
+      sanitizedValue = sanitize.text(value);
+    }
+    
+    // Prevent script injection
+    if (!validation.noScriptTags(sanitizedValue)) {
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: sanitizedValue
     }));
   };
 
-  const validateEmail = (email: string) => /.+@.+\..+/.test(email);
-  const validatePhone = (phone: string) => /^\d{10}$/.test(phone);
-  const validatePassword = (pw: string) => pw.length >= 6;
+  const validateForm = () => {
+    const requiredFields = ['companyName', 'contactPerson', 'email', 'phone', 'address', 'licenseNumber', 'serviceAreas', 'specializations'];
+    
+    for (const field of requiredFields) {
+      if (!validation.required(formData[field as keyof typeof formData])) {
+        setError(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} is required`);
+        return false;
+      }
+    }
+
+    if (!validation.maxLength(formData.companyName, 100)) {
+      setError('Company name ' + validationMessages.maxLength(100));
+      return false;
+    }
+
+    if (!validation.maxLength(formData.contactPerson, 100)) {
+      setError('Contact person name ' + validationMessages.maxLength(100));
+      return false;
+    }
+
+    if (!validation.email(formData.email)) {
+      setError(validationMessages.email);
+      return false;
+    }
+
+    if (!validation.phone(formData.phone)) {
+      setError(validationMessages.phone);
+      return false;
+    }
+
+    if (!validation.licenseNumber(formData.licenseNumber)) {
+      setError(validationMessages.licenseNumber);
+      return false;
+    }
+
+    if (!validation.password(formData.password)) {
+      setError(validationMessages.password);
+      return false;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError(validationMessages.noMatch);
+      return false;
+    }
+
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    if (!validateEmail(formData.email)) {
-      setError('Invalid email address.');
+    
+    if (!validateForm()) {
       return;
     }
-    if (!validatePhone(formData.phone)) {
-      setError('Phone number must be 10 digits.');
-      return;
-    }
-    if (!validatePassword(formData.password)) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
+
     setLoading(true);
     try {
-      const { error: signUpError } = await signUp(formData.email, formData.password);
-      if (signUpError) throw signUpError;
-      // TODO: After registration, user must verify email and log in. Insert vendor data after login, or use session user id if available.
+      const { error: signUpError } = await signUp(formData.email, formData.password, {
+        data: {
+          full_name: sanitize.html(formData.contactPerson),
+          company_name: sanitize.html(formData.companyName),
+          user_type: 'vendor'
+        }
+      });
+      
+      if (signUpError) {
+        if (signUpError.message.includes('User already registered')) {
+          setError('An account with this email already exists. Please login instead.');
+        } else {
+          setError('Registration failed. Please try again.');
+        }
+        return;
+      }
+      
       setSuccess('Registration successful! Please check your email to verify your account.');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Registration failed.');
+      console.error('Registration error:', err);
+      setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

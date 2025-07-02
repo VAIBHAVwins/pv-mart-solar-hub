@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';
+import { validation, sanitize, validationMessages } from '@/lib/validation';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function CustomerRegister() {
   const { signUp } = useSupabaseAuth();
@@ -16,42 +18,87 @@ export default function CustomerRegister() {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let sanitizedValue = value;
+    
+    // Sanitize input based on field type
+    if (name === 'phone') {
+      sanitizedValue = sanitize.phone(value);
+    } else {
+      sanitizedValue = sanitize.text(value);
+    }
+    
+    // Prevent script injection
+    if (!validation.noScriptTags(sanitizedValue)) {
+      return;
+    }
+    
+    setForm({ ...form, [name]: sanitizedValue });
   };
 
-  const validateEmail = (email: string) => /.+@.+\..+/.test(email);
-  const validatePhone = (phone: string) => /^\d{10}$/.test(phone);
-  const validatePassword = (pw: string) => pw.length >= 6;
+  const validateForm = () => {
+    if (!validation.required(form.name)) {
+      setError('Name is required');
+      return false;
+    }
+    
+    if (!validation.maxLength(form.name, 100)) {
+      setError(validationMessages.maxLength(100));
+      return false;
+    }
+
+    if (!validation.email(form.email)) {
+      setError(validationMessages.email);
+      return false;
+    }
+
+    if (!validation.phone(form.phone)) {
+      setError(validationMessages.phone);
+      return false;
+    }
+
+    if (!validation.password(form.password)) {
+      setError(validationMessages.password);
+      return false;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setError(validationMessages.noMatch);
+      return false;
+    }
+
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!validateEmail(form.email)) {
-      setError('Invalid email address.');
+    
+    if (!validateForm()) {
       return;
     }
-    if (!validatePhone(form.phone)) {
-      setError('Phone number must be 10 digits.');
-      return;
-    }
-    if (!validatePassword(form.password)) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-    if (form.password !== form.confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
+
     setLoading(true);
     try {
-      const { error } = await signUp(form.email, form.password);
+      const { error } = await signUp(form.email, form.password, {
+        data: {
+          full_name: sanitize.html(form.name),
+          user_type: 'customer'
+        }
+      });
+      
       if (error) {
-        setError(error.message || 'Registration failed');
+        if (error.message.includes('User already registered')) {
+          setError('An account with this email already exists. Please login instead.');
+        } else {
+          setError('Registration failed. Please try again.');
+        }
       } else {
         navigate('/customer/dashboard');
       }
     } catch (err: any) {
-      setError(err.message || 'Registration failed');
+      console.error('Registration error:', err);
+      setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

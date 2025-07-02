@@ -1,12 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { validation, sanitize, validationMessages } from '@/lib/validation';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const { signIn, user, loading: authLoading } = useSupabaseAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -14,24 +18,70 @@ export default function AdminLogin() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    // Redirect if already logged in as admin
+    if (user && !authLoading) {
+      checkAdminRole();
+    }
+  }, [user, authLoading]);
+
+  const checkAdminRole = async () => {
+    if (!user) return;
+    
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin');
+    
+    if (roles && roles.length > 0) {
+      navigate('/admin');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
     try {
-      // Accept both old and new admin credentials
-      const validCreds = (
-        (formData.email === 'admin@pvmart.com' && formData.password === 'admin123') ||
-        (formData.email === 'ecogrid.ai@gmail.com' && formData.password === 'ECOGRID_AI-28/02/2025')
-      );
-      if (validCreds) {
-        localStorage.setItem('adminAuth', 'true');
-        navigate('/admin');
-      } else {
-        setError('Invalid admin credentials');
+      // Validate input
+      const email = sanitize.text(formData.email);
+      const password = formData.password;
+
+      if (!validation.email(email)) {
+        setError(validationMessages.email);
+        return;
       }
+
+      if (!validation.required(password)) {
+        setError(validationMessages.required);
+        return;
+      }
+
+      // Attempt Supabase authentication
+      const { error: signInError } = await signIn(email, password);
+      if (signInError) {
+        setError('Invalid credentials');
+        return;
+      }
+
+      // Check if user has admin role
+      const { data: roles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('role', 'admin');
+
+      if (roleError || !roles || roles.length === 0) {
+        await supabase.auth.signOut();
+        setError('Access denied: Admin privileges required');
+        return;
+      }
+
+      navigate('/admin');
     } catch (err) {
-      setError('Login failed');
+      console.error('Admin login error:', err);
+      setError('Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -82,7 +132,7 @@ export default function AdminLogin() {
             </Button>
           </form>
           <div className="mt-6 text-center text-sm text-gray-500">
-            Demo credentials: admin@pvmart.com / admin123
+            Only admin users can access this area. Contact your administrator for access.
           </div>
         </div>
       </div>
