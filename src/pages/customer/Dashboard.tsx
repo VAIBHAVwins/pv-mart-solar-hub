@@ -59,10 +59,10 @@ export default function CustomerDashboard() {
                 <h3 className="text-xl font-bold text-[#190a02] mb-2">Consumer Requirement Form (Google Form)</h3>
                 <p className="text-[#8b4a08]">Submit your requirement via Google Form</p>
               </a>
-              <button onClick={handleRequirementClick} className="bg-[#fecb00] p-6 rounded-xl hover:bg-[#f8b200] transition-colors cursor-pointer flex flex-col items-center justify-center">
+              <a href="/customer/requirements" className="bg-[#fecb00] p-6 rounded-xl hover:bg-[#f8b200] transition-colors cursor-pointer flex flex-col items-center justify-center">
                 <h3 className="text-xl font-bold text-[#190a02] mb-2">Consumer Requirement Form (Supabase)</h3>
                 <p className="text-[#8b4a08]">Submit your requirement via Supabase</p>
-              </button>
+              </a>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

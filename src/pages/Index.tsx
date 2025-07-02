@@ -4,6 +4,8 @@ import Layout from '@/components/layout/Layout';
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowRight, CheckCircle, Users, Award, MapPin, Phone, Mail } from 'lucide-react';
 import Footer from '@/components/common/Footer';
+import "react-responsive-carousel/lib/styles/carousel.min.css";
+import { Carousel } from 'react-responsive-carousel';
 
 export default function Home() {
   const [currentBanner, setCurrentBanner] = useState(0);
@@ -58,81 +60,73 @@ export default function Home() {
   }, [banners.length]);
 
   const nextBanner = () => {
-    setCurrentBanner(prev => (prev + 1) % banners.length);
+    setCurrentBanner(prev => {
+      const next = (prev + 1) % banners.length;
+      console.log('Next Banner:', next);
+      return next;
+    });
   };
 
   const prevBanner = () => {
-    setCurrentBanner(prev => (prev - 1 + banners.length) % banners.length);
+    setCurrentBanner(prev => {
+      const prevIndex = (prev - 1 + banners.length) % banners.length;
+      console.log('Prev Banner:', prevIndex);
+      return prevIndex;
+    });
   };
 
   return (
     <Layout>
-      {/* Hero Section */}
+      {/* Hero Section with Carousel */}
       <section className="relative h-screen overflow-hidden">
-        <div className="absolute inset-0">
-          <img 
-            src={banners[currentBanner].image} 
-            alt={banners[currentBanner].title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/40"></div>
-        </div>
-        
-        <div className="relative z-10 flex items-center justify-center h-full">
-          <div className="container-responsive text-center text-white">
-            <div className="max-w-4xl mx-auto">
-              <h1 className="solar-heading text-white mb-6 animate-fade-in">
-                {banners[currentBanner].title}
-              </h1>
-              <p className="text-2xl md:text-3xl font-semibold mb-4 text-solar-primary">
-                {banners[currentBanner].subtitle}
-              </p>
-              <p className="text-lg md:text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-                {banners[currentBanner].description}
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/vendor/register">
-                  <Button className="solar-button text-lg px-8 py-4">
-                    Join as Vendor
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
-                <Link to="/installation-type">
-                  <Button variant="outline" className="btn-outline text-white border-white hover:bg-white hover:text-solar-dark text-lg px-8 py-4">
-                    Get Quotes
-                  </Button>
-                </Link>
+        <Carousel
+          showThumbs={false}
+          showStatus={false}
+          infiniteLoop
+          autoPlay
+          interval={5000}
+          className="h-full"
+        >
+          {banners.map((banner, idx) => (
+            <div key={idx} className="relative h-screen">
+              <img 
+                src={banner.image} 
+                alt={banner.title}
+                className="w-full h-full object-cover"
+                style={{ maxHeight: '100vh' }}
+              />
+              <div className="absolute inset-0 bg-black/40"></div>
+              <div className="absolute inset-0 z-10 flex items-center justify-center h-full">
+                <div className="container-responsive text-center text-white">
+                  <div className="max-w-4xl mx-auto">
+                    <h1 className="solar-heading text-white mb-6 animate-fade-in">
+                      {banner.title}
+                    </h1>
+                    <p className="text-2xl md:text-3xl font-semibold mb-4 text-solar-primary">
+                      {banner.subtitle}
+                    </p>
+                    <p className="text-lg md:text-xl mb-8 opacity-90 max-w-2xl mx-auto">
+                      {banner.description}
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <Link to="/vendor/register">
+                        <Button className="solar-button text-lg px-8 py-4">
+                          Join as Vendor
+                          <ArrowRight className="ml-2 w-5 h-5" />
+                        </Button>
+                      </Link>
+                      <Link to="/installation-type">
+                        <Button variant="outline" className="btn-outline text-white border-white hover:bg-white hover:text-solar-dark text-lg px-8 py-4">
+                          Get Quotes
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Banner Navigation */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4">
-          {banners.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentBanner(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                index === currentBanner ? 'bg-solar-primary' : 'bg-white/50'
-              }`}
-            />
           ))}
-        </div>
-
-        {/* Arrow Navigation */}
-        <button
-          onClick={prevBanner}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <button
-          onClick={nextBanner}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300"
-        >
-          <ChevronRight className="w-6 h-6" />
-        </button>
+        </Carousel>
       </section>
 
       {/* Features Section */}
