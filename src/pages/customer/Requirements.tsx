@@ -1,9 +1,9 @@
-
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
+import { useNavigate } from 'react-router-dom';
 
 const CustomerRequirements = () => {
   const [formData, setFormData] = useState({
@@ -20,6 +20,13 @@ const CustomerRequirements = () => {
     additionalRequirements: ''
   });
 
+  const [loading, setLoading] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<{ panelCount: number; estimatedAmount: number } | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const resultRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  let popupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({
       ...prev,
@@ -27,10 +34,28 @@ const CustomerRequirements = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log('Customer requirements:', formData);
+    setLoading(true);
+    setAnalysisResult(null);
+    // Simulate backend analysis (replace with real logic as needed)
+    setTimeout(() => {
+      const panelCount = Math.ceil(Number(formData.monthlyBill || 0) / 1000) || 5;
+      const estimatedAmount = panelCount * 35000;
+      setAnalysisResult({ panelCount, estimatedAmount });
+      setLoading(false);
+      setTimeout(() => {
+        resultRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }, 2000);
+  };
+
+  const handleConnectVendor = () => {
+    setShowPopup(true);
+    popupTimeoutRef.current = setTimeout(() => {
+      setShowPopup(false);
+      navigate('/');
+    }, 15000);
   };
 
   return (
@@ -203,13 +228,42 @@ const CustomerRequirements = () => {
               />
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full bg-[#fecb00] hover:bg-[#f8b200] text-[#190a02] font-semibold text-lg py-3"
-            >
-              Submit Requirements & Get Quotes
-            </Button>
+            <div className="text-center">
+              <Button type="submit" disabled={loading} className="bg-[#fecb00] hover:bg-[#f8b200] text-[#190a02] px-8 py-2 font-bold">
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin h-5 w-5 mr-2 text-[#8b4a08]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                    </svg>
+                    Analyzing...
+                  </span>
+                ) : 'Submit Requirement'}
+              </Button>
+            </div>
           </form>
+
+          {/* Analysis Result Section */}
+          {analysisResult && (
+            <div ref={resultRef} className="mt-10 p-6 bg-yellow-50 rounded-lg shadow-inner text-center">
+              <h2 className="text-xl font-bold text-[#8b4a08] mb-2">Analysis Result</h2>
+              <p className="text-lg mb-2">Estimated number of solar panels required: <span className="font-bold text-[#f8b200]">{analysisResult.panelCount}</span></p>
+              <p className="text-lg mb-2">Estimated Amount: <span className="font-bold text-[#f8b200]">9{analysisResult.estimatedAmount}</span></p>
+              <Button className="mt-4 bg-[#fecb00] hover:bg-[#f8b200] text-[#190a02] px-6 py-2 font-bold" onClick={handleConnectVendor}>
+                Connect me to a vendor
+              </Button>
+            </div>
+          )}
+          {/* Popup Message */}
+          {showPopup && (
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
+              <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+                <h3 className="text-2xl font-bold mb-4 text-[#8b4a08]">Thank you for showing your interest</h3>
+                <p className="text-lg text-gray-700 mb-2">Our team will contact you soon.</p>
+                <p className="text-sm text-gray-500">You will be redirected to the homepage shortly.</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Layout>

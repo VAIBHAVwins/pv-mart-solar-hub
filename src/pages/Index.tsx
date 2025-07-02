@@ -95,10 +95,10 @@ export default function Home() {
                 className="w-full h-full object-cover"
                 style={{ maxHeight: '100vh' }}
               />
-              <div className="absolute inset-0 bg-black/40"></div>
               <div className="absolute inset-0 z-10 flex items-center justify-center h-full">
-                <div className="container-responsive text-center text-white">
-                  <div className="max-w-4xl mx-auto">
+                <div className="container-responsive text-center text-white relative">
+                  <div className="absolute inset-0 bg-black/40 z-0"></div>
+                  <div className="max-w-4xl mx-auto relative z-10">
                     <h1 className="solar-heading text-white mb-6 animate-fade-in">
                       {banner.title}
                     </h1>
