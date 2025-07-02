@@ -3,18 +3,38 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 // CURSOR AI: Modern, professional Vendor Dashboard redesign with vendor color palette and UI patterns
 export default function VendorDashboard() {
   const { user, signOut, loading } = useSupabaseAuth();
   const navigate = useNavigate();
+  const [profile, setProfile] = useState<{ full_name?: string; company_name?: string } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate('/vendor/login');
     }
   }, [user, loading, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name, company_name')
+      .eq('user_id', user.id)
+      .single();
+    
+    setProfile(data);
+  };
 
   if (loading) return <div className="text-center py-20">Loading...</div>;
   if (!user) return null;
@@ -33,7 +53,12 @@ export default function VendorDashboard() {
         <div className="container mx-auto">
           <div className="bg-[#f7f7f6] p-10 rounded-2xl shadow-xl w-full max-w-4xl mx-auto text-center animate-fade-in">
             <h1 className="text-4xl font-extrabold mb-4 text-[#797a83] drop-shadow">Vendor Dashboard</h1>
-            <p className="mb-6 text-[#4f4f56] text-lg">Welcome, <span className="font-semibold text-[#b07e66]">{user.email}</span></p>
+            <p className="mb-6 text-[#4f4f56] text-lg">
+              Welcome <span className="font-semibold text-[#b07e66]">
+                {profile?.full_name || user.email}
+                {profile?.company_name && ` from ${profile.company_name}`}
+              </span>
+            </p>
             <div className="mb-8">
               <span className="inline-block bg-[#b07e66] text-[#f7f7f6] px-4 py-2 rounded-full font-semibold shadow">Vendor Account</span>
             </div>
