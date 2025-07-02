@@ -1,11 +1,15 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
 import { useNavigate } from 'react-router-dom';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const CustomerRequirements = () => {
+  const { user } = useSupabaseAuth();
+  const [profile, setProfile] = useState<{ full_name?: string } | null>(null);
   const [formData, setFormData] = useState({
     capacity: '',
     propertyType: '',
@@ -27,6 +31,22 @@ const CustomerRequirements = () => {
   const navigate = useNavigate();
   let popupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('user_id', user.id)
+      .single();
+    setProfile(data);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({
       ...prev,
@@ -38,6 +58,26 @@ const CustomerRequirements = () => {
     e.preventDefault();
     setLoading(true);
     setAnalysisResult(null);
+    // Store requirement in Supabase
+    if (user) {
+      await supabase.from('customer_requirements').insert({
+        customer_id: user.id,
+        customer_email: user.email,
+        customer_name: profile?.full_name || user.email,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        pincode: formData.pincode,
+        property_type: formData.propertyType,
+        roof_type: formData.roofType,
+        installation_type: formData.capacity,
+        system_type: 'on-grid', // or get from form if you add it
+        monthly_bill: Number(formData.monthlyBill),
+        timeline: formData.timeline,
+        budget_range: formData.budget,
+        additional_requirements: formData.additionalRequirements,
+      });
+    }
     // Simulate backend analysis (replace with real logic as needed)
     setTimeout(() => {
       const panelCount = Math.ceil(Number(formData.monthlyBill || 0) / 1000) || 5;
@@ -247,8 +287,23 @@ const CustomerRequirements = () => {
           {analysisResult && (
             <div ref={resultRef} className="mt-10 p-6 bg-yellow-50 rounded-lg shadow-inner text-center">
               <h2 className="text-xl font-bold text-[#8b4a08] mb-2">Analysis Result</h2>
+              <p className="text-lg mb-2">Welcome <span className="font-bold text-[#3d1604]">{profile?.full_name || user?.email}</span></p>
+              <p className="text-lg mb-2">Email: <span className="font-bold text-[#3d1604]">{user?.email}</span></p>
+              <div className="my-4 text-left max-w-xl mx-auto">
+                <h3 className="font-semibold text-[#8b4a08] mb-2">Your Requirement Details:</h3>
+                <ul className="text-[#3d1604] text-base space-y-1">
+                  <li><b>Address:</b> {formData.address}, {formData.city}, {formData.state} - {formData.pincode}</li>
+                  <li><b>Property Type:</b> {formData.propertyType}</li>
+                  <li><b>Roof Type:</b> {formData.roofType}</li>
+                  <li><b>Capacity:</b> {formData.capacity}</li>
+                  <li><b>Monthly Bill:</b> ₹{formData.monthlyBill}</li>
+                  <li><b>Timeline:</b> {formData.timeline}</li>
+                  <li><b>Budget:</b> {formData.budget}</li>
+                  <li><b>Additional Requirements:</b> {formData.additionalRequirements}</li>
+                </ul>
+              </div>
               <p className="text-lg mb-2">Estimated number of solar panels required: <span className="font-bold text-[#f8b200]">{analysisResult.panelCount}</span></p>
-              <p className="text-lg mb-2">Estimated Amount: <span className="font-bold text-[#f8b200]">9{analysisResult.estimatedAmount}</span></p>
+              <p className="text-lg mb-2">Estimated Amount: <span className="font-bold text-[#f8b200]">₹{analysisResult.estimatedAmount}</span></p>
               <Button className="mt-4 bg-[#fecb00] hover:bg-[#f8b200] text-[#190a02] px-6 py-2 font-bold" onClick={handleConnectVendor}>
                 Connect me to a vendor
               </Button>

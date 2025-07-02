@@ -86,6 +86,45 @@ export default function Home() {
           autoPlay
           interval={5000}
           className="h-full"
+          renderArrowPrev={(onClickHandler, hasPrev, label) =>
+            hasPrev && (
+              <button
+                type="button"
+                onClick={onClickHandler}
+                title={label}
+                style={{ zIndex: 30, position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }}
+                className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            )
+          }
+          renderArrowNext={(onClickHandler, hasNext, label) =>
+            hasNext && (
+              <button
+                type="button"
+                onClick={onClickHandler}
+                title={label}
+                style={{ zIndex: 30, position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)' }}
+                className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            )
+          }
+          renderIndicator={(onClickHandler, isSelected, index, label) => (
+            <li
+              style={{ zIndex: 30, display: 'inline-block', margin: '0 4px' }}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${isSelected ? 'bg-solar-primary' : 'bg-white/50'}`}
+              onClick={onClickHandler}
+              onKeyDown={onClickHandler}
+              value={index}
+              key={index}
+              role="button"
+              tabIndex={0}
+              aria-label={`${label} ${index + 1}`}
+            />
+          )}
         >
           {banners.map((banner, idx) => (
             <div key={idx} className="relative h-screen">
@@ -97,7 +136,7 @@ export default function Home() {
               />
               <div className="absolute inset-0 z-10 flex items-center justify-center h-full">
                 <div className="container-responsive text-center text-white relative">
-                  <div className="absolute inset-0 bg-black/40 z-0"></div>
+                  <div className="absolute inset-0 bg-black/40" style={{ zIndex: 10 }}></div>
                   <div className="max-w-4xl mx-auto relative z-10">
                     <h1 className="solar-heading text-white mb-6 animate-fade-in">
                       {banner.title}
