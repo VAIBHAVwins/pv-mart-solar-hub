@@ -90,7 +90,11 @@ export default function Home() {
             hasPrev && (
               <button
                 type="button"
-                onClick={onClickHandler}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onClickHandler();
+                }}
                 title={label}
                 style={{ zIndex: 30, position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }}
                 className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300"
@@ -103,7 +107,11 @@ export default function Home() {
             hasNext && (
               <button
                 type="button"
-                onClick={onClickHandler}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onClickHandler();
+                }}
                 title={label}
                 style={{ zIndex: 30, position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)' }}
                 className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300"

@@ -48,7 +48,7 @@ export default function CustomerDashboard() {
           <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-4xl mx-auto text-center animate-fade-in">
             <h1 className="text-4xl font-extrabold mb-4 text-[#8b4a08] drop-shadow">Customer Dashboard</h1>
             <p className="mb-6 text-[#52796f] text-lg">
-              Welcome <span className="font-semibold text-[#3d1604]">{profile?.full_name || user.email}{profile?.company_name ? ` from ${profile.company_name}` : ''}</span>
+              Welcome <span className="font-semibold text-[#3d1604]">{profile?.full_name || user.email}</span>
             </p>
             <div className="mb-8">
               <span className="inline-block bg-[#fecb00] text-[#190a02] px-4 py-2 rounded-full font-semibold shadow">Customer Account</span>

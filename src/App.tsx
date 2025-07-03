@@ -11,11 +11,7 @@ import Login from './pages/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
 import VendorDashboard from './pages/vendor/Dashboard';
 import CustomerRequirements from './pages/customer/Requirements';
-import SupabaseRequirementForm from './pages/customer/SupabaseRequirementForm';
-import QuotationDetails from './pages/customer/QuotationDetails';
-import QuotationList from './pages/customer/QuotationList';
 import SupabaseQuotationForm from './pages/vendor/SupabaseQuotationForm';
-import VendorQuotationList from './pages/vendor/QuotationList';
 import AdminLogin from './pages/admin/Login';
 import AdminPanel from './pages/admin/Dashboard';
 import NotFound from './pages/NotFound';
@@ -45,11 +41,7 @@ export default function App() {
           <Route path="/customer/dashboard" element={<CustomerDashboard />} />
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
           <Route path="/customer/requirements" element={<CustomerRequirements />} />
-          <Route path="/customer/supabase-requirement" element={<SupabaseRequirementForm />} />
-          <Route path="/customer/quotation/:id" element={<QuotationDetails />} />
-          <Route path="/customer/quotations" element={<QuotationList />} />
           <Route path="/vendor/supabase-quotation" element={<SupabaseQuotationForm />} />
-          <Route path="/vendor/quotation-list" element={<VendorQuotationList />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/game" element={<Game />} />

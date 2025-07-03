@@ -70,8 +70,8 @@ const CustomerRequirements = () => {
         pincode: formData.pincode,
         property_type: formData.propertyType,
         roof_type: formData.roofType,
-        installation_type: formData.capacity,
-        system_type: 'on-grid', // or get from form if you add it
+        installation_type: formData.capacity as any,
+        system_type: 'on-grid' as any, // or get from form if you add it
         monthly_bill: Number(formData.monthlyBill),
         timeline: formData.timeline,
         budget_range: formData.budget,
@@ -91,6 +91,7 @@ const CustomerRequirements = () => {
   };
 
   const handleConnectVendor = () => {
+    window.open('https://docs.google.com/forms/d/e/1FAIpQLSdbuVmhwpsO4LYaUv4v9TDKPL_FxPBNAOquU6SLUhnf72NuWQ/viewform', '_blank');
     setShowPopup(true);
     popupTimeoutRef.current = setTimeout(() => {
       setShowPopup(false);
@@ -120,9 +121,9 @@ const CustomerRequirements = () => {
                 required
               >
                 <option value="">Select capacity</option>
-                <option value="1kw">1 KW</option>
-                <option value="2kw">2 KW</option>
-                <option value="3kw">3 KW</option>
+                <option value="1KW">1 KW</option>
+                <option value="2KW">2 KW</option>
+                <option value="3KW">3 KW</option>
                 <option value="custom">Other (specify in additional requirements)</option>
               </select>
             </div>
