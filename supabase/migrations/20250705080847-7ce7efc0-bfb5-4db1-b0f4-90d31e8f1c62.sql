@@ -6,14 +6,25 @@ ADD COLUMN IF NOT EXISTS phone TEXT;
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
+  -- Log the trigger execution for debugging
+  RAISE NOTICE 'Trigger handle_new_user executed for user: %', NEW.id;
+  RAISE NOTICE 'User metadata: %', NEW.raw_user_meta_data;
+  
+  -- Insert profile with proper error handling
   INSERT INTO public.profiles (user_id, full_name, user_type, phone)
   VALUES (
     NEW.id, 
-    NEW.raw_user_meta_data->>'full_name', 
+    COALESCE(NEW.raw_user_meta_data->>'full_name', 'Unknown'),
     COALESCE(NEW.raw_user_meta_data->>'user_type', 'customer'),
     NEW.raw_user_meta_data->>'phone'
   );
+  
+  RAISE NOTICE 'Profile created successfully for user: %', NEW.id;
   RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Error creating profile for user %: %', NEW.id, SQLERRM;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

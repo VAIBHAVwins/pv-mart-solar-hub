@@ -3,6 +3,7 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { validation, sanitize, validationMessages } from '@/lib/validation';
 import { supabase } from '@/integrations/supabase/client';
+import { debugCustomerRegistration } from '@/lib/debug';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -101,16 +102,28 @@ export default function CustomerRegister() {
         }
       });
       
+      console.log('SignUp response:', { data, error });
+      console.log('User metadata being passed:', {
+        full_name: sanitize.html(form.name),
+        phone: sanitize.html(form.phone),
+        user_type: 'customer'
+      });
+      
       if (error) {
         console.error('SignUp error:', error);
         if (error.message.includes('User already registered')) {
           setError('An account with this email already exists. Please login instead.');
+        } else if (error.message.includes('Invalid email')) {
+          setError('Please enter a valid email address.');
+        } else if (error.message.includes('Password')) {
+          setError('Password must be at least 6 characters long.');
         } else {
           setError(`Registration failed: ${error.message}`);
         }
       } else {
         // Profile will be created automatically by trigger
         console.log('User registered successfully:', data.user?.id);
+        console.log('User data:', data.user);
 
         setSuccess('Account created successfully! Please verify your email with OTP.');
         setRegisteredEmail(form.email);
@@ -132,6 +145,11 @@ export default function CustomerRegister() {
     setShowOTP(false);
     setRegisteredEmail('');
     setSuccess('');
+  };
+
+  // Debug function - remove this in production
+  const handleDebug = async () => {
+    await debugCustomerRegistration();
   };
 
   if (showOTP) {
@@ -251,6 +269,15 @@ export default function CustomerRegister() {
               disabled={loading}
             >
               {loading ? 'Creating Account...' : 'Create Account'}
+            </Button>
+
+            {/* Debug button - remove in production */}
+            <Button
+              type="button"
+              onClick={handleDebug}
+              className="w-full mt-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold"
+            >
+              Debug Registration
             </Button>
           </form>
 
