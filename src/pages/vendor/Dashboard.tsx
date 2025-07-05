@@ -55,8 +55,7 @@ export default function VendorDashboard() {
             <h1 className="text-4xl font-extrabold mb-4 text-[#797a83] drop-shadow">Vendor Dashboard</h1>
             <p className="mb-6 text-[#4f4f56] text-lg">
               Welcome <span className="font-semibold text-[#b07e66]">
-                {profile?.full_name || user.email}
-                {profile?.company_name && ` from ${profile.company_name}`}
+                {profile?.full_name ? `${profile.full_name}${profile?.company_name ? ` from ${profile.company_name}` : ''}` : 'Vendor'}
               </span>
             </p>
             <div className="mb-8">

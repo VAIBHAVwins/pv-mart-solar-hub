@@ -10,7 +10,7 @@ import { locationData, getDistrictsByState, getDiscomsByState } from '@/lib/loca
 
 const CustomerRequirements = () => {
   const { user } = useSupabaseAuth();
-  const [profile, setProfile] = useState<{ full_name?: string; phone?: string } | null>(null);
+  const [profile, setProfile] = useState<{ full_name?: string } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     mobileNumber: '',
@@ -37,6 +37,7 @@ const CustomerRequirements = () => {
   const resultRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   let popupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Get available states, districts, and DISCOMs
   const states = locationData.map(state => state.name);
@@ -51,21 +52,32 @@ const CustomerRequirements = () => {
 
   const fetchProfile = async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from('profiles')
-      .select('full_name, phone')
-      .eq('user_id', user.id)
-      .single();
-    setProfile(data);
-    
-    // Pre-fill form with user data
-    if (data) {
-      setFormData(prev => ({
-        ...prev,
-        name: data.full_name || '',
-        email: user.email || '',
-        mobileNumber: data.phone || ''
-      }));
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching profile:', error);
+        // Continue without profile data
+        setProfile({ full_name: user.email || '' });
+      } else {
+        setProfile(data);
+        
+        // Pre-fill form with user data
+        if (data) {
+          setFormData(prev => ({
+            ...prev,
+            name: data.full_name || '',
+            email: user.email || ''
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Profile fetch error:', err);
+      setProfile({ full_name: user.email || '' });
     }
   };
 
@@ -92,41 +104,54 @@ const CustomerRequirements = () => {
     setLoading(true);
     setAnalysisResult(null);
     
-    // Store requirement in Supabase
-    if (user) {
-      await supabase.from('customer_requirements').insert({
-        customer_id: user.id,
-        customer_email: formData.email,
-        customer_name: formData.name,
-        customer_phone: formData.mobileNumber,
-        rooftop_area: formData.rooftopArea,
-        state: formData.state,
-        district: formData.district,
-        discom: formData.discom,
-        address: formData.address,
-        city: formData.city,
-        pincode: formData.pincode,
-        property_type: formData.propertyType,
-        roof_type: formData.roofType,
-        installation_type: formData.capacity as any,
-        system_type: 'on-grid' as any,
-        monthly_bill: Number(formData.monthlyBill),
-        timeline: formData.timeline,
-        budget_range: formData.budget,
-        additional_requirements: formData.additionalRequirements,
-      });
-    }
-    
-    // Simulate backend analysis (replace with real logic as needed)
-    setTimeout(() => {
-      const panelCount = Math.ceil(Number(formData.monthlyBill || 0) / 1000) || 5;
-      const estimatedAmount = panelCount * 35000;
-      setAnalysisResult({ panelCount, estimatedAmount });
-      setLoading(false);
+    try {
+      // Store requirement in Supabase
+      if (user) {
+        const { error: insertError } = await supabase.from('customer_requirements').insert({
+          customer_id: user.id,
+          customer_email: formData.email,
+          customer_name: formData.name,
+          customer_phone: formData.mobileNumber,
+          rooftop_area: formData.rooftopArea,
+          state: formData.state,
+          district: formData.district,
+          discom: formData.discom,
+          address: formData.address,
+          city: formData.city,
+          pincode: formData.pincode,
+          property_type: formData.propertyType,
+          roof_type: formData.roofType,
+          installation_type: formData.capacity as any,
+          system_type: 'on-grid' as any,
+          monthly_bill: Number(formData.monthlyBill),
+          timeline: formData.timeline,
+          budget_range: formData.budget,
+          additional_requirements: formData.additionalRequirements,
+        });
+
+        if (insertError) {
+          console.error('Error saving requirement:', insertError);
+          setError('Failed to save requirement. Please try again.');
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Simulate backend analysis (replace with real logic as needed)
       setTimeout(() => {
-        resultRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }, 2000);
+        const panelCount = Math.ceil(Number(formData.monthlyBill || 0) / 1000) || 5;
+        const estimatedAmount = panelCount * 35000;
+        setAnalysisResult({ panelCount, estimatedAmount });
+        setLoading(false);
+        setTimeout(() => {
+          resultRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }, 2000);
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      setError('An error occurred. Please try again.');
+      setLoading(false);
+    }
   };
 
   const handleConnectVendor = async () => {
@@ -160,6 +185,9 @@ const CustomerRequirements = () => {
 
         if (error) {
           console.error('Error saving requirement:', error);
+          setError('Failed to connect with vendors. Please try again.');
+          setShowPopup(false);
+          return;
         }
       }
       
@@ -171,6 +199,8 @@ const CustomerRequirements = () => {
       }, 5000);
     } catch (error) {
       console.error('Error connecting to vendors:', error);
+      setError('Failed to connect with vendors. Please try again.');
+      setShowPopup(false);
     }
   };
 
@@ -182,6 +212,12 @@ const CustomerRequirements = () => {
             <h1 className="text-3xl font-bold text-[#190a02] mb-2">Solar Requirements Form</h1>
             <p className="text-[#8b4a08]">Tell us about your solar needs to get accurate quotations</p>
           </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Personal Information */}

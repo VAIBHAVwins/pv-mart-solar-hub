@@ -110,17 +110,24 @@ export default function CustomerRegister() {
       } else {
         // Create profile with phone number
         if (data.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              user_id: data.user.id,
-              full_name: sanitize.html(form.name),
-              phone: sanitize.html(form.phone),
-              user_type: 'customer'
-            });
+          try {
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                user_id: data.user.id,
+                full_name: sanitize.html(form.name),
+                phone: sanitize.html(form.phone),
+                user_type: 'customer'
+              });
 
-          if (profileError) {
-            console.error('Profile creation error:', profileError);
+            if (profileError) {
+              console.error('Profile creation error:', profileError);
+              // Don't fail registration if profile creation fails
+              // The user can still verify their email and login
+            }
+          } catch (profileErr) {
+            console.error('Profile creation exception:', profileErr);
+            // Continue with registration even if profile creation fails
           }
         }
 
