@@ -91,15 +91,15 @@ export default function Home() {
               <button
                 type="button"
                 onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onClickHandler();
+                  e.preventDefault()
+                  e.stopPropagation()
+                  console.log('Previous arrow clicked')
+                  onClickHandler()
                 }}
-                title={label}
-                style={{ zIndex: 30, position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }}
-                className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 hover:bg-white/40 p-3 rounded-full text-white transition-all duration-300"
+                aria-label={label}
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft size={24} />
               </button>
             )
           }
@@ -108,22 +108,22 @@ export default function Home() {
               <button
                 type="button"
                 onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onClickHandler();
+                  e.preventDefault()
+                  e.stopPropagation()
+                  console.log('Next arrow clicked')
+                  onClickHandler()
                 }}
-                title={label}
-                style={{ zIndex: 30, position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)' }}
-                className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 hover:bg-white/40 p-3 rounded-full text-white transition-all duration-300"
+                aria-label={label}
               >
-                <ChevronRight className="w-6 h-6" />
+                <ChevronRight size={24} />
               </button>
             )
           }
           renderIndicator={(onClickHandler, isSelected, index, label) => (
             <li
               style={{ zIndex: 30, display: 'inline-block', margin: '0 4px' }}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${isSelected ? 'bg-solar-primary' : 'bg-white/50'}`}
+              className={`w-3 h-3 rounded-full transition-all duration-300 cursor-pointer ${isSelected ? 'bg-solar-primary' : 'bg-white/50'}`}
               onClick={onClickHandler}
               onKeyDown={onClickHandler}
               value={index}

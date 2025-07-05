@@ -158,45 +158,12 @@ const CustomerRequirements = () => {
     setShowPopup(true);
     
     try {
-      // Store the requirement in the database for vendors to see
-      if (user) {
-        const { error } = await supabase.from('customer_requirements').insert({
-          customer_id: user.id,
-          customer_email: formData.email,
-          customer_name: formData.name,
-          customer_phone: formData.mobileNumber,
-          rooftop_area: formData.rooftopArea,
-          state: formData.state,
-          district: formData.district,
-          discom: formData.discom,
-          address: formData.address,
-          city: formData.city,
-          pincode: formData.pincode,
-          property_type: formData.propertyType,
-          roof_type: formData.roofType,
-          installation_type: formData.capacity as any,
-          system_type: 'on-grid' as any,
-          monthly_bill: Number(formData.monthlyBill),
-          timeline: formData.timeline,
-          budget_range: formData.budget,
-          additional_requirements: formData.additionalRequirements,
-          status: 'active'
-        });
-
-        if (error) {
-          console.error('Error saving requirement:', error);
-          setError('Failed to connect with vendors. Please try again.');
-          setShowPopup(false);
-          return;
-        }
-      }
-      
       // Show success message
       setShowPopup(true);
       popupTimeoutRef.current = setTimeout(() => {
         setShowPopup(false);
-        navigate('/customer/dashboard');
-      }, 5000);
+        navigate('/');
+      }, 15000);
     } catch (error) {
       console.error('Error connecting to vendors:', error);
       setError('Failed to connect with vendors. Please try again.');
@@ -535,10 +502,10 @@ const CustomerRequirements = () => {
           {showPopup && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
               <div className="bg-white p-8 rounded-lg shadow-lg text-center">
-                <h3 className="text-2xl font-bold mb-4 text-[#8b4a08]">Requirement Submitted Successfully!</h3>
-                <p className="text-lg text-gray-700 mb-2">Your solar requirement has been shared with our verified vendors.</p>
-                <p className="text-sm text-gray-500 mb-4">Vendors will review your requirements and contact you with quotations.</p>
-                <p className="text-sm text-gray-500">You will be redirected to your dashboard shortly.</p>
+                <h3 className="text-2xl font-bold mb-4 text-[#8b4a08]">Thank You!</h3>
+                <p className="text-lg text-gray-700 mb-2">Thank you for showing your interest.</p>
+                <p className="text-sm text-gray-500 mb-4">Our team will contact you soon.</p>
+                <p className="text-sm text-gray-500">You will be redirected to homepage in 15 seconds.</p>
               </div>
             </div>
           )}

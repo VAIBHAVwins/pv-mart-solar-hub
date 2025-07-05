@@ -96,6 +96,7 @@ export default function CustomerRegister() {
       const { data, error } = await signUp(form.email, form.password, {
         data: {
           full_name: sanitize.html(form.name),
+          phone: sanitize.html(form.phone),
           user_type: 'customer'
         }
       });
@@ -108,28 +109,8 @@ export default function CustomerRegister() {
           setError(`Registration failed: ${error.message}`);
         }
       } else {
-        // Create profile with phone number
-        if (data.user) {
-          try {
-            const { error: profileError } = await supabase
-              .from('profiles')
-              .insert({
-                user_id: data.user.id,
-                full_name: sanitize.html(form.name),
-                phone: sanitize.html(form.phone),
-                user_type: 'customer'
-              });
-
-            if (profileError) {
-              console.error('Profile creation error:', profileError);
-              // Don't fail registration if profile creation fails
-              // The user can still verify their email and login
-            }
-          } catch (profileErr) {
-            console.error('Profile creation exception:', profileErr);
-            // Continue with registration even if profile creation fails
-          }
-        }
+        // Profile will be created automatically by trigger
+        console.log('User registered successfully:', data.user?.id);
 
         setSuccess('Account created successfully! Please verify your email with OTP.');
         setRegisteredEmail(form.email);

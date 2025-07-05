@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import CustomerRequirements from '@/pages/customer/Requirements'
 import { SupabaseAuthProvider } from '@/contexts/SupabaseAuthContext'
 import { supabase } from '@/integrations/supabase/client'
+import type { User, Session } from '@supabase/supabase-js'
 
 // Mock the Layout component
 vi.mock('@/components/layout/Layout', () => ({
@@ -16,6 +17,34 @@ vi.mock('react-router-dom', () => ({
   ...vi.importActual('react-router-dom'),
   useNavigate: () => mockNavigate,
 }))
+
+// Mock helper functions
+const createMockUser = (overrides = {}): User => ({
+  id: 'test-user-id',
+  email: 'test@example.com',
+  app_metadata: {},
+  user_metadata: {},
+  aud: 'authenticated',
+  created_at: '2024-01-01T00:00:00Z',
+  confirmed_at: '2024-01-01T00:00:00Z',
+  email_confirmed_at: '2024-01-01T00:00:00Z',
+  phone_confirmed_at: '2024-01-01T00:00:00Z',
+  last_sign_in_at: '2024-01-01T00:00:00Z',
+  role: 'authenticated',
+  updated_at: '2024-01-01T00:00:00Z',
+  identities: [],
+  factors: [],
+  ...overrides
+})
+
+const createMockSession = (user?: User): Session => ({
+  user: user || createMockUser(),
+  access_token: 'mock-access-token',
+  refresh_token: 'mock-refresh-token',
+  expires_in: 3600,
+  token_type: 'bearer',
+  expires_at: Date.now() / 1000 + 3600
+})
 
 const renderWithAuth = (component: React.ReactElement) => {
   return render(
@@ -31,16 +60,7 @@ describe('CustomerRequirements', () => {
     // Mock user session with proper User type
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { 
-        session: { 
-          user: { 
-            id: 'test-user-id', 
-            email: 'test@example.com',
-            app_metadata: {},
-            user_metadata: {},
-            aud: 'authenticated',
-            created_at: '2024-01-01T00:00:00Z'
-          } 
-        } 
+        session: createMockSession()
       },
       error: null,
     })
