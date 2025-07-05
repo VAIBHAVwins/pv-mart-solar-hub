@@ -95,3 +95,18 @@ CREATE TRIGGER on_auth_user_created_with_role
 AFTER INSERT ON auth.users
 FOR EACH ROW
 EXECUTE FUNCTION public.handle_new_user_with_role();
+
+-- Add new fields to customer_requirements table
+ALTER TABLE public.customer_requirements 
+ADD COLUMN IF NOT EXISTS customer_phone TEXT,
+ADD COLUMN IF NOT EXISTS rooftop_area TEXT,
+ADD COLUMN IF NOT EXISTS district TEXT,
+ADD COLUMN IF NOT EXISTS discom TEXT;
+
+-- Add phone field to profiles table if it doesn't exist
+ALTER TABLE public.profiles 
+ADD COLUMN IF NOT EXISTS phone TEXT;
+
+-- Update existing customer_requirements to have proper state field
+-- (assuming the existing state field is in the address, we'll keep it as is)
+-- The new state field will be used for the dropdown selection

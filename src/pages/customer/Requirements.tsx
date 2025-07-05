@@ -6,17 +6,24 @@ import Layout from '@/components/layout/Layout';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { locationData, getDistrictsByState, getDiscomsByState } from '@/lib/locationData';
 
 const CustomerRequirements = () => {
   const { user } = useSupabaseAuth();
-  const [profile, setProfile] = useState<{ full_name?: string } | null>(null);
+  const [profile, setProfile] = useState<{ full_name?: string; phone?: string } | null>(null);
   const [formData, setFormData] = useState({
+    name: '',
+    mobileNumber: '',
+    rooftopArea: '',
+    email: '',
+    state: '',
+    district: '',
+    discom: '',
     capacity: '',
     propertyType: '',
     roofType: '',
     address: '',
     city: '',
-    state: '',
     pincode: '',
     monthlyBill: '',
     timeline: '',
@@ -31,6 +38,11 @@ const CustomerRequirements = () => {
   const navigate = useNavigate();
   let popupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Get available states, districts, and DISCOMs
+  const states = locationData.map(state => state.name);
+  const districts = formData.state ? getDistrictsByState(formData.state) : [];
+  const discoms = formData.state ? getDiscomsByState(formData.state) : [];
+
   useEffect(() => {
     if (user) {
       fetchProfile();
@@ -41,43 +53,70 @@ const CustomerRequirements = () => {
     if (!user) return;
     const { data } = await supabase
       .from('profiles')
-      .select('full_name')
+      .select('full_name, phone')
       .eq('user_id', user.id)
       .single();
     setProfile(data);
+    
+    // Pre-fill form with user data
+    if (data) {
+      setFormData(prev => ({
+        ...prev,
+        name: data.full_name || '',
+        email: user.email || '',
+        mobileNumber: data.phone || ''
+      }));
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
     }));
+
+    // Reset dependent fields when state changes
+    if (name === 'state') {
+      setFormData(prev => ({
+        ...prev,
+        state: value,
+        district: '',
+        discom: ''
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setAnalysisResult(null);
+    
     // Store requirement in Supabase
     if (user) {
       await supabase.from('customer_requirements').insert({
         customer_id: user.id,
-        customer_email: user.email,
-        customer_name: profile?.full_name || user.email,
+        customer_email: formData.email,
+        customer_name: formData.name,
+        customer_phone: formData.mobileNumber,
+        rooftop_area: formData.rooftopArea,
+        state: formData.state,
+        district: formData.district,
+        discom: formData.discom,
         address: formData.address,
         city: formData.city,
-        state: formData.state,
         pincode: formData.pincode,
         property_type: formData.propertyType,
         roof_type: formData.roofType,
         installation_type: formData.capacity as any,
-        system_type: 'on-grid' as any, // or get from form if you add it
+        system_type: 'on-grid' as any,
         monthly_bill: Number(formData.monthlyBill),
         timeline: formData.timeline,
         budget_range: formData.budget,
         additional_requirements: formData.additionalRequirements,
       });
     }
+    
     // Simulate backend analysis (replace with real logic as needed)
     setTimeout(() => {
       const panelCount = Math.ceil(Number(formData.monthlyBill || 0) / 1000) || 5;
@@ -90,13 +129,49 @@ const CustomerRequirements = () => {
     }, 2000);
   };
 
-  const handleConnectVendor = () => {
-    window.open('https://docs.google.com/forms/d/e/1FAIpQLSdbuVmhwpsO4LYaUv4v9TDKPL_FxPBNAOquU6SLUhnf72NuWQ/viewform', '_blank');
+  const handleConnectVendor = async () => {
     setShowPopup(true);
-    popupTimeoutRef.current = setTimeout(() => {
-      setShowPopup(false);
-      navigate('/');
-    }, 15000);
+    
+    try {
+      // Store the requirement in the database for vendors to see
+      if (user) {
+        const { error } = await supabase.from('customer_requirements').insert({
+          customer_id: user.id,
+          customer_email: formData.email,
+          customer_name: formData.name,
+          customer_phone: formData.mobileNumber,
+          rooftop_area: formData.rooftopArea,
+          state: formData.state,
+          district: formData.district,
+          discom: formData.discom,
+          address: formData.address,
+          city: formData.city,
+          pincode: formData.pincode,
+          property_type: formData.propertyType,
+          roof_type: formData.roofType,
+          installation_type: formData.capacity as any,
+          system_type: 'on-grid' as any,
+          monthly_bill: Number(formData.monthlyBill),
+          timeline: formData.timeline,
+          budget_range: formData.budget,
+          additional_requirements: formData.additionalRequirements,
+          status: 'active'
+        });
+
+        if (error) {
+          console.error('Error saving requirement:', error);
+        }
+      }
+      
+      // Show success message
+      setShowPopup(true);
+      popupTimeoutRef.current = setTimeout(() => {
+        setShowPopup(false);
+        navigate('/customer/dashboard');
+      }, 5000);
+    } catch (error) {
+      console.error('Error connecting to vendors:', error);
+    }
   };
 
   return (
@@ -109,6 +184,117 @@ const CustomerRequirements = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Personal Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="name" className="text-[#190a02] font-semibold">Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="mt-2 border-[#8b4a08] focus:border-[#fecb00]"
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="mobileNumber" className="text-[#190a02] font-semibold">Consumer Mobile Number</Label>
+                <Input
+                  id="mobileNumber"
+                  name="mobileNumber"
+                  value={formData.mobileNumber}
+                  onChange={handleChange}
+                  className="mt-2 border-[#8b4a08] focus:border-[#fecb00]"
+                  placeholder="Enter mobile number"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="rooftopArea" className="text-[#190a02] font-semibold">Rooftop Area (sq ft)</Label>
+                <Input
+                  id="rooftopArea"
+                  name="rooftopArea"
+                  type="number"
+                  value={formData.rooftopArea}
+                  onChange={handleChange}
+                  className="mt-2 border-[#8b4a08] focus:border-[#fecb00]"
+                  placeholder="Enter rooftop area"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="email" className="text-[#190a02] font-semibold">Email ID</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="mt-2 border-[#8b4a08] focus:border-[#fecb00]"
+                  placeholder="Enter email address"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Location Dropdowns */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <Label htmlFor="state" className="text-[#190a02] font-semibold">State</Label>
+                <select
+                  id="state"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  className="mt-2 w-full p-3 border border-[#8b4a08] rounded-md focus:border-[#fecb00] focus:outline-none"
+                  required
+                >
+                  <option value="">Select state</option>
+                  {states.map(state => (
+                    <option key={state} value={state}>{state}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="district" className="text-[#190a02] font-semibold">District</Label>
+                <select
+                  id="district"
+                  name="district"
+                  value={formData.district}
+                  onChange={handleChange}
+                  className="mt-2 w-full p-3 border border-[#8b4a08] rounded-md focus:border-[#fecb00] focus:outline-none"
+                  required
+                  disabled={!formData.state}
+                >
+                  <option value="">Select district</option>
+                  {districts.map(district => (
+                    <option key={district} value={district}>{district}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="discom" className="text-[#190a02] font-semibold">DISCOM (Electricity Board)</Label>
+                <select
+                  id="discom"
+                  name="discom"
+                  value={formData.discom}
+                  onChange={handleChange}
+                  className="mt-2 w-full p-3 border border-[#8b4a08] rounded-md focus:border-[#fecb00] focus:outline-none"
+                  required
+                  disabled={!formData.state}
+                >
+                  <option value="">Select DISCOM</option>
+                  {discoms.map(discom => (
+                    <option key={discom} value={discom}>{discom}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             {/* Solar Capacity */}
             <div>
               <Label htmlFor="capacity" className="text-[#190a02] text-lg font-semibold">Solar System Capacity</Label>
@@ -165,9 +351,9 @@ const CustomerRequirements = () => {
               </div>
             </div>
 
-            {/* Location */}
+            {/* Address */}
             <div>
-              <Label className="text-[#190a02] text-lg font-semibold">Installation Location</Label>
+              <Label className="text-[#190a02] text-lg font-semibold">Installation Address</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                 <Input
                   name="address"
@@ -182,14 +368,6 @@ const CustomerRequirements = () => {
                   value={formData.city}
                   onChange={handleChange}
                   placeholder="City"
-                  className="border-[#8b4a08] focus:border-[#fecb00]"
-                  required
-                />
-                <Input
-                  name="state"
-                  value={formData.state}
-                  onChange={handleChange}
-                  placeholder="State"
                   className="border-[#8b4a08] focus:border-[#fecb00]"
                   required
                 />
@@ -288,12 +466,18 @@ const CustomerRequirements = () => {
           {analysisResult && (
             <div ref={resultRef} className="mt-10 p-6 bg-yellow-50 rounded-lg shadow-inner text-center">
               <h2 className="text-xl font-bold text-[#8b4a08] mb-2">Analysis Result</h2>
-              <p className="text-lg mb-2">Welcome <span className="font-bold text-[#3d1604]">{profile?.full_name || user?.email}</span></p>
-              <p className="text-lg mb-2">Email: <span className="font-bold text-[#3d1604]">{user?.email}</span></p>
+              <p className="text-lg mb-2">Welcome <span className="font-bold text-[#3d1604]">{formData.name || profile?.full_name || user?.email}</span></p>
+              <p className="text-lg mb-2">Email: <span className="font-bold text-[#3d1604]">{formData.email || user?.email}</span></p>
               <div className="my-4 text-left max-w-xl mx-auto">
                 <h3 className="font-semibold text-[#8b4a08] mb-2">Your Requirement Details:</h3>
                 <ul className="text-[#3d1604] text-base space-y-1">
-                  <li><b>Address:</b> {formData.address}, {formData.city}, {formData.state} - {formData.pincode}</li>
+                  <li><b>Name:</b> {formData.name}</li>
+                  <li><b>Mobile:</b> {formData.mobileNumber}</li>
+                  <li><b>Rooftop Area:</b> {formData.rooftopArea} sq ft</li>
+                  <li><b>State:</b> {formData.state}</li>
+                  <li><b>District:</b> {formData.district}</li>
+                  <li><b>DISCOM:</b> {formData.discom}</li>
+                  <li><b>Address:</b> {formData.address}, {formData.city} - {formData.pincode}</li>
                   <li><b>Property Type:</b> {formData.propertyType}</li>
                   <li><b>Roof Type:</b> {formData.roofType}</li>
                   <li><b>Capacity:</b> {formData.capacity}</li>
@@ -310,13 +494,15 @@ const CustomerRequirements = () => {
               </Button>
             </div>
           )}
+          
           {/* Popup Message */}
           {showPopup && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
               <div className="bg-white p-8 rounded-lg shadow-lg text-center">
-                <h3 className="text-2xl font-bold mb-4 text-[#8b4a08]">Thank you for showing your interest</h3>
-                <p className="text-lg text-gray-700 mb-2">Our team will contact you soon.</p>
-                <p className="text-sm text-gray-500">You will be redirected to the homepage shortly.</p>
+                <h3 className="text-2xl font-bold mb-4 text-[#8b4a08]">Requirement Submitted Successfully!</h3>
+                <p className="text-lg text-gray-700 mb-2">Your solar requirement has been shared with our verified vendors.</p>
+                <p className="text-sm text-gray-500 mb-4">Vendors will review your requirements and contact you with quotations.</p>
+                <p className="text-sm text-gray-500">You will be redirected to your dashboard shortly.</p>
               </div>
             </div>
           )}
