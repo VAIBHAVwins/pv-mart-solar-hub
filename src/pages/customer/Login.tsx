@@ -1,103 +1,128 @@
 
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Layout from '@/components/layout/Layout';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 const CustomerLogin = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { signIn } = useSupabaseAuth();
+  const { signIn, user } = useSupabaseAuth();
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      // Check if user came from installation flow
+      const installationType = sessionStorage.getItem('selectedInstallationType');
+      const gridType = sessionStorage.getItem('selectedGridType');
+      
+      if (installationType && gridType) {
+        // Clear the session storage
+        sessionStorage.removeItem('selectedInstallationType');
+        sessionStorage.removeItem('selectedGridType');
+        // Redirect to requirements form
+        navigate('/customer/requirements');
+      } else {
+        // Regular login, go to dashboard
+        navigate('/customer/dashboard');
+      }
+    }
+  }, [user, navigate]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+    setLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
-      if (error) {
-        setError('Failed to login. Please check your credentials.');
-        console.error('Login error:', error);
-      } else {
-        navigate('/customer/dashboard');
+      const { error: signInError } = await signIn(formData.email, formData.password);
+      
+      if (signInError) {
+        if (signInError.message.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please check your credentials.');
+        } else if (signInError.message.includes('Email not confirmed')) {
+          setError('Please check your email and click the confirmation link before signing in.');
+        } else {
+          setError(`Login failed: ${signInError.message}`);
+        }
+        return;
       }
-    } catch (error) {
-      setError('Failed to login. Please check your credentials.');
-      console.error('Login error:', error);
+      
+      // Success case is handled by useEffect above
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Layout className="bg-gradient-to-br from-[#fecb00] to-[#f8b200] min-h-screen">
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#190a02] mb-2">Customer Login</h1>
-            <p className="text-[#8b4a08]">Access your solar requirements and quotations</p>
-          </div>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
-            </div>
-          )}
-
+    <Layout>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-jonquil py-16 px-4">
+        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
+          <h1 className="text-4xl font-extrabold mb-6 text-center text-licorice drop-shadow">Customer Login</h1>
+          <p className="text-brown mb-8 text-center">Sign in to access your solar dashboard</p>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <Label htmlFor="email" className="text-[#190a02]">Email Address</Label>
+              <Label htmlFor="email" className="text-licorice">Email Address</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 border-[#8b4a08] focus:border-[#fecb00]"
+                value={formData.email}
+                onChange={handleChange}
+                className="mt-1 border-brown focus:border-licorice"
                 placeholder="Enter your email"
                 required
-                disabled={loading}
               />
             </div>
-
             <div>
-              <Label htmlFor="password" className="text-[#190a02]">Password</Label>
+              <Label htmlFor="password" className="text-licorice">Password</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 border-[#8b4a08] focus:border-[#fecb00]"
+                value={formData.password}
+                onChange={handleChange}
+                className="mt-1 border-brown focus:border-licorice"
                 placeholder="Enter your password"
                 required
-                disabled={loading}
               />
             </div>
-
-            <Button 
-              type="submit" 
-              className="w-full bg-[#fecb00] hover:bg-[#f8b200] text-[#190a02] font-semibold"
+            {error && <div className="text-red-600 font-semibold text-center">{error}</div>}
+            <Button
+              type="submit"
+              className="w-full bg-brown text-white py-3 rounded-lg font-bold hover:bg-licorice shadow-md transition"
               disabled={loading}
             >
-              {loading ? 'Signing In...' : 'Sign In'}
+              {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-
           <div className="mt-6 text-center">
-            <p className="text-[#8b4a08] mb-2">
+            <p className="text-brown mb-2">
               Don't have an account?{' '}
-              <Link to="/customer/register" className="text-[#0895c6] hover:underline font-semibold">
+              <Link to="/customer/register" className="text-licorice hover:underline font-semibold">
                 Sign up here
               </Link>
             </p>
-            <Link to="/customer/forgot-password" className="text-[#8b4a08] hover:underline text-sm">
-              Forgot your password?
+            <Link to="/" className="text-brown hover:underline">
+              ← Back to Home
             </Link>
           </div>
         </div>

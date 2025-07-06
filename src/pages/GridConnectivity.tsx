@@ -1,3 +1,4 @@
+
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
@@ -10,6 +11,12 @@ export default function GridConnectivity() {
 
   const handleNonResidentialOnGrid = () => {
     setShowMaintenanceModal(true);
+  };
+
+  const handleResidentialSelection = (gridType: string) => {
+    // Store the selection in sessionStorage for the customer login to access
+    sessionStorage.setItem('selectedInstallationType', installationType);
+    sessionStorage.setItem('selectedGridType', gridType);
   };
 
   const MaintenanceModal = () => (
@@ -68,7 +75,7 @@ export default function GridConnectivity() {
                   <li>• Sell excess energy</li>
                 </ul>
                 {installationType === 'residential' ? (
-                  <Link to="/customer/login">
+                  <Link to="/customer/login" onClick={() => handleResidentialSelection('on-grid')}>
                     <Button className="w-full bg-cornflower_blue text-white hover:bg-cornflower_blue-600 font-semibold">
                       Choose On-Grid
                     </Button>
@@ -104,7 +111,7 @@ export default function GridConnectivity() {
                   <li>• No grid dependency</li>
                 </ul>
                 {installationType === 'residential' ? (
-                  <Link to="/customer/login">
+                  <Link to="/customer/login" onClick={() => handleResidentialSelection('off-grid')}>
                     <Button className="w-full bg-cornflower_blue text-white hover:bg-cornflower_blue-600 font-semibold">
                       Choose Off-Grid
                     </Button>
@@ -140,7 +147,7 @@ export default function GridConnectivity() {
                   <li>• Maximum reliability</li>
                 </ul>
                 {installationType === 'residential' ? (
-                  <Link to="/customer/login">
+                  <Link to="/customer/login" onClick={() => handleResidentialSelection('hybrid')}>
                     <Button className="w-full bg-cornflower_blue text-white hover:bg-cornflower_blue-600 font-semibold">
                       Choose Hybrid
                     </Button>

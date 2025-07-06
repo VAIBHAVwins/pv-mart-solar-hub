@@ -1,3 +1,4 @@
+
 // ENHANCED BY CURSOR AI: Vendor Dashboard with proper navigation
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -27,13 +28,17 @@ export default function VendorDashboard() {
   const fetchProfile = async () => {
     if (!user) return;
     
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('full_name, company_name')
       .eq('user_id', user.id)
       .single();
     
-    setProfile(data);
+    if (error) {
+      console.error('Error fetching profile:', error);
+    } else {
+      setProfile(data);
+    }
   };
 
   if (loading) return <div className="text-center py-20">Loading...</div>;
@@ -47,6 +52,21 @@ export default function VendorDashboard() {
     navigate('/vendor/supabase-quotation');
   };
 
+  // Create proper welcome message format
+  const getWelcomeMessage = () => {
+    if (!profile) return 'Vendor';
+    
+    const contactPerson = profile.full_name || 'Vendor';
+    const companyName = profile.company_name;
+    
+    if (contactPerson && companyName) {
+      return `${contactPerson} from ${companyName}`;
+    } else if (contactPerson) {
+      return contactPerson;
+    }
+    return 'Vendor';
+  };
+
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-[#797a83] to-[#4f4f56] py-16 px-4">
@@ -55,7 +75,7 @@ export default function VendorDashboard() {
             <h1 className="text-4xl font-extrabold mb-4 text-[#797a83] drop-shadow">Vendor Dashboard</h1>
             <p className="mb-6 text-[#4f4f56] text-lg">
               Welcome <span className="font-semibold text-[#b07e66]">
-                {profile?.full_name ? `${profile.full_name}${profile?.company_name ? ` from ${profile.company_name}` : ''}` : 'Vendor'}
+                {getWelcomeMessage()}
               </span>
             </p>
             <div className="mb-8">
