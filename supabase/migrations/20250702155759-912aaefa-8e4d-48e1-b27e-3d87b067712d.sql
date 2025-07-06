@@ -4,6 +4,7 @@ CREATE TABLE public.profiles (
   user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT,
   company_name TEXT,
+  phone TEXT,
   user_type TEXT CHECK (user_type IN ('customer', 'vendor')),
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()

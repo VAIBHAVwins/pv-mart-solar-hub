@@ -20,6 +20,7 @@ import InstallationType from './pages/InstallationType';
 import GridConnectivity from './pages/GridConnectivity';
 import Blogs from './pages/Blogs';
 import BlogDetail from './pages/BlogDetail';
+import DatabaseFix from './pages/DatabaseFix';
 
 export default function App() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/game" element={<Game />} />
+          <Route path="/database-fix" element={<DatabaseFix />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

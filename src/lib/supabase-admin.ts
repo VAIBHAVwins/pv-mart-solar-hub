@@ -1,12 +1,22 @@
-
-import { supabase } from '@/integrations/supabase/client';
+import { createClient } from '@supabase/supabase-js';
 import type { TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+
+const SUPABASE_URL = "https://lkalcafckgyilasikfml.supabase.co";
+const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrYWxjYWZja2d5aWxhc2lrZm1sIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTIyNTM5MywiZXhwIjoyMDY2ODAxMzkzfQ.dzvT7IwJq4FSscdQ-brXe1e-SDY6CKvZvkaDol-xscM";
+
+// Admin client with service role key for database operations
+export const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
 
 // Customer Requirements Management
 export const customerRequirementsService = {
   // Get all customer requirements
   async getAll() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('customer_requirements')
       .select('*')
       .order('created_at', { ascending: false });
@@ -17,7 +27,7 @@ export const customerRequirementsService = {
 
   // Get customer requirement by ID
   async getById(id: string) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('customer_requirements')
       .select('*')
       .eq('id', id)
@@ -29,7 +39,7 @@ export const customerRequirementsService = {
 
   // Create new customer requirement
   async create(requirement: TablesInsert<'customer_requirements'>) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('customer_requirements')
       .insert(requirement)
       .select()
@@ -41,7 +51,7 @@ export const customerRequirementsService = {
 
   // Update customer requirement
   async update(id: string, updates: TablesUpdate<'customer_requirements'>) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('customer_requirements')
       .update(updates)
       .eq('id', id)
@@ -54,7 +64,7 @@ export const customerRequirementsService = {
 
   // Delete customer requirement
   async delete(id: string) {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('customer_requirements')
       .delete()
       .eq('id', id);
@@ -67,7 +77,7 @@ export const customerRequirementsService = {
 export const vendorQuotationsService = {
   // Get all vendor quotations
   async getAll() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('vendor_quotations')
       .select('*')
       .order('created_at', { ascending: false });
@@ -78,7 +88,7 @@ export const vendorQuotationsService = {
 
   // Get vendor quotation by ID
   async getById(id: string) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('vendor_quotations')
       .select('*')
       .eq('id', id)
@@ -90,7 +100,7 @@ export const vendorQuotationsService = {
 
   // Create new vendor quotation
   async create(quotation: TablesInsert<'vendor_quotations'>) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('vendor_quotations')
       .insert(quotation)
       .select()
@@ -102,7 +112,7 @@ export const vendorQuotationsService = {
 
   // Update vendor quotation
   async update(id: string, updates: TablesUpdate<'vendor_quotations'>) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('vendor_quotations')
       .update(updates)
       .eq('id', id)
@@ -115,7 +125,7 @@ export const vendorQuotationsService = {
 
   // Delete vendor quotation
   async delete(id: string) {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('vendor_quotations')
       .delete()
       .eq('id', id);
@@ -128,7 +138,7 @@ export const vendorQuotationsService = {
 export const quotationComponentsService = {
   // Get components for a quotation
   async getByQuotationId(quotationId: string) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('quotation_components')
       .select('*')
       .eq('quotation_id', quotationId)
@@ -140,7 +150,7 @@ export const quotationComponentsService = {
 
   // Create new quotation component
   async create(component: TablesInsert<'quotation_components'>) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('quotation_components')
       .insert(component)
       .select()
@@ -152,7 +162,7 @@ export const quotationComponentsService = {
 
   // Update quotation component
   async update(id: string, updates: TablesUpdate<'quotation_components'>) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('quotation_components')
       .update(updates)
       .eq('id', id)
@@ -165,7 +175,7 @@ export const quotationComponentsService = {
 
   // Delete quotation component
   async delete(id: string) {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('quotation_components')
       .delete()
       .eq('id', id);
