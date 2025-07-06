@@ -1,9 +1,9 @@
+
 import { useState } from 'react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { validation, sanitize, validationMessages } from '@/lib/validation';
 import { supabase } from '@/integrations/supabase/client';
-import { debugCustomerRegistration } from '@/lib/debug';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,20 +30,17 @@ export default function CustomerRegister() {
     const { name, value } = e.target;
     let sanitizedValue = value;
     
-    // Sanitize input based on field type
     if (name === 'phone') {
       sanitizedValue = sanitize.phone(value);
     } else {
       sanitizedValue = sanitize.text(value);
     }
     
-    // Prevent script injection
     if (!validation.noScriptTags(sanitizedValue)) {
       return;
     }
     
     setForm({ ...form, [name]: sanitizedValue });
-    // Clear error when user starts typing
     if (error) setError('');
   };
 
@@ -92,7 +89,11 @@ export default function CustomerRegister() {
 
     setLoading(true);
     try {
-      console.log('Attempting to sign up with:', { email: form.email, name: form.name });
+      console.log('Attempting customer registration with:', { 
+        email: form.email, 
+        name: form.name,
+        phone: form.phone 
+      });
       
       const { data, error } = await signUp(form.email, form.password, {
         data: {
@@ -102,7 +103,7 @@ export default function CustomerRegister() {
         }
       });
       
-      console.log('SignUp response:', { data, error });
+      console.log('Customer signup response:', { data, error });
       console.log('User metadata being passed:', {
         full_name: sanitize.html(form.name),
         phone: sanitize.html(form.phone),
@@ -110,7 +111,7 @@ export default function CustomerRegister() {
       });
       
       if (error) {
-        console.error('SignUp error:', error);
+        console.error('Customer signup error:', error);
         if (error.message.includes('User already registered')) {
           setError('An account with this email already exists. Please login instead.');
         } else if (error.message.includes('Invalid email')) {
@@ -121,8 +122,7 @@ export default function CustomerRegister() {
           setError(`Registration failed: ${error.message}`);
         }
       } else {
-        // Profile will be created automatically by trigger
-        console.log('User registered successfully:', data.user?.id);
+        console.log('Customer registered successfully:', data.user?.id);
         console.log('User data:', data.user);
 
         setSuccess('Account created successfully! Please verify your email with OTP.');
@@ -130,7 +130,7 @@ export default function CustomerRegister() {
         setShowOTP(true);
       }
     } catch (err: any) {
-      console.error('Registration error:', err);
+      console.error('Customer registration error:', err);
       setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);
@@ -145,11 +145,6 @@ export default function CustomerRegister() {
     setShowOTP(false);
     setRegisteredEmail('');
     setSuccess('');
-  };
-
-  // Debug function - remove this in production
-  const handleDebug = async () => {
-    await debugCustomerRegistration();
   };
 
   if (showOTP) {
@@ -269,15 +264,6 @@ export default function CustomerRegister() {
               disabled={loading}
             >
               {loading ? 'Creating Account...' : 'Create Account'}
-            </Button>
-
-            {/* Debug button - remove in production */}
-            <Button
-              type="button"
-              onClick={handleDebug}
-              className="w-full mt-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold"
-            >
-              Debug Registration
             </Button>
           </form>
 

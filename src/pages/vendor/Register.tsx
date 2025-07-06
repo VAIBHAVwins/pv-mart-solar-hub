@@ -1,3 +1,4 @@
+
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +9,6 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { validation, sanitize, validationMessages } from '@/lib/validation';
 
-// CURSOR AI: Modern, professional Vendor Registration redesign with vendor color palette and UI patterns
 const VendorRegister = () => {
   const { signUp } = useSupabaseAuth();
   const [formData, setFormData] = useState({
@@ -31,14 +31,12 @@ const VendorRegister = () => {
     const { name, value } = e.target;
     let sanitizedValue = value;
     
-    // Sanitize input based on field type
     if (name === 'phone') {
       sanitizedValue = sanitize.phone(value);
     } else {
       sanitizedValue = sanitize.text(value);
     }
     
-    // Prevent script injection
     if (!validation.noScriptTags(sanitizedValue)) {
       return;
     }
@@ -108,26 +106,37 @@ const VendorRegister = () => {
 
     setLoading(true);
     try {
-      const { error: signUpError } = await signUp(formData.email, formData.password, {
+      console.log('Attempting vendor registration with:', {
+        email: formData.email,
+        contactPerson: formData.contactPerson,
+        companyName: formData.companyName
+      });
+
+      const { data, error: signUpError } = await signUp(formData.email, formData.password, {
         data: {
           full_name: sanitize.html(formData.contactPerson),
           company_name: sanitize.html(formData.companyName),
+          phone: sanitize.html(formData.phone),
           user_type: 'vendor'
         }
       });
       
+      console.log('Vendor signup response:', { data, error: signUpError });
+      
       if (signUpError) {
+        console.error('Vendor signup error:', signUpError);
         if (signUpError.message.includes('User already registered')) {
           setError('An account with this email already exists. Please login instead.');
         } else {
-          setError('Registration failed. Please try again.');
+          setError(`Registration failed: ${signUpError.message}`);
         }
         return;
       }
       
+      console.log('Vendor registered successfully:', data.user?.id);
       setSuccess('Registration successful! Please check your email to verify your account.');
     } catch (err: unknown) {
-      console.error('Registration error:', err);
+      console.error('Vendor registration error:', err);
       setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);
@@ -283,6 +292,14 @@ const VendorRegister = () => {
               {loading ? 'Registering...' : 'Register'}
             </Button>
           </form>
+          <div className="mt-6 text-center">
+            <p className="text-[#4f4f56] mb-2">
+              Already have an account?{' '}
+              <Link to="/vendor/login" className="text-[#797a83] hover:underline font-semibold">
+                Sign in here
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </Layout>

@@ -20,12 +20,15 @@ export type Database = {
           customer_id: string
           customer_name: string
           customer_phone: string | null
+          discom: string | null
+          district: string | null
           id: string
           installation_type: Database["public"]["Enums"]["installation_type"]
           monthly_bill: number | null
           pincode: string
           property_type: string
           roof_type: string
+          rooftop_area: string | null
           state: string
           status: string | null
           system_type: Database["public"]["Enums"]["system_type"]
@@ -42,12 +45,15 @@ export type Database = {
           customer_id: string
           customer_name: string
           customer_phone?: string | null
+          discom?: string | null
+          district?: string | null
           id?: string
           installation_type: Database["public"]["Enums"]["installation_type"]
           monthly_bill?: number | null
           pincode: string
           property_type: string
           roof_type: string
+          rooftop_area?: string | null
           state: string
           status?: string | null
           system_type: Database["public"]["Enums"]["system_type"]
@@ -64,12 +70,15 @@ export type Database = {
           customer_id?: string
           customer_name?: string
           customer_phone?: string | null
+          discom?: string | null
+          district?: string | null
           id?: string
           installation_type?: Database["public"]["Enums"]["installation_type"]
           monthly_bill?: number | null
           pincode?: string
           property_type?: string
           roof_type?: string
+          rooftop_area?: string | null
           state?: string
           status?: string | null
           system_type?: Database["public"]["Enums"]["system_type"]

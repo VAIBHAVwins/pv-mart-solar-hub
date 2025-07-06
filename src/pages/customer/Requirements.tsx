@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,12 +62,10 @@ const CustomerRequirements = () => {
       
       if (error) {
         console.error('Error fetching profile:', error);
-        // Continue without profile data
         setProfile({ full_name: user.email || '' });
       } else {
         setProfile(data);
         
-        // Pre-fill form with user data
         if (data) {
           setFormData(prev => ({
             ...prev,
@@ -88,7 +87,6 @@ const CustomerRequirements = () => {
       [name]: value
     }));
 
-    // Reset dependent fields when state changes
     if (name === 'state') {
       setFormData(prev => ({
         ...prev,
@@ -103,10 +101,32 @@ const CustomerRequirements = () => {
     e.preventDefault();
     setLoading(true);
     setAnalysisResult(null);
+    setError(null);
     
     try {
-      // Store requirement in Supabase
       if (user) {
+        console.log('Submitting requirement with data:', {
+          customer_id: user.id,
+          customer_email: formData.email,
+          customer_name: formData.name,
+          customer_phone: formData.mobileNumber,
+          rooftop_area: formData.rooftopArea,
+          state: formData.state,
+          district: formData.district,
+          discom: formData.discom,
+          address: formData.address,
+          city: formData.city,
+          pincode: formData.pincode,
+          property_type: formData.propertyType,
+          roof_type: formData.roofType,
+          installation_type: formData.capacity,
+          system_type: 'on-grid',
+          monthly_bill: Number(formData.monthlyBill),
+          timeline: formData.timeline,
+          budget_range: formData.budget,
+          additional_requirements: formData.additionalRequirements,
+        });
+
         const { error: insertError } = await supabase.from('customer_requirements').insert({
           customer_id: user.id,
           customer_email: formData.email,
@@ -135,9 +155,10 @@ const CustomerRequirements = () => {
           setLoading(false);
           return;
         }
+
+        console.log('Requirement saved successfully');
       }
       
-      // Simulate backend analysis (replace with real logic as needed)
       setTimeout(() => {
         const panelCount = Math.ceil(Number(formData.monthlyBill || 0) / 1000) || 5;
         const estimatedAmount = panelCount * 35000;
@@ -158,7 +179,6 @@ const CustomerRequirements = () => {
     setShowPopup(true);
     
     try {
-      // Show success message
       setShowPopup(true);
       popupTimeoutRef.current = setTimeout(() => {
         setShowPopup(false);
