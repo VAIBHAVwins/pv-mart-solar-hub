@@ -19,9 +19,10 @@ jobs:
           set -e
           # Fetch latest release tag from GitHub API
           LATEST=$(curl --silent "https://api.github.com/repos/supabase/cli/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-          # Download the Linux AMD64 tarball
-          curl -L "https://github.com/supabase/cli/releases/download/${LATEST}/supabase-cli-linux-amd64.tar.gz" -o supabase.tar.gz
-          # Extract and move to /usr/local/bin
+          # Use the correct asset name for the release
+          ASSET_URL="https://github.com/supabase/cli/releases/download/${LATEST}/supabase_linux_amd64.tar.gz"
+          # Download and extract
+          curl -L --fail "${ASSET_URL}" -o supabase.tar.gz
           tar -xzf supabase.tar.gz
           chmod +x supabase
           sudo mv supabase /usr/local/bin/supabase
