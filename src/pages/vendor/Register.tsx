@@ -6,9 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { validation, sanitize, validationMessages } from '@/lib/validation';
-import { debugCustomerRegistration } from '@/lib/debug';
 
 const VendorRegister = () => {
   const { signUp } = useSupabaseAuth();
@@ -126,14 +124,18 @@ const VendorRegister = () => {
       
       if (signUpError) {
         console.error('Vendor SignUp error:', signUpError);
-        if (signUpError.message.includes('User already registered')) {
+        
+        // Handle specific error types
+        if (signUpError.message.includes('User already registered') || signUpError.message.includes('already registered')) {
           setError('An account with this email already exists. Please login instead.');
-        } else if (signUpError.message.includes('Database error')) {
-          setError('Registration failed due to database error. Please try again or contact support.');
-        } else if (signUpError.message.includes('Invalid email')) {
+        } else if (signUpError.message.includes('Invalid email') || signUpError.message.includes('invalid email')) {
           setError('Please enter a valid email address.');
-        } else if (signUpError.message.includes('Password')) {
+        } else if (signUpError.message.includes('Password') || signUpError.message.includes('password')) {
           setError('Password must be at least 6 characters long.');
+        } else if (signUpError.message.includes('duplicate key') || signUpError.message.includes('constraint')) {
+          setError('Account creation failed. Please try again or contact support if the issue persists.');
+        } else if (signUpError.message.includes('Database error') || signUpError.message.includes('database')) {
+          setError('Registration temporarily unavailable. Please try again in a few moments.');
         } else {
           setError(`Registration failed: ${signUpError.message}`);
         }
@@ -148,11 +150,6 @@ const VendorRegister = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Debug function - remove this in production
-  const handleDebug = async () => {
-    await debugCustomerRegistration();
   };
 
   return (
@@ -302,15 +299,6 @@ const VendorRegister = () => {
               disabled={loading}
             >
               {loading ? 'Registering...' : 'Register'}
-            </Button>
-
-            {/* Debug button - remove in production */}
-            <Button
-              type="button"
-              onClick={handleDebug}
-              className="w-full mt-2 bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-lg font-bold shadow-md transition"
-            >
-              Debug Registration
             </Button>
           </form>
           <div className="mt-6 text-center">
