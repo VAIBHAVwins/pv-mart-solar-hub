@@ -23,6 +23,7 @@ jobs:
           ASSET_URL="https://github.com/supabase/cli/releases/download/${LATEST}/supabase_linux_amd64.tar.gz"
           # Download and extract
           curl -L --fail "${ASSET_URL}" -o supabase.tar.gz
+          rm -rf supabase
           tar -xzf supabase.tar.gz
           chmod +x supabase
           sudo mv supabase /usr/local/bin/supabase
