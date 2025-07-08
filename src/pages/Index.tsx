@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
@@ -6,31 +7,49 @@ import { ChevronLeft, ChevronRight, ArrowRight, CheckCircle, Users, Award, MapPi
 import Footer from '@/components/common/Footer';
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from 'react-responsive-carousel';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Banner {
+  id?: string;
+  title: string;
+  subtitle?: string;
+  description: string;
+  image_url: string;
+  cta_text: string;
+  cta_link: string;
+}
 
 export default function Home() {
   const [currentBanner, setCurrentBanner] = useState(0);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   
-  const banners = [
+  // Static fallback banners (existing ones)
+  const staticBanners: Banner[] = [
     {
       title: "PM-KUSUM Yojana 2024",
       subtitle: "Get up to 60% subsidy on solar installations",
       description: "Transform your energy future with government-backed solar solutions. Save money while contributing to a sustainable tomorrow.",
-      image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=1200&h=600&fit=crop",
-      cta: "Learn More"
+      image_url: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=1200&h=600&fit=crop",
+      cta_text: "Learn More",
+      cta_link: "/about"
     },
     {
       title: "Zero Down Payment",
       subtitle: "Start your solar journey with easy EMI options",
       description: "No upfront costs required. Choose from flexible payment plans and start saving on your electricity bills immediately.",
-      image: "https://images.unsplash.com/photo-1497440001374-f26997328c1b?w=1200&h=600&fit=crop",
-      cta: "Get Quote"
+      image_url: "https://images.unsplash.com/photo-1497440001374-f26997328c1b?w=1200&h=600&fit=crop",
+      cta_text: "Get Quote",
+      cta_link: "/installation-type"
     },
     {
       title: "Free Site Assessment",
       subtitle: "Get professional evaluation of your solar potential",
       description: "Our experts analyze your location, energy consumption, and roof structure to design the perfect solar solution for your needs.",
-      image: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?auto=format&fit=crop&w=1200&q=80",
-      cta: "Book Assessment"
+      image_url: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?auto=format&fit=crop&w=1200&q=80",
+      cta_text: "Book Assessment",
+      cta_link: "/contact"
     }
   ];
 
@@ -52,11 +71,54 @@ export default function Home() {
     }
   ];
 
+  // Fetch banners from Supabase
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentBanner((prev) => (prev + 1) % banners.length);
-    }, 5000);
-    return () => clearInterval(timer);
+    const fetchBanners = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const { data, error } = await supabase
+          .from('hero_images')
+          .select('*')
+          .eq('is_active', true)
+          .order('order_index', { ascending: true });
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          // Map Supabase data to Banner interface
+          const dynamicBanners: Banner[] = data.map(item => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            image_url: item.image_url,
+            cta_text: item.cta_text || 'Learn More',
+            cta_link: item.cta_link || '#'
+          }));
+          setBanners(dynamicBanners);
+        } else {
+          // Use static banners as fallback
+          setBanners(staticBanners);
+        }
+      } catch (err) {
+        console.error('Error fetching banners:', err);
+        setError('Failed to load banners. Showing demo banners.');
+        setBanners(staticBanners);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBanners();
+  }, []);
+
+  useEffect(() => {
+    if (banners.length > 0) {
+      const timer = setInterval(() => {
+        setCurrentBanner((prev) => (prev + 1) % banners.length);
+      }, 5000);
+      return () => clearInterval(timer);
+    }
   }, [banners.length]);
 
   const nextBanner = () => {
@@ -74,6 +136,19 @@ export default function Home() {
       return prevIndex;
     });
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-solar-primary mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading banners...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -135,9 +210,9 @@ export default function Home() {
           )}
         >
           {banners.map((banner, idx) => (
-            <div key={idx} className="relative h-screen">
+            <div key={banner.id || idx} className="relative h-screen">
               <img 
-                src={banner.image} 
+                src={banner.image_url} 
                 alt={banner.title}
                 className="w-full h-full object-cover"
                 style={{ maxHeight: '100vh' }}
@@ -149,9 +224,11 @@ export default function Home() {
                     <h1 className="solar-heading text-white mb-6 animate-fade-in">
                       {banner.title}
                     </h1>
-                    <p className="text-2xl md:text-3xl font-semibold mb-4 text-solar-primary">
-                      {banner.subtitle}
-                    </p>
+                    {banner.subtitle && (
+                      <p className="text-2xl md:text-3xl font-semibold mb-4 text-solar-primary">
+                        {banner.subtitle}
+                      </p>
+                    )}
                     <p className="text-lg md:text-xl mb-8 opacity-90 max-w-2xl mx-auto">
                       {banner.description}
                     </p>
@@ -162,9 +239,9 @@ export default function Home() {
                           <ArrowRight className="ml-2 w-5 h-5" />
                         </Button>
                       </Link>
-                      <Link to="/installation-type">
+                      <Link to={banner.cta_link}>
                         <Button variant="outline" className="btn-outline text-white border-white hover:bg-white hover:text-solar-dark text-lg px-8 py-4">
-                          Get Quotes
+                          {banner.cta_text}
                         </Button>
                       </Link>
                     </div>
@@ -175,6 +252,13 @@ export default function Home() {
           ))}
         </Carousel>
       </section>
+
+      {/* Error message if any */}
+      {error && (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4">
+          <span className="block sm:inline">{error}</span>
+        </div>
+      )}
 
       {/* Features Section */}
       <section className="solar-section">

@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext';
 import Home from './pages/Index';
@@ -21,6 +22,7 @@ import GridConnectivity from './pages/GridConnectivity';
 import Blogs from './pages/Blogs';
 import BlogDetail from './pages/BlogDetail';
 import DatabaseFix from './pages/DatabaseFix';
+import AdminSetup from './components/admin/AdminSetup';
 
 export default function App() {
   return (
@@ -45,6 +47,7 @@ export default function App() {
           <Route path="/vendor/supabase-quotation" element={<SupabaseQuotationForm />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/admin/setup" element={<div className="min-h-screen bg-gray-50 py-8"><AdminSetup /></div>} />
           <Route path="/game" element={<Game />} />
           <Route path="/database-fix" element={<DatabaseFix />} />
           <Route path="*" element={<NotFound />} />
