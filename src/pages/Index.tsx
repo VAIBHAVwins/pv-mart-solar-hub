@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
@@ -17,6 +16,19 @@ interface Banner {
   image_url: string;
   cta_text: string;
   cta_link: string;
+}
+
+interface HeroImage {
+  id: string;
+  title: string;
+  description: string;
+  image_url: string;
+  cta_text?: string;
+  cta_link?: string;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function Home() {
@@ -77,17 +89,29 @@ export default function Home() {
       setLoading(true);
       setError('');
       try {
+        // Use raw query to avoid TypeScript issues with missing table types
         const { data, error } = await supabase
-          .from('hero_images')
-          .select('*')
-          .eq('is_active', true)
-          .order('order_index', { ascending: true });
+          .rpc('get_hero_images') // We'll create this function
+          .select('*');
+
+        // Alternative approach using direct query
+        const response = await fetch(`${supabase.supabaseUrl}/rest/v1/hero_images?is_active=eq.true&order=order_index.asc`, {
+          headers: {
+            'apikey': supabase.supabaseKey,
+            'Authorization': `Bearer ${supabase.supabaseKey}`,
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch hero images');
+        }
+
+        const heroImages: HeroImage[] = await response.json();
         
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
+        if (heroImages && heroImages.length > 0) {
           // Map Supabase data to Banner interface
-          const dynamicBanners: Banner[] = data.map(item => ({
+          const dynamicBanners: Banner[] = heroImages.map(item => ({
             id: item.id,
             title: item.title,
             description: item.description,
