@@ -6,7 +6,6 @@ import { ChevronLeft, ChevronRight, ArrowRight, CheckCircle, Users, Award, MapPi
 import Footer from '@/components/common/Footer';
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from 'react-responsive-carousel';
-import { supabase } from '@/integrations/supabase/client';
 
 interface Banner {
   id?: string;
@@ -16,19 +15,6 @@ interface Banner {
   image_url: string;
   cta_text: string;
   cta_link: string;
-}
-
-interface HeroImage {
-  id: string;
-  title: string;
-  description: string;
-  image_url: string;
-  cta_text?: string;
-  cta_link?: string;
-  order_index: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
 }
 
 export default function Home() {
@@ -89,16 +75,14 @@ export default function Home() {
       setLoading(true);
       setError('');
       try {
-        // Use raw query to avoid TypeScript issues with missing table types
-        const { data, error } = await supabase
-          .rpc('get_hero_images') // We'll create this function
-          .select('*');
-
-        // Alternative approach using direct query
-        const response = await fetch(`${supabase.supabaseUrl}/rest/v1/hero_images?is_active=eq.true&order=order_index.asc`, {
+        // Use direct API call to fetch hero images
+        const SUPABASE_URL = "https://lkalcafckgyilasikfml.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrYWxjYWZja2d5aWxhc2lrZm1sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyMjUzOTMsImV4cCI6MjA2NjgwMTM5M30.geEBJ1gkwIFr-o-pzQS9X2zu2IfQ656E5TDlNfp-piE";
+        
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/hero_images?is_active=eq.true&order=order_index.asc`, {
           headers: {
-            'apikey': supabase.supabaseKey,
-            'Authorization': `Bearer ${supabase.supabaseKey}`,
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
             'Content-Type': 'application/json',
           }
         });
@@ -107,11 +91,11 @@ export default function Home() {
           throw new Error('Failed to fetch hero images');
         }
 
-        const heroImages: HeroImage[] = await response.json();
+        const data = await response.json();
         
-        if (heroImages && heroImages.length > 0) {
+        if (data && data.length > 0) {
           // Map Supabase data to Banner interface
-          const dynamicBanners: Banner[] = heroImages.map(item => ({
+          const dynamicBanners: Banner[] = data.map((item: any) => ({
             id: item.id,
             title: item.title,
             description: item.description,

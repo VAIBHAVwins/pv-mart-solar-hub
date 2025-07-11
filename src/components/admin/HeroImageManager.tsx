@@ -51,14 +51,17 @@ const HeroImageManager = () => {
     is_active: true
   });
 
+  const SUPABASE_URL = "https://lkalcafckgyilasikfml.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrYWxjYWZja2d5aWxhc2lrZm1sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyMjUzOTMsImV4cCI6MjA2NjgwMTM5M30.geEBJ1gkwIFr-o-pzQS9X2zu2IfQ656E5TDlNfp-piE";
+
   // Fetch hero images
   const fetchHeroImages = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/hero_images?order=order_index.asc`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/hero_images?order=order_index.asc`, {
         headers: {
-          'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${await supabase.auth.getSession().then(s => s.data.session?.access_token || supabase.supabaseKey)}`,
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${await supabase.auth.getSession().then(s => s.data.session?.access_token || SUPABASE_KEY)}`,
           'Content-Type': 'application/json',
         }
       });
@@ -82,11 +85,11 @@ const HeroImageManager = () => {
     setSuccess('');
 
     try {
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/hero_images`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/hero_images`, {
         method: 'POST',
         headers: {
-          'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${await supabase.auth.getSession().then(s => s.data.session?.access_token || supabase.supabaseKey)}`,
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${await supabase.auth.getSession().then(s => s.data.session?.access_token || SUPABASE_KEY)}`,
           'Content-Type': 'application/json',
           'Prefer': 'return=representation'
         },
@@ -122,11 +125,11 @@ const HeroImageManager = () => {
     setSuccess('');
 
     try {
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/hero_images?id=eq.${id}`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/hero_images?id=eq.${id}`, {
         method: 'PATCH',
         headers: {
-          'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${await supabase.auth.getSession().then(s => s.data.session?.access_token || supabase.supabaseKey)}`,
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${await supabase.auth.getSession().then(s => s.data.session?.access_token || SUPABASE_KEY)}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(updates)
@@ -154,11 +157,11 @@ const HeroImageManager = () => {
     setSuccess('');
 
     try {
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/hero_images?id=eq.${id}`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/hero_images?id=eq.${id}`, {
         method: 'DELETE',
         headers: {
-          'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${await supabase.auth.getSession().then(s => s.data.session?.access_token || supabase.supabaseKey)}`,
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${await supabase.auth.getSession().then(s => s.data.session?.access_token || SUPABASE_KEY)}`,
           'Content-Type': 'application/json',
         }
       });

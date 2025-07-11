@@ -44,10 +44,13 @@ const AdminDashboard = () => {
         .eq('user_type', 'vendor');
 
       // Fetch hero images count using direct API call
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/hero_images?select=count`, {
+      const SUPABASE_URL = "https://lkalcafckgyilasikfml.supabase.co";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrYWxjYWZja2d5aWxhc2lrZm1sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyMjUzOTMsImV4cCI6MjA2NjgwMTM5M30.geEBJ1gkwIFr-o-pzQS9X2zu2IfQ656E5TDlNfp-piE";
+      
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/hero_images?select=count`, {
         headers: {
-          'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${await supabase.auth.getSession().then(s => s.data.session?.access_token || supabase.supabaseKey)}`,
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${await supabase.auth.getSession().then(s => s.data.session?.access_token || SUPABASE_KEY)}`,
           'Content-Type': 'application/json',
         }
       });
