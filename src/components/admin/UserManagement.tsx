@@ -9,6 +9,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Trash2, Edit, Plus, Save, X, UserPlus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Database } from '@/integrations/supabase/types';
+
+type UserRole = Database['public']['Enums']['app_role'];
 
 interface UserProfile {
   id: string;
@@ -19,28 +22,24 @@ interface UserProfile {
   company_name: string | null;
   created_at: string;
   email?: string;
-  roles?: string[];
+  roles?: UserRole[];
 }
 
-interface UserRole {
+interface UserRoleData {
   id: string;
   user_id: string;
-  role: string;
+  role: UserRole;
   created_at: string;
 }
 
 const UserManagement = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [roles, setRoles] = useState<UserRole[]>([]);
+  const [roles, setRoles] = useState<UserRoleData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [newRole, setNewRole] = useState<string>('');
   const { user } = useSupabaseAuth();
-
-  const SUPABASE_URL = "https://lkalcafckgyilasikfml.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrYWxjYWZja2d5aWxhc2lrZm1sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyMjUzOTMsImV4cCI6MjA2NjgwMTM5M30.geEBJ1gkwIFr-o-pzQS9X2zu2IfQ656E5TDlNfp-piE";
 
   // Fetch users and their roles
   const fetchUsers = async () => {
@@ -88,7 +87,7 @@ const UserManagement = () => {
         .from('user_roles')
         .insert({
           user_id: userId,
-          role: role
+          role: role as UserRole
         });
 
       if (error && !error.message.includes('duplicate')) {
@@ -106,7 +105,7 @@ const UserManagement = () => {
   };
 
   // Remove role from user
-  const removeRole = async (userId: string, role: string) => {
+  const removeRole = async (userId: string, role: UserRole) => {
     if (!confirm(`Are you sure you want to remove the ${role} role from this user?`)) return;
 
     setLoading(true);
