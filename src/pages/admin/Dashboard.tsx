@@ -6,6 +6,16 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import Layout from '@/components/layout/Layout';
 
+// Same hardcoded admin credentials as in Login
+const ADMIN_CREDENTIALS = [
+  {
+    email: 'ecogrid.ai@gmail.com',
+    password: 'ECOGRID_AI-28/02/2025',
+    name: 'EcoGrid Admin'
+  }
+  // Add more admin credentials here as needed
+];
+
 const AdminPanel = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,15 +30,10 @@ const AdminPanel = () => {
       }
 
       try {
-        const { data: roles, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin');
-
-        if (error) throw error;
-
-        if (!roles || roles.length === 0) {
+        // Check if current user email is in our admin credentials list
+        const isAdminUser = ADMIN_CREDENTIALS.some(admin => admin.email === user.email);
+        
+        if (!isAdminUser) {
           navigate('/admin/login');
           return;
         }

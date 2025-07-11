@@ -9,6 +9,16 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Eye, EyeOff, Shield, AlertCircle } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 
+// Hardcoded admin credentials
+const ADMIN_CREDENTIALS = [
+  {
+    email: 'ecogrid.ai@gmail.com',
+    password: 'ECOGRID_AI-28/02/2025',
+    name: 'EcoGrid Admin'
+  }
+  // Add more admin credentials here as needed
+];
+
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,25 +27,17 @@ const AdminLogin = () => {
   const [error, setError] = useState('');
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const navigate = useNavigate();
-  const { user, signIn } = useSupabaseAuth();
+  const { user } = useSupabaseAuth();
 
   // Check if user is already authenticated and is admin
   useEffect(() => {
     const checkAdminAuth = async () => {
       if (user) {
-        try {
-          const { data: roles } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id)
-            .eq('role', 'admin');
-
-          if (roles && roles.length > 0) {
-            navigate('/admin');
-            return;
-          }
-        } catch (error) {
-          console.error('Error checking admin role:', error);
+        // Check if current user is in our admin credentials list
+        const isAdmin = ADMIN_CREDENTIALS.some(admin => admin.email === user.email);
+        if (isAdmin) {
+          navigate('/admin');
+          return;
         }
       }
       setIsCheckingAuth(false);
@@ -50,24 +52,56 @@ const AdminLogin = () => {
     setError('');
 
     try {
-      // Sign in user
-      const { error: signInError } = await signIn(email, password);
-      if (signInError) throw signInError;
+      // Check if credentials match our hardcoded admin list
+      const adminCredential = ADMIN_CREDENTIALS.find(
+        admin => admin.email === email && admin.password === password
+      );
 
-      // Check if user has admin role
-      const { data: user } = await supabase.auth.getUser();
-      if (user.user) {
-        const { data: roles, error: rolesError } = await supabase
+      if (!adminCredential) {
+        throw new Error('Invalid admin credentials. Access denied.');
+      }
+
+      // Try to sign up the user first (in case they don't exist)
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            full_name: adminCredential.name,
+            user_type: 'admin'
+          },
+          emailRedirectTo: window.location.origin
+        }
+      });
+
+      // If user already exists, sign them in
+      if (signUpError && signUpError.message.includes('already registered')) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (signInError) throw signInError;
+      } else if (signUpError) {
+        throw signUpError;
+      }
+
+      // Get the current user
+      const { data: userData } = await supabase.auth.getUser();
+      
+      if (userData.user) {
+        // Ensure user has admin role in database
+        const { error: roleError } = await supabase
           .from('user_roles')
-          .select('role')
-          .eq('user_id', user.user.id)
-          .eq('role', 'admin');
+          .upsert({
+            user_id: userData.user.id,
+            role: 'admin'
+          }, {
+            onConflict: 'user_id,role'
+          });
 
-        if (rolesError) throw rolesError;
-
-        if (!roles || roles.length === 0) {
-          await supabase.auth.signOut();
-          throw new Error('Access denied. Admin privileges required.');
+        if (roleError) {
+          console.warn('Could not assign admin role:', roleError);
         }
 
         // Redirect to admin dashboard
@@ -75,7 +109,7 @@ const AdminLogin = () => {
       }
     } catch (err: any) {
       console.error('Admin login error:', err);
-      setError(err.message || 'Login failed. Please try again.');
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -170,7 +204,7 @@ const AdminLogin = () => {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full solar-button"
+                    className="w-full bg-solar-primary hover:bg-solar-secondary text-white"
                   >
                     {loading ? 'Signing in...' : 'Sign in'}
                   </Button>
@@ -178,7 +212,7 @@ const AdminLogin = () => {
 
                 <div className="text-center">
                   <div className="text-sm text-gray-600 p-3 bg-blue-50 rounded-md">
-                    <strong>Default Admin Credentials:</strong><br />
+                    <strong>Admin Credentials:</strong><br />
                     Email: ecogrid.ai@gmail.com<br />
                     Password: ECOGRID_AI-28/02/2025
                   </div>
@@ -186,18 +220,6 @@ const AdminLogin = () => {
               </form>
             </CardContent>
           </Card>
-
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Need to create an admin account?{' '}
-              <button
-                onClick={() => navigate('/admin/setup')}
-                className="font-medium text-solar-primary hover:text-solar-secondary"
-              >
-                Admin Setup
-              </button>
-            </p>
-          </div>
         </div>
       </div>
     </Layout>
