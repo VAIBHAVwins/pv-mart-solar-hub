@@ -122,38 +122,38 @@ function BannerAdmin() {
 }
 
 export default function BannerDashboard() {
-  // const { user, loading: authLoading } = useSupabaseAuth();
-  // const navigate = useNavigate();
-  // const [checking, setChecking] = useState(true);
-  // const [isAdmin, setIsAdmin] = useState(false);
+   const { user, loading: authLoading } = useSupabaseAuth();
+   const navigate = useNavigate();
+   const [checking, setChecking] = useState(true);
+   const [isAdmin, setIsAdmin] = useState(false);
 
-  // useEffect(() => {
-  //   const checkAdmin = async () => {
-  //     if (!user && !authLoading) {
-  //       navigate('/admin/login');
-  //       return;
-  //     }
-  //     if (user) {
-  //       const { data: roles } = await supabase
-  //         .from('user_roles')
-  //         .select('role')
-  //         .eq('user_id', user.id)
-  //         .eq('role', 'admin');
-  //       if (roles && roles.length > 0) {
-  //         setIsAdmin(true);
-  //       } else {
-  //         navigate('/admin/login');
-  //       }
-  //     }
-  //     setChecking(false);
-  //   };
-  //   checkAdmin();
-  // }, [user, authLoading, navigate]);
+   useEffect(() => {
+     const checkAdmin = async () => {
+       if (!user && !authLoading) {
+         navigate('/admin/login');
+         return;
+       }
+       if (user) {
+         const { data: roles } = await supabase
+           .from('user_roles')
+           .select('role')
+           .eq('user_id', user.id)
+           .eq('role', 'admin');
+         if (roles && roles.length > 0) {
+           setIsAdmin(true);
+         } else {
+           navigate('/admin/login');
+         }
+       }
+       setChecking(false);
+     };
+     checkAdmin();
+   }, [user, authLoading, navigate]);
 
-  // if (checking) {
-  //   return <div className="flex items-center justify-center min-h-screen">Checking admin access...</div>;
-  // }
-  // if (!isAdmin) return null;
+   if (checking) {
+     return <div className="flex items-center justify-center min-h-screen">Checking admin access...</div>;
+   }
+   if (!isAdmin) return null;
 
   return (
     <div className="flex items-center justify-center min-h-screen flex-col">
