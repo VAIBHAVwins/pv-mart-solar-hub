@@ -1,475 +1,35 @@
 
-import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { supabase } from '@/integrations/supabase/client';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import { Trash2, Edit, Plus, Save, X, Check, Eye, Upload, Image as ImageIcon } from 'lucide-react';
-
-interface HeroImage {
-  id: string;
-  title: string;
-  description: string;
-  image_url: string;
-  cta_text?: string;
-  cta_link?: string;
-  order_index: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-interface HeroImageForm {
-  title: string;
-  description: string;
-  image_url: string;
-  cta_text: string;
-  cta_link: string;
-  order_index: number;
-  is_active: boolean;
-}
+import { Plus } from 'lucide-react';
+import { useHeroImageManager } from './hero/useHeroImageManager';
+import { HeroImageForm } from './hero/HeroImageForm';
+import { HeroImageTable } from './hero/HeroImageTable';
 
 const HeroImageManager = () => {
-  const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useSupabaseAuth();
-
-  const [formData, setFormData] = useState<HeroImageForm>({
-    title: '',
-    description: '',
-    image_url: '',
-    cta_text: 'Learn More',
-    cta_link: '#',
-    order_index: 0,
-    is_active: true
-  });
-
-  // Clear messages automatically
-  const clearMessages = () => {
-    setTimeout(() => {
-      setError('');
-      setSuccess('');
-    }, 5000);
-  };
-
-  // Upload file to Supabase Storage with better error handling
-  const uploadFile = async (file: File): Promise<string> => {
-    console.log('Starting file upload:', file.name, file.size, file.type);
-    
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const filePath = `hero-images/${fileName}`;
-
-    console.log('Uploading to path:', filePath);
-
-    try {
-      const { error: uploadError, data } = await supabase.storage
-        .from('hero-images')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error(`Upload failed: ${uploadError.message}`);
-      }
-
-      console.log('Upload successful:', data);
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('hero-images')
-        .getPublicUrl(filePath);
-
-      console.log('Public URL:', urlData.publicUrl);
-      return urlData.publicUrl;
-    } catch (err: any) {
-      console.error('File upload error:', err);
-      throw new Error(err.message || 'Failed to upload file');
-    }
-  };
-
-  // Handle file upload with improved feedback
-  const handleFileUpload = async (file: File) => {
-    if (!file) {
-      setError('No file selected');
-      clearMessages();
-      return;
-    }
-
-    console.log('Processing file:', file.name, file.type, file.size);
-
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!allowedTypes.includes(file.type)) {
-      setError('Please select a valid image file (JPEG, PNG, WebP, or GIF)');
-      clearMessages();
-      return;
-    }
-
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size must be less than 5MB');
-      clearMessages();
-      return;
-    }
-
-    setUploading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const imageUrl = await uploadFile(file);
-      console.log('Upload completed, URL:', imageUrl);
-      
-      setUploadedImageUrl(imageUrl);
-      setFormData(prev => ({ ...prev, image_url: imageUrl }));
-      setSuccess('Image uploaded successfully!');
-      clearMessages();
-    } catch (err: any) {
-      console.error('Error uploading file:', err);
-      setError('Failed to upload image: ' + (err.message || 'Unknown error'));
-      clearMessages();
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  // Handle drag and drop
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileUpload(e.dataTransfer.files[0]);
-    }
-  };
-
-  // Handle file input change
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFileUpload(e.target.files[0]);
-    }
-  };
-
-  // Fetch hero images with better error handling
-  const fetchHeroImages = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      console.log('Fetching hero images...');
-      const { data, error } = await supabase
-        .from('hero_images')
-        .select('*')
-        .order('order_index', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching hero images:', error);
-        throw new Error(`Failed to fetch hero images: ${error.message}`);
-      }
-      
-      console.log('Fetched hero images:', data);
-      setHeroImages(data || []);
-    } catch (err: any) {
-      console.error('Error fetching hero images:', err);
-      setError('Failed to load hero images: ' + (err.message || 'Unknown error'));
-      clearMessages();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Add new hero image with better error handling
-  const addHeroImage = async () => {
-    if (!formData.image_url) {
-      setError('Please upload an image first');
-      clearMessages();
-      return;
-    }
-
-    if (!formData.title.trim()) {
-      setError('Please enter a title');
-      clearMessages();
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      console.log('Adding hero image with data:', formData);
-      
-      const insertData = {
-        ...formData,
-        order_index: formData.order_index || heroImages.length
-      };
-
-      const { data, error } = await supabase
-        .from('hero_images')
-        .insert([insertData])
-        .select();
-
-      if (error) {
-        console.error('Error adding hero image:', error);
-        throw new Error(`Failed to add hero image: ${error.message}`);
-      }
-
-      console.log('Hero image added successfully:', data);
-      setSuccess('Hero image added successfully!');
-      setShowAddForm(false);
-      resetForm();
-      await fetchHeroImages();
-      clearMessages();
-    } catch (err: any) {
-      console.error('Error adding hero image:', err);
-      setError('Failed to add hero image: ' + (err.message || 'Unknown error'));
-      clearMessages();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update hero image with better error handling
-  const updateHeroImage = async (id: string, updates: Partial<HeroImageForm>) => {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      console.log('Updating hero image:', id, updates);
-      
-      const { data, error } = await supabase
-        .from('hero_images')
-        .update(updates)
-        .eq('id', id)
-        .select();
-
-      if (error) {
-        console.error('Error updating hero image:', error);
-        throw new Error(`Failed to update hero image: ${error.message}`);
-      }
-
-      console.log('Hero image updated successfully:', data);
-      setSuccess('Hero image updated successfully!');
-      setEditingId(null);
-      resetForm();
-      await fetchHeroImages();
-      clearMessages();
-    } catch (err: any) {
-      console.error('Error updating hero image:', err);
-      setError('Failed to update hero image: ' + (err.message || 'Unknown error'));
-      clearMessages();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Delete hero image with better error handling
-  const deleteHeroImage = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this hero image?')) return;
-
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      console.log('Deleting hero image:', id);
-      
-      // First, get the image to find the file path for cleanup
-      const imageToDelete = heroImages.find(img => img.id === id);
-      
-      // Delete from database
-      const { error: dbError } = await supabase
-        .from('hero_images')
-        .delete()
-        .eq('id', id);
-
-      if (dbError) {
-        console.error('Error deleting hero image:', dbError);
-        throw new Error(`Failed to delete hero image: ${dbError.message}`);
-      }
-
-      // Try to delete from storage if it's a local file
-      if (imageToDelete?.image_url && imageToDelete.image_url.includes('supabase.co')) {
-        try {
-          const urlParts = imageToDelete.image_url.split('/');
-          const fileName = urlParts[urlParts.length - 1];
-          const filePath = `hero-images/${fileName}`;
-          
-          const { error: storageError } = await supabase.storage
-            .from('hero-images')
-            .remove([filePath]);
-            
-          if (storageError) {
-            console.warn('Could not delete file from storage:', storageError);
-          } else {
-            console.log('File deleted from storage:', filePath);
-          }
-        } catch (storageError) {
-          console.warn('Could not delete file from storage:', storageError);
-        }
-      }
-
-      console.log('Hero image deleted successfully');
-      setSuccess('Hero image deleted successfully!');
-      await fetchHeroImages();
-      clearMessages();
-    } catch (err: any) {
-      console.error('Error deleting hero image:', err);
-      setError('Failed to delete hero image: ' + (err.message || 'Unknown error'));
-      clearMessages();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Reset form
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      image_url: '',
-      cta_text: 'Learn More',
-      cta_link: '#',
-      order_index: 0,
-      is_active: true
-    });
-    setUploadedImageUrl('');
-  };
-
-  // Start editing an image
-  const startEditing = (image: HeroImage) => {
-    setEditingId(image.id);
-    setFormData({
-      title: image.title,
-      description: image.description,
-      image_url: image.image_url,
-      cta_text: image.cta_text || 'Learn More',
-      cta_link: image.cta_link || '#',
-      order_index: image.order_index,
-      is_active: image.is_active
-    });
-    setUploadedImageUrl(image.image_url);
-  };
-
-  // Cancel editing
-  const cancelEditing = () => {
-    setEditingId(null);
-    resetForm();
-  };
-
-  // Save edited image
-  const saveEdit = async () => {
-    if (!editingId) return;
-    await updateHeroImage(editingId, formData);
-  };
-
-  useEffect(() => {
-    fetchHeroImages();
-  }, []);
-
-  const handleInputChange = (field: keyof HeroImageForm, value: string | number | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  // File upload component with improved preview
-  const FileUploadArea = ({ isEdit = false }: { isEdit?: boolean }) => (
-    <div className="space-y-4">
-      <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-          dragActive 
-            ? 'border-blue-500 bg-blue-50' 
-            : 'border-gray-300 hover:border-gray-400'
-        }`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileInputChange}
-          className="hidden"
-        />
-        
-        <ImageIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        
-        <div className="space-y-2">
-          <p className="text-sm text-gray-600">
-            {isEdit ? 'Upload new image to replace current one' : 'Upload hero image'}
-          </p>
-          <p className="text-xs text-gray-500">
-            Drag and drop an image here, or{' '}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="text-blue-600 hover:text-blue-800 underline"
-            >
-              browse files
-            </button>
-          </p>
-          <p className="text-xs text-gray-400">
-            Supports: JPEG, PNG, WebP, GIF (max 5MB)
-          </p>
-        </div>
-
-        {/* Show uploaded image preview */}
-        {(uploadedImageUrl || formData.image_url) && (
-          <div className="mt-4">
-            <p className="text-sm font-medium text-green-600 mb-2">✓ Image ready</p>
-            <div className="relative inline-block">
-              <img 
-                src={uploadedImageUrl || formData.image_url} 
-                alt="Preview" 
-                className="mx-auto max-h-32 rounded border"
-                onError={(e) => {
-                  console.error('Image preview error:', e);
-                  e.currentTarget.src = 'https://via.placeholder.com/200x100?text=Image+Preview';
-                }}
-                onLoad={() => console.log('Image preview loaded successfully')}
-              />
-              <div className="absolute top-0 right-0 bg-green-500 text-white text-xs px-2 py-1 rounded-bl">
-                ✓
-              </div>
-            </div>
-          </div>
-        )}
-
-        {uploading && (
-          <div className="mt-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-sm text-gray-600 mt-2">Uploading...</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  const {
+    heroImages,
+    loading,
+    error,
+    success,
+    editingId,
+    showAddForm,
+    uploading,
+    dragActive,
+    uploadedImageUrl,
+    formData,
+    setShowAddForm,
+    handleFileUpload,
+    handleDrag,
+    handleDrop,
+    addHeroImage,
+    deleteHeroImage,
+    startEditing,
+    cancelEditing,
+    saveEdit,
+    handleInputChange,
+    resetForm
+  } = useHeroImageManager();
 
   return (
     <div className="space-y-6">
@@ -497,186 +57,46 @@ const HeroImageManager = () => {
 
           {/* Add Form */}
           {showAddForm && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="text-lg">Add New Hero Image</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* File Upload */}
-                <FileUploadArea />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Title *</label>
-                    <Input
-                      value={formData.title}
-                      onChange={(e) => handleInputChange('title', e.target.value)}
-                      placeholder="Hero image title"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Image URL (or upload above)</label>
-                    <Input
-                      value={formData.image_url}
-                      onChange={(e) => handleInputChange('image_url', e.target.value)}
-                      placeholder="https://example.com/image.jpg"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-2">Description</label>
-                    <Textarea
-                      value={formData.description}
-                      onChange={(e) => handleInputChange('description', e.target.value)}
-                      placeholder="Hero image description"
-                      rows={3}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">CTA Text</label>
-                    <Input
-                      value={formData.cta_text}
-                      onChange={(e) => handleInputChange('cta_text', e.target.value)}
-                      placeholder="Learn More"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">CTA Link</label>
-                    <Input
-                      value={formData.cta_link}
-                      onChange={(e) => handleInputChange('cta_link', e.target.value)}
-                      placeholder="/about"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Order Index</label>
-                    <Input
-                      type="number"
-                      value={formData.order_index}
-                      onChange={(e) => handleInputChange('order_index', parseInt(e.target.value) || 0)}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="is_active"
-                      checked={formData.is_active}
-                      onChange={(e) => handleInputChange('is_active', e.target.checked)}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="is_active" className="text-sm font-medium">Active</label>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button 
-                    onClick={addHeroImage} 
-                    disabled={loading || uploading || !formData.image_url || !formData.title.trim()}
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Save
-                  </Button>
-                  <Button variant="outline" onClick={() => {
-                    setShowAddForm(false);
-                    resetForm();
-                  }}>
-                    <X className="w-4 h-4 mr-2" />
-                    Cancel
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <HeroImageForm
+              formData={formData}
+              onInputChange={handleInputChange}
+              onSubmit={addHeroImage}
+              onCancel={() => {
+                setShowAddForm(false);
+                resetForm();
+              }}
+              loading={loading}
+              uploading={uploading}
+              title="Add New Hero Image"
+              onFileUpload={handleFileUpload}
+              dragActive={dragActive}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              uploadedImageUrl={uploadedImageUrl}
+            />
           )}
 
           {/* Edit Form */}
           {editingId && (
-            <Card className="mb-6 border-blue-200 bg-blue-50">
-              <CardHeader>
-                <CardTitle className="text-lg text-blue-800">Edit Hero Image</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* File Upload for Edit */}
-                <FileUploadArea isEdit={true} />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Title *</label>
-                    <Input
-                      value={formData.title}
-                      onChange={(e) => handleInputChange('title', e.target.value)}
-                      placeholder="Hero image title"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Image URL (or upload above)</label>
-                    <Input
-                      value={formData.image_url}
-                      onChange={(e) => handleInputChange('image_url', e.target.value)}
-                      placeholder="https://example.com/image.jpg"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-2">Description</label>
-                    <Textarea
-                      value={formData.description}
-                      onChange={(e) => handleInputChange('description', e.target.value)}
-                      placeholder="Hero image description"
-                      rows={3}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">CTA Text</label>
-                    <Input
-                      value={formData.cta_text}
-                      onChange={(e) => handleInputChange('cta_text', e.target.value)}
-                      placeholder="Learn More"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">CTA Link</label>
-                    <Input
-                      value={formData.cta_link}
-                      onChange={(e) => handleInputChange('cta_link', e.target.value)}
-                      placeholder="/about"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Order Index</label>
-                    <Input
-                      type="number"
-                      value={formData.order_index}
-                      onChange={(e) => handleInputChange('order_index', parseInt(e.target.value) || 0)}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="edit_is_active"
-                      checked={formData.is_active}
-                      onChange={(e) => handleInputChange('is_active', e.target.checked)}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="edit_is_active" className="text-sm font-medium">Active</label>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button 
-                    onClick={saveEdit} 
-                    disabled={loading || uploading || !formData.title.trim()} 
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Check className="w-4 h-4 mr-2" />
-                    Save Changes
-                  </Button>
-                  <Button variant="outline" onClick={cancelEditing}>
-                    <X className="w-4 h-4 mr-2" />
-                    Cancel
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <HeroImageForm
+              formData={formData}
+              onInputChange={handleInputChange}
+              onSubmit={saveEdit}
+              onCancel={cancelEditing}
+              loading={loading}
+              uploading={uploading}
+              isEdit={true}
+              title="Edit Hero Image"
+              onFileUpload={handleFileUpload}
+              dragActive={dragActive}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              uploadedImageUrl={uploadedImageUrl}
+            />
           )}
 
           {/* Messages */}
@@ -693,81 +113,13 @@ const HeroImageManager = () => {
           )}
 
           {/* Table */}
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Preview</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Active</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {heroImages.map((image) => (
-                  <TableRow key={image.id}>
-                    <TableCell>
-                      <div className="w-16 h-12 rounded overflow-hidden">
-                        <img 
-                          src={image.image_url} 
-                          alt={image.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://via.placeholder.com/64x48?text=No+Image';
-                          }}
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">{image.title}</TableCell>
-                    <TableCell className="max-w-xs truncate">{image.description}</TableCell>
-                    <TableCell>{image.order_index}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        image.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {image.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => startEditing(image)}
-                          disabled={editingId === image.id || loading}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => deleteHeroImage(image.id)}
-                          disabled={loading}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {heroImages.length === 0 && !loading && (
-            <div className="text-center py-8 text-gray-500">
-              No hero images found. Add some to get started!
-            </div>
-          )}
-
-          {loading && (
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading...</p>
-            </div>
-          )}
+          <HeroImageTable
+            heroImages={heroImages}
+            onEdit={startEditing}
+            onDelete={deleteHeroImage}
+            loading={loading}
+            editingId={editingId}
+          />
         </CardContent>
       </Card>
     </div>
