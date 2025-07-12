@@ -52,6 +52,8 @@ const AdminLogin = () => {
     setError('');
 
     try {
+      console.log('Starting admin login process...');
+      
       // Check if credentials match our hardcoded admin list
       const adminCredential = ADMIN_CREDENTIALS.find(
         admin => admin.email === email && admin.password === password
@@ -60,6 +62,8 @@ const AdminLogin = () => {
       if (!adminCredential) {
         throw new Error('Invalid admin credentials. Access denied.');
       }
+
+      console.log('Admin credentials verified, attempting authentication...');
 
       // Try to sign up the user first (in case they don't exist)
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -74,22 +78,38 @@ const AdminLogin = () => {
         }
       });
 
+      console.log('Sign up result:', { data: signUpData, error: signUpError });
+
       // If user already exists, sign them in
       if (signUpError && signUpError.message.includes('already registered')) {
+        console.log('User already exists, attempting sign in...');
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: email,
           password: password
         });
 
-        if (signInError) throw signInError;
+        console.log('Sign in result:', { data: signInData, error: signInError });
+
+        if (signInError) {
+          console.error('Sign in error:', signInError);
+          throw new Error(`Sign in failed: ${signInError.message}`);
+        }
       } else if (signUpError) {
-        throw signUpError;
+        console.error('Sign up error:', signUpError);
+        throw new Error(`Sign up failed: ${signUpError.message}`);
       }
 
       // Get the current user
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('Error getting user:', userError);
+        throw new Error(`Failed to get user: ${userError.message}`);
+      }
       
       if (userData.user) {
+        console.log('User authenticated, assigning admin role...');
+        
         // Ensure user has admin role in database
         const { error: roleError } = await supabase
           .from('user_roles')
@@ -101,15 +121,39 @@ const AdminLogin = () => {
           });
 
         if (roleError) {
-          console.warn('Could not assign admin role:', roleError);
+          console.error('Could not assign admin role:', roleError);
+          // Don't throw error here, just log it
+        } else {
+          console.log('Admin role assigned successfully');
         }
 
         // Redirect to admin dashboard
+        console.log('Redirecting to admin dashboard...');
         navigate('/admin');
+      } else {
+        throw new Error('No user data found after authentication');
       }
     } catch (err: any) {
       console.error('Admin login error:', err);
-      setError(err.message || 'Login failed. Please check your credentials.');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Login failed. Please check your credentials.';
+      
+      if (err.message) {
+        if (err.message.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please try again.';
+        } else if (err.message.includes('Email not confirmed')) {
+          errorMessage = 'Please check your email and click the confirmation link before logging in.';
+        } else if (err.message.includes('Too many requests')) {
+          errorMessage = 'Too many login attempts. Please wait a moment and try again.';
+        } else if (err.message.includes('Invalid admin credentials')) {
+          errorMessage = 'Invalid admin credentials. Access denied.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -207,6 +251,20 @@ const AdminLogin = () => {
                     className="w-full bg-solar-primary hover:bg-solar-secondary text-white"
                   >
                     {loading ? 'Signing in...' : 'Sign in'}
+                  </Button>
+                </div>
+
+                {/* Temporary test button for debugging */}
+                <div className="text-center">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      console.log('Test button clicked - bypassing auth for testing');
+                      navigate('/admin');
+                    }}
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-white mb-2"
+                  >
+                    🧪 Test: Skip Login (Debug Only)
                   </Button>
                 </div>
 
