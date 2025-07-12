@@ -1,8 +1,9 @@
+
 import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerRequirementFormData } from '@/types/customerRequirement';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { analyzeRequirement } from '@/lib/requirementAnalysis';
 
 const initialFormData: CustomerRequirementFormData = {
@@ -23,7 +24,7 @@ const initialFormData: CustomerRequirementFormData = {
 };
 
 export const useCustomerRequirementForm = () => {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CustomerRequirementFormData>(initialFormData);
