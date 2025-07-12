@@ -55,6 +55,14 @@ const HeroImageManager = () => {
     is_active: true
   });
 
+  // Clear messages automatically
+  const clearMessages = () => {
+    setTimeout(() => {
+      setError('');
+      setSuccess('');
+    }, 5000);
+  };
+
   // Upload file to Supabase Storage with better error handling
   const uploadFile = async (file: File): Promise<string> => {
     console.log('Starting file upload:', file.name, file.size, file.type);
@@ -65,33 +73,39 @@ const HeroImageManager = () => {
 
     console.log('Uploading to path:', filePath);
 
-    const { error: uploadError, data } = await supabase.storage
-      .from('hero-images')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
+    try {
+      const { error: uploadError, data } = await supabase.storage
+        .from('hero-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      console.log('Upload successful:', data);
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('hero-images')
+        .getPublicUrl(filePath);
+
+      console.log('Public URL:', urlData.publicUrl);
+      return urlData.publicUrl;
+    } catch (err: any) {
+      console.error('File upload error:', err);
+      throw new Error(err.message || 'Failed to upload file');
     }
-
-    console.log('Upload successful:', data);
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('hero-images')
-      .getPublicUrl(filePath);
-
-    console.log('Public URL:', urlData.publicUrl);
-    return urlData.publicUrl;
   };
 
   // Handle file upload with improved feedback
   const handleFileUpload = async (file: File) => {
     if (!file) {
       setError('No file selected');
+      clearMessages();
       return;
     }
 
@@ -101,12 +115,14 @@ const HeroImageManager = () => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
       setError('Please select a valid image file (JPEG, PNG, WebP, or GIF)');
+      clearMessages();
       return;
     }
 
     // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
       setError('File size must be less than 5MB');
+      clearMessages();
       return;
     }
 
@@ -121,12 +137,11 @@ const HeroImageManager = () => {
       setUploadedImageUrl(imageUrl);
       setFormData(prev => ({ ...prev, image_url: imageUrl }));
       setSuccess('Image uploaded successfully!');
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(''), 3000);
+      clearMessages();
     } catch (err: any) {
       console.error('Error uploading file:', err);
       setError('Failed to upload image: ' + (err.message || 'Unknown error'));
+      clearMessages();
     } finally {
       setUploading(false);
     }
@@ -160,11 +175,12 @@ const HeroImageManager = () => {
     }
   };
 
-  // Fetch hero images using Supabase client
+  // Fetch hero images with better error handling
   const fetchHeroImages = async () => {
     setLoading(true);
     setError('');
     try {
+      console.log('Fetching hero images...');
       const { data, error } = await supabase
         .from('hero_images')
         .select('*')
@@ -172,27 +188,31 @@ const HeroImageManager = () => {
 
       if (error) {
         console.error('Error fetching hero images:', error);
-        throw error;
+        throw new Error(`Failed to fetch hero images: ${error.message}`);
       }
       
+      console.log('Fetched hero images:', data);
       setHeroImages(data || []);
     } catch (err: any) {
       console.error('Error fetching hero images:', err);
       setError('Failed to load hero images: ' + (err.message || 'Unknown error'));
+      clearMessages();
     } finally {
       setLoading(false);
     }
   };
 
-  // Add new hero image using Supabase client
+  // Add new hero image with better error handling
   const addHeroImage = async () => {
     if (!formData.image_url) {
       setError('Please upload an image first');
+      clearMessages();
       return;
     }
 
     if (!formData.title.trim()) {
       setError('Please enter a title');
+      clearMessages();
       return;
     }
 
@@ -203,39 +223,37 @@ const HeroImageManager = () => {
     try {
       console.log('Adding hero image with data:', formData);
       
+      const insertData = {
+        ...formData,
+        order_index: formData.order_index || heroImages.length
+      };
+
       const { data, error } = await supabase
         .from('hero_images')
-        .insert([formData])
+        .insert([insertData])
         .select();
 
       if (error) {
         console.error('Error adding hero image:', error);
-        throw error;
+        throw new Error(`Failed to add hero image: ${error.message}`);
       }
 
       console.log('Hero image added successfully:', data);
       setSuccess('Hero image added successfully!');
       setShowAddForm(false);
-      setFormData({
-        title: '',
-        description: '',
-        image_url: '',
-        cta_text: 'Learn More',
-        cta_link: '#',
-        order_index: 0,
-        is_active: true
-      });
-      setUploadedImageUrl('');
-      fetchHeroImages();
+      resetForm();
+      await fetchHeroImages();
+      clearMessages();
     } catch (err: any) {
       console.error('Error adding hero image:', err);
       setError('Failed to add hero image: ' + (err.message || 'Unknown error'));
+      clearMessages();
     } finally {
       setLoading(false);
     }
   };
 
-  // Update hero image using Supabase client
+  // Update hero image with better error handling
   const updateHeroImage = async (id: string, updates: Partial<HeroImageForm>) => {
     setLoading(true);
     setError('');
@@ -252,23 +270,25 @@ const HeroImageManager = () => {
 
       if (error) {
         console.error('Error updating hero image:', error);
-        throw error;
+        throw new Error(`Failed to update hero image: ${error.message}`);
       }
 
       console.log('Hero image updated successfully:', data);
       setSuccess('Hero image updated successfully!');
       setEditingId(null);
-      setUploadedImageUrl('');
-      fetchHeroImages();
+      resetForm();
+      await fetchHeroImages();
+      clearMessages();
     } catch (err: any) {
       console.error('Error updating hero image:', err);
       setError('Failed to update hero image: ' + (err.message || 'Unknown error'));
+      clearMessages();
     } finally {
       setLoading(false);
     }
   };
 
-  // Delete hero image using Supabase client
+  // Delete hero image with better error handling
   const deleteHeroImage = async (id: string) => {
     if (!confirm('Are you sure you want to delete this hero image?')) return;
 
@@ -279,13 +299,9 @@ const HeroImageManager = () => {
     try {
       console.log('Deleting hero image:', id);
       
-      // First, get the image to find the file path
-      const { data: imageData } = await supabase
-        .from('hero_images')
-        .select('image_url')
-        .eq('id', id)
-        .single();
-
+      // First, get the image to find the file path for cleanup
+      const imageToDelete = heroImages.find(img => img.id === id);
+      
       // Delete from database
       const { error: dbError } = await supabase
         .from('hero_images')
@@ -294,18 +310,23 @@ const HeroImageManager = () => {
 
       if (dbError) {
         console.error('Error deleting hero image:', dbError);
-        throw dbError;
+        throw new Error(`Failed to delete hero image: ${dbError.message}`);
       }
 
       // Try to delete from storage if it's a local file
-      if (imageData?.image_url && imageData.image_url.includes('supabase.co')) {
+      if (imageToDelete?.image_url && imageToDelete.image_url.includes('supabase.co')) {
         try {
-          const urlParts = imageData.image_url.split('/');
-          const filePath = urlParts[urlParts.length - 1];
-          if (filePath) {
-            await supabase.storage
-              .from('hero-images')
-              .remove([filePath]);
+          const urlParts = imageToDelete.image_url.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+          const filePath = `hero-images/${fileName}`;
+          
+          const { error: storageError } = await supabase.storage
+            .from('hero-images')
+            .remove([filePath]);
+            
+          if (storageError) {
+            console.warn('Could not delete file from storage:', storageError);
+          } else {
             console.log('File deleted from storage:', filePath);
           }
         } catch (storageError) {
@@ -315,13 +336,29 @@ const HeroImageManager = () => {
 
       console.log('Hero image deleted successfully');
       setSuccess('Hero image deleted successfully!');
-      fetchHeroImages();
+      await fetchHeroImages();
+      clearMessages();
     } catch (err: any) {
       console.error('Error deleting hero image:', err);
       setError('Failed to delete hero image: ' + (err.message || 'Unknown error'));
+      clearMessages();
     } finally {
       setLoading(false);
     }
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      image_url: '',
+      cta_text: 'Learn More',
+      cta_link: '#',
+      order_index: 0,
+      is_active: true
+    });
+    setUploadedImageUrl('');
   };
 
   // Start editing an image
@@ -342,16 +379,7 @@ const HeroImageManager = () => {
   // Cancel editing
   const cancelEditing = () => {
     setEditingId(null);
-    setFormData({
-      title: '',
-      description: '',
-      image_url: '',
-      cta_text: 'Learn More',
-      cta_link: '#',
-      order_index: 0,
-      is_active: true
-    });
-    setUploadedImageUrl('');
+    resetForm();
   };
 
   // Save edited image
@@ -367,21 +395,6 @@ const HeroImageManager = () => {
   const handleInputChange = (field: keyof HeroImageForm, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
-
-  // Temporary bypass for testing - comment out the user check
-  // if (!user) {
-  //   return (
-  //     <Card>
-  //       <CardContent className="p-6">
-  //         <p className="text-center text-gray-600">Please log in to manage hero images.</p>
-  //       </CardContent>
-  //     </Card>
-  //   );
-  // }
-
-  // Temporary debug info
-  console.log('HeroImageManager - user:', user);
-  console.log('HeroImageManager - bypassing user check for testing');
 
   // File upload component with improved preview
   const FileUploadArea = ({ isEdit = false }: { isEdit?: boolean }) => (
@@ -429,7 +442,7 @@ const HeroImageManager = () => {
         {/* Show uploaded image preview */}
         {(uploadedImageUrl || formData.image_url) && (
           <div className="mt-4">
-            <p className="text-sm font-medium text-green-600 mb-2">✓ Image uploaded</p>
+            <p className="text-sm font-medium text-green-600 mb-2">✓ Image ready</p>
             <div className="relative inline-block">
               <img 
                 src={uploadedImageUrl || formData.image_url} 
@@ -445,9 +458,6 @@ const HeroImageManager = () => {
                 ✓
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {uploadedImageUrl || formData.image_url}
-            </p>
           </div>
         )}
 
@@ -472,9 +482,12 @@ const HeroImageManager = () => {
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Current Hero Images</h3>
+            <h3 className="text-lg font-semibold">Current Hero Images ({heroImages.length})</h3>
             <Button 
-              onClick={() => setShowAddForm(!showAddForm)}
+              onClick={() => {
+                setShowAddForm(!showAddForm);
+                if (showAddForm) resetForm();
+              }}
               disabled={loading}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -556,11 +569,17 @@ const HeroImageManager = () => {
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <Button onClick={addHeroImage} disabled={loading || uploading || !formData.image_url}>
+                  <Button 
+                    onClick={addHeroImage} 
+                    disabled={loading || uploading || !formData.image_url || !formData.title.trim()}
+                  >
                     <Save className="w-4 h-4 mr-2" />
                     Save
                   </Button>
-                  <Button variant="outline" onClick={() => setShowAddForm(false)}>
+                  <Button variant="outline" onClick={() => {
+                    setShowAddForm(false);
+                    resetForm();
+                  }}>
                     <X className="w-4 h-4 mr-2" />
                     Cancel
                   </Button>
@@ -643,7 +662,11 @@ const HeroImageManager = () => {
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <Button onClick={saveEdit} disabled={loading || uploading} className="bg-blue-600 hover:bg-blue-700">
+                  <Button 
+                    onClick={saveEdit} 
+                    disabled={loading || uploading || !formData.title.trim()} 
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
                     <Check className="w-4 h-4 mr-2" />
                     Save Changes
                   </Button>
@@ -713,7 +736,7 @@ const HeroImageManager = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => startEditing(image)}
-                          disabled={editingId === image.id}
+                          disabled={editingId === image.id || loading}
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
