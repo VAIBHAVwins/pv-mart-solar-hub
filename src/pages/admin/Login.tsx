@@ -80,6 +80,8 @@ const AdminLogin = () => {
 
       console.log('Sign up result:', { data: signUpData, error: signUpError });
 
+      let userData = null;
+
       // If user already exists, sign them in
       if (signUpError && signUpError.message.includes('already registered')) {
         console.log('User already exists, attempting sign in...');
@@ -94,27 +96,29 @@ const AdminLogin = () => {
           console.error('Sign in error:', signInError);
           throw new Error(`Sign in failed: ${signInError.message}`);
         }
+        
+        userData = signInData;
       } else if (signUpError) {
         console.error('Sign up error:', signUpError);
         throw new Error(`Sign up failed: ${signUpError.message}`);
+      } else {
+        userData = signUpData;
       }
 
-      // Get the current user
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+      // Wait a moment for the auth state to update
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Get the current user from the auth context instead of directly
+      const currentUser = userData?.user;
       
-      if (userError) {
-        console.error('Error getting user:', userError);
-        throw new Error(`Failed to get user: ${userError.message}`);
-      }
-      
-      if (userData.user) {
+      if (currentUser) {
         console.log('User authenticated, assigning admin role...');
         
         // Ensure user has admin role in database
         const { error: roleError } = await supabase
           .from('user_roles')
           .upsert({
-            user_id: userData.user.id,
+            user_id: currentUser.id,
             role: 'admin'
           }, {
             onConflict: 'user_id,role'
@@ -148,6 +152,8 @@ const AdminLogin = () => {
           errorMessage = 'Too many login attempts. Please wait a moment and try again.';
         } else if (err.message.includes('Invalid admin credentials')) {
           errorMessage = 'Invalid admin credentials. Access denied.';
+        } else if (err.message.includes('Auth session missing')) {
+          errorMessage = 'Authentication session error. Please try again.';
         } else {
           errorMessage = err.message;
         }
