@@ -42,7 +42,13 @@ export const HeroImageForm = ({
   onDrop,
   uploadedImageUrl
 }: HeroImageFormProps) => {
-  const canSubmit = !loading && !uploading && formData.image_url && formData.title.trim();
+  // Check if we have either an uploaded image or a valid image URL
+  const hasUploadedImage = uploadedImageUrl && uploadedImageUrl.trim() !== '';
+  const hasValidImageUrl = formData.image_url && formData.image_url.trim() !== '';
+  const hasImage = hasUploadedImage || hasValidImageUrl;
+  const hasTitle = formData.title.trim() !== '';
+  
+  const canSubmit = !loading && !uploading && hasImage && hasTitle;
 
   // Preset for "Join as Vendor" button
   const setJoinAsVendorPreset = () => {
@@ -100,11 +106,11 @@ export const HeroImageForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Image URL (or upload above)</label>
+            <label className="block text-sm font-medium mb-2">Image URL (optional - upload above is preferred)</label>
             <Input
               value={formData.image_url}
               onChange={(e) => onInputChange('image_url', e.target.value)}
-              placeholder="https://example.com/image.jpg"
+              placeholder="https://example.com/image.jpg (optional)"
             />
           </div>
           <div className="md:col-span-2">
@@ -169,6 +175,18 @@ export const HeroImageForm = ({
             Cancel
           </Button>
         </div>
+        
+        {/* Validation feedback */}
+        {!hasImage && (
+          <div className="text-sm text-red-600">
+            ⚠️ Please upload an image or provide a valid image URL
+          </div>
+        )}
+        {!hasTitle && (
+          <div className="text-sm text-red-600">
+            ⚠️ Please enter a title
+          </div>
+        )}
       </CardContent>
     </Card>
   );

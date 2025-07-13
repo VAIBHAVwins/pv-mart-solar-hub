@@ -154,8 +154,12 @@ export const useHeroImageManager = () => {
 
   // Add new hero image
   const addHeroImage = async () => {
-    if (!formData.image_url) {
-      setError('Please upload an image first');
+    // Check if we have either an uploaded image or a valid image URL
+    const hasUploadedImage = uploadedImageUrl && uploadedImageUrl.trim() !== '';
+    const hasValidImageUrl = formData.image_url && formData.image_url.trim() !== '';
+    
+    if (!hasUploadedImage && !hasValidImageUrl) {
+      setError('Please upload an image or provide a valid image URL');
       clearMessages();
       return;
     }
@@ -173,8 +177,12 @@ export const useHeroImageManager = () => {
     try {
       console.log('Adding hero image with data:', formData);
       
+      // Use uploaded image URL if available, otherwise use the provided URL
+      const finalImageUrl = hasUploadedImage ? uploadedImageUrl : formData.image_url;
+      
       const insertData = {
         ...formData,
+        image_url: finalImageUrl,
         order_index: formData.order_index || heroImages.length
       };
 
@@ -324,7 +332,27 @@ export const useHeroImageManager = () => {
   // Save edit
   const saveEdit = async () => {
     if (!editingId) return;
-    await updateHeroImage(editingId, formData);
+    
+    // Check if we have either an uploaded image or a valid image URL
+    const hasUploadedImage = uploadedImageUrl && uploadedImageUrl.trim() !== '';
+    const hasValidImageUrl = formData.image_url && formData.image_url.trim() !== '';
+    
+    if (!hasUploadedImage && !hasValidImageUrl) {
+      setError('Please upload an image or provide a valid image URL');
+      clearMessages();
+      return;
+    }
+
+    if (!formData.title.trim()) {
+      setError('Please enter a title');
+      clearMessages();
+      return;
+    }
+
+    // Use uploaded image URL if available, otherwise use the provided URL
+    const finalImageUrl = hasUploadedImage ? uploadedImageUrl : formData.image_url;
+    
+    await updateHeroImage(editingId, { ...formData, image_url: finalImageUrl });
   };
 
   // Handle input change
