@@ -1,117 +1,259 @@
 
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Grid, List, Calendar, Eye, User, Tag } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Blog } from '@/types/blog';
 import Layout from '@/components/layout/Layout';
 
-export default function Blogs() {
-  const blogPosts = [
-    {
-      id: 1,
-      title: "Understanding Solar Panel Efficiency: What You Need to Know",
-      excerpt: "Learn about solar panel efficiency ratings and how they impact your energy production and savings.",
-      image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=250&fit=crop",
-      date: "2024-01-15",
-      category: "Technology"
-    },
-    {
-      id: 2,
-      title: "Government Subsidies for Solar Installation in India 2024",
-      excerpt: "Complete guide to available government subsidies and incentives for solar installations.",
-      image: "https://images.unsplash.com/photo-1497440001374-f26997328c1b?w=400&h=250&fit=crop",
-      date: "2024-01-10",
-      category: "Policy"
-    },
-    {
-      id: 3,
-      title: "Maintenance Tips for Your Solar Power System",
-      excerpt: "Essential maintenance practices to keep your solar panels running at peak efficiency.",
-      image: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=250&fit=crop",
-      date: "2024-01-05",
-      category: "Maintenance"
-    },
-    {
-      id: 4,
-      title: "ROI Analysis: How Long Does It Take to Recover Solar Investment?",
-      excerpt: "Detailed analysis of return on investment for different types of solar installations.",
-      image: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=400&h=250&fit=crop",
-      date: "2023-12-28",
-      category: "Finance"
-    },
-    {
-      id: 5,
-      title: "Choosing the Right Solar Installer: A Complete Guide",
-      excerpt: "Key factors to consider when selecting a solar installation company for your project.",
-      image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=400&h=250&fit=crop",
-      date: "2023-12-20",
-      category: "Guide"
-    },
-    {
-      id: 6,
-      title: "Net Metering Explained: How to Sell Solar Power Back to Grid",
-      excerpt: "Understanding net metering policies and how to maximize your solar investment benefits.",
-      image: "https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=400&h=250&fit=crop",
-      date: "2023-12-15",
-      category: "Policy"
+const Blogs = () => {
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
+
+  const fetchBlogs = async () => {
+    try {
+      setLoading(true);
+      
+      let query = supabase
+        .from('blogs')
+        .select('*')
+        .eq('status', 'published')
+        .order('is_pinned', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching blogs:', error);
+        return;
+      }
+
+      if (data) {
+        // Cast the data to match our Blog type
+        const typedData = data.map(blog => ({
+          ...blog,
+          status: blog.status as 'draft' | 'published' | 'archived',
+          tags: blog.tags || [],
+          view_count: blog.view_count || 0,
+          is_pinned: blog.is_pinned || false
+        }));
+        
+        setBlogs(typedData);
+        
+        // Extract unique categories
+        const uniqueCategories = [...new Set(typedData.map(blog => blog.category).filter(Boolean))];
+        setCategories(uniqueCategories);
+      }
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const filteredBlogs = blogs.filter(blog => {
+    if (selectedCategory === 'all') return true;
+    return blog.category === selectedCategory;
+  });
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const truncateText = (text: string, maxLength: number) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading blogs...</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <div className="min-h-screen bg-cornflower_blue-50 py-16">
-        <div className="container mx-auto px-4">
-          <h1 className="text-3xl md:text-5xl font-extrabold mb-10 text-center text-charcoal">
-            Solar Energy Blog
-          </h1>
-          <p className="text-center text-slate_gray mb-12 text-lg max-w-2xl mx-auto">
-            Stay updated with the latest trends, tips, and insights in solar energy technology, 
-            policies, and best practices.
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Solar Energy Blog</h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Stay updated with the latest insights, tips, and news about solar energy, 
+            renewable technology, and sustainable living.
           </p>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {blogPosts.map((post) => (
-              <article key={post.id} className="bg-white rounded-xl shadow-lg overflow-hidden transition-transform hover:-translate-y-2 hover:shadow-2xl">
-                <img 
-                  src={post.image} 
-                  alt={post.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="bg-cornflower_blue text-white px-3 py-1 rounded-full text-sm font-medium">
-                      {post.category}
-                    </span>
-                    <span className="text-slate_gray text-sm">
-                      {new Date(post.date).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <h2 className="text-xl font-bold mb-3 text-charcoal line-clamp-2">
-                    {post.title}
-                  </h2>
-                  <p className="text-slate_gray mb-4 line-clamp-3">
-                    {post.excerpt}
-                  </p>
-                  <Link 
-                    to={`/blog/${post.id}`}
-                    className="inline-flex items-center text-cornflower_blue hover:text-cornflower_blue-600 font-medium transition-colors"
-                  >
-                    Read More →
-                  </Link>
-                </div>
-              </article>
-            ))}
+        {/* Filters and Controls */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+          <div className="flex items-center space-x-4">
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map(category => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <span className="text-sm text-gray-600">
+              {filteredBlogs.length} {filteredBlogs.length === 1 ? 'article' : 'articles'}
+            </span>
           </div>
 
-          <div className="text-center mt-12">
-            <p className="text-slate_gray mb-4">
-              Looking for specific information about solar energy?
-            </p>
-            <Link to="/contact">
-              <button className="bg-cornflower_blue text-white px-6 py-3 rounded-lg hover:bg-cornflower_blue-600 transition-colors font-medium">
-                Contact Our Experts
-              </button>
-            </Link>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="w-4 h-4" />
+            </Button>
           </div>
         </div>
+
+        {/* Blog Posts */}
+        {filteredBlogs.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-400 mb-4">
+              <Tag className="w-16 h-16 mx-auto" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No articles found</h3>
+            <p className="text-gray-600">
+              {selectedCategory === 'all' 
+                ? 'No blog posts are available at the moment.' 
+                : `No articles found in the "${selectedCategory}" category.`
+              }
+            </p>
+          </div>
+        ) : (
+          <div className={viewMode === 'grid' 
+            ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' 
+            : 'space-y-6'
+          }>
+            {filteredBlogs.map((blog) => (
+              <Card key={blog.id} className="hover:shadow-lg transition-shadow duration-200">
+                {blog.featured_image_url && (
+                  <div className="aspect-video overflow-hidden rounded-t-lg">
+                    <img
+                      src={blog.featured_image_url}
+                      alt={blog.title}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                    />
+                  </div>
+                )}
+                
+                <CardHeader className={blog.featured_image_url ? '' : 'pt-6'}>
+                  <div className="flex items-center justify-between mb-2">
+                    {blog.category && (
+                      <Badge variant="outline" className="text-xs">
+                        {blog.category}
+                      </Badge>
+                    )}
+                    {blog.is_pinned && (
+                      <Badge className="bg-purple-100 text-purple-800 text-xs">
+                        Pinned
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <CardTitle className="text-lg leading-tight">
+                    <Link 
+                      to={`/blog/${blog.slug}`}
+                      className="hover:text-blue-600 transition-colors"
+                    >
+                      {blog.title}
+                    </Link>
+                  </CardTitle>
+                  
+                  {blog.excerpt && (
+                    <CardDescription className="text-sm">
+                      {truncateText(blog.excerpt, 120)}
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                
+                <CardContent>
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center space-x-4">
+                      {blog.author && (
+                        <div className="flex items-center">
+                          <User className="w-3 h-3 mr-1" />
+                          <span>{blog.author}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        <span>{formatDate(blog.created_at)}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <Eye className="w-3 h-3 mr-1" />
+                      <span>{blog.view_count || 0} views</span>
+                    </div>
+                  </div>
+                  
+                  {blog.tags && blog.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      {blog.tags.slice(0, 3).map((tag, index) => (
+                        <span
+                          key={index}
+                          className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {blog.tags.length > 3 && (
+                        <span className="text-xs text-gray-500">
+                          +{blog.tags.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </Layout>
   );
-}
+};
+
+export default Blogs;

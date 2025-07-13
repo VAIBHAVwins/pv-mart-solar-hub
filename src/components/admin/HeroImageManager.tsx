@@ -56,7 +56,7 @@ const HeroImageManager = () => {
           </div>
 
           {/* Add Form */}
-          {showAddForm && (
+          {showAddForm && !editingId && (
             <HeroImageForm
               formData={formData}
               onInputChange={handleInputChange}
@@ -79,7 +79,7 @@ const HeroImageManager = () => {
           )}
 
           {/* Edit Form */}
-          {editingId && (
+          {editingId && !showAddForm && (
             <HeroImageForm
               formData={formData}
               onInputChange={handleInputChange}

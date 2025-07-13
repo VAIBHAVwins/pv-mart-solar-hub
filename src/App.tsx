@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { SupabaseAuthProvider } from './contexts/SupabaseAuthContext';
 import Home from './pages/Index';
@@ -33,7 +32,7 @@ export default function App() {
           <Route path="/installation-type" element={<InstallationType />} />
           <Route path="/grid-connectivity" element={<GridConnectivity />} />
           <Route path="/blogs" element={<Blogs />} />
-          <Route path="/blog/:id" element={<BlogDetail />} />
+          <Route path="/blog/:slug" element={<BlogDetail />} />
           <Route path="/customer/register" element={<CustomerRegister />} />
           <Route path="/vendor/register" element={<VendorRegister />} />
           <Route path="/customer/login" element={<CustomerLogin />} />

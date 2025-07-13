@@ -5,12 +5,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import HeroImageManager from './HeroImageManager';
+import BlogManager from './blog/BlogManager';
 import UserManagement from './UserManagement';
-import { Users, Image, Database, Settings, Activity, TrendingUp } from 'lucide-react';
+import { Users, Image, Database, Settings, Activity, TrendingUp, FileText } from 'lucide-react';
 
 interface AdminStats {
   totalUsers: number;
   totalHeroImages: number;
+  totalBlogs: number;
   totalCustomers: number;
   totalVendors: number;
   totalAdmins: number;
@@ -22,6 +24,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState<AdminStats>({
     totalUsers: 0,
     totalHeroImages: 0,
+    totalBlogs: 0,
     totalCustomers: 0,
     totalVendors: 0,
     totalAdmins: 0,
@@ -71,9 +74,15 @@ const AdminDashboard = () => {
         .from('hero_images')
         .select('*', { count: 'exact', head: true });
 
+      // Fetch blogs count
+      const { count: blogsCount } = await supabase
+        .from('blogs')
+        .select('*', { count: 'exact', head: true });
+
       setStats({
         totalUsers: profilesCount || 0,
         totalHeroImages: heroImagesCount || 0,
+        totalBlogs: blogsCount || 0,
         totalCustomers: customersCount || 0,
         totalVendors: vendorsCount || 0,
         totalAdmins: adminsCount || 0,
@@ -170,6 +179,17 @@ const AdminDashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Blog Posts</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{loading ? '...' : stats.totalBlogs}</div>
+            <p className="text-xs text-muted-foreground">Published articles</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Requirements</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -193,7 +213,7 @@ const AdminDashboard = () => {
 
       {/* Admin Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">
             <Database className="w-4 h-4 mr-2" />
             Overview
@@ -201,6 +221,10 @@ const AdminDashboard = () => {
           <TabsTrigger value="hero-images">
             <Image className="w-4 h-4 mr-2" />
             Hero Images
+          </TabsTrigger>
+          <TabsTrigger value="blogs">
+            <FileText className="w-4 h-4 mr-2" />
+            Blogs
           </TabsTrigger>
           <TabsTrigger value="users">
             <Users className="w-4 h-4 mr-2" />
@@ -232,6 +256,10 @@ const AdminDashboard = () => {
                     <span className="text-sm text-blue-600">{stats.totalHeroImages} live</span>
                   </div>
                   <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Published Blogs</span>
+                    <span className="text-sm text-purple-600">{stats.totalBlogs} articles</span>
+                  </div>
+                  <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Customer Engagement</span>
                     <span className="text-sm text-green-600">High</span>
                   </div>
@@ -257,6 +285,10 @@ const AdminDashboard = () => {
                     <span className="text-sm">Hero image updated</span>
                   </div>
                   <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span className="text-sm">New blog post published</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                     <span className="text-sm">New vendor quotation</span>
                   </div>
@@ -268,6 +300,10 @@ const AdminDashboard = () => {
 
         <TabsContent value="hero-images" className="space-y-4">
           <HeroImageManager />
+        </TabsContent>
+
+        <TabsContent value="blogs" className="space-y-4">
+          <BlogManager />
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4">
