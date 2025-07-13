@@ -145,6 +145,23 @@ export default function Home() {
     });
   };
 
+  // Handle CTA link click
+  const handleCTAClick = (ctaLink: string) => {
+    if (ctaLink.startsWith('http')) {
+      // External link - open in new tab
+      window.open(ctaLink, '_blank', 'noopener,noreferrer');
+    } else if (ctaLink.startsWith('#')) {
+      // Internal anchor link
+      const element = document.querySelector(ctaLink);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      // Internal route - handled by Link component
+      return;
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -224,6 +241,11 @@ export default function Home() {
                 alt={banner.title}
                 className="w-full h-full object-cover"
                 style={{ maxHeight: '100vh' }}
+                onError={(e) => {
+                  console.error('Image failed to load:', banner.image_url);
+                  e.currentTarget.src = 'https://via.placeholder.com/1200x600?text=Image+Not+Available';
+                }}
+                onLoad={() => console.log('Image loaded successfully:', banner.image_url)}
               />
               <div className="absolute inset-0 z-10 flex items-center justify-center h-full">
                 <div className="container-responsive text-center text-white relative">
@@ -241,17 +263,37 @@ export default function Home() {
                       {banner.description}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                      <Link to="/vendor/register">
-                        <Button className="solar-button text-lg px-8 py-4">
-                          Join as Vendor
-                          <ArrowRight className="ml-2 w-5 h-5" />
-                        </Button>
-                      </Link>
-                      <Link to={banner.cta_link}>
-                        <Button variant="outline" className="btn-outline text-white border-white hover:bg-white hover:text-solar-dark text-lg px-8 py-4">
-                          {banner.cta_text}
-                        </Button>
-                      </Link>
+                      {/* Show CTA button if provided */}
+                      {banner.cta_text && banner.cta_link && (
+                        <>
+                          {banner.cta_link.startsWith('http') || banner.cta_link.startsWith('#') ? (
+                            <Button 
+                              onClick={() => handleCTAClick(banner.cta_link)}
+                              className="solar-button text-lg px-8 py-4"
+                            >
+                              {banner.cta_text}
+                              <ArrowRight className="ml-2 w-5 h-5" />
+                            </Button>
+                          ) : (
+                            <Link to={banner.cta_link}>
+                              <Button className="solar-button text-lg px-8 py-4">
+                                {banner.cta_text}
+                                <ArrowRight className="ml-2 w-5 h-5" />
+                              </Button>
+                            </Link>
+                          )}
+                        </>
+                      )}
+                      
+                      {/* Fallback "Join as Vendor" button if no CTA is provided */}
+                      {(!banner.cta_text || !banner.cta_link) && (
+                        <Link to="/vendor/register">
+                          <Button className="solar-button text-lg px-8 py-4">
+                            Join as Vendor
+                            <ArrowRight className="ml-2 w-5 h-5" />
+                          </Button>
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>

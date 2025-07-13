@@ -1,6 +1,6 @@
 
 import { useRef } from 'react';
-import { Upload, Image as ImageIcon } from 'lucide-react';
+import { Upload, Image as ImageIcon, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface FileUploadAreaProps {
   onFileUpload: (file: File) => void;
@@ -36,6 +36,7 @@ export const FileUploadArea = ({
   };
 
   const displayImageUrl = uploadedImageUrl || currentImageUrl;
+  const hasImage = displayImageUrl && displayImageUrl.trim() !== '';
 
   return (
     <div className="space-y-4">
@@ -43,6 +44,8 @@ export const FileUploadArea = ({
         className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
           dragActive 
             ? 'border-blue-500 bg-blue-50' 
+            : hasImage
+            ? 'border-green-300 bg-green-50'
             : 'border-gray-300 hover:border-gray-400'
         }`}
         onDragEnter={onDragEnter}
@@ -58,46 +61,60 @@ export const FileUploadArea = ({
           className="hidden"
         />
         
-        <ImageIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        
-        <div className="space-y-2">
-          <p className="text-sm text-gray-600">
-            {isEdit ? 'Upload new image to replace current one' : 'Upload hero image'}
-          </p>
-          <p className="text-xs text-gray-500">
-            Drag and drop an image here, or{' '}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="text-blue-600 hover:text-blue-800 underline"
-            >
-              browse files
-            </button>
-          </p>
-          <p className="text-xs text-gray-400">
-            Supports: JPEG, PNG, WebP, GIF (max 5MB)
-          </p>
-        </div>
-
-        {displayImageUrl && (
-          <div className="mt-4">
-            <p className="text-sm font-medium text-green-600 mb-2">✓ Image ready</p>
+        {hasImage ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-center text-green-600 mb-4">
+              <CheckCircle className="w-8 h-8 mr-2" />
+              <span className="font-medium">Image Ready</span>
+            </div>
+            
             <div className="relative inline-block">
               <img 
                 src={displayImageUrl} 
                 alt="Preview" 
-                className="mx-auto max-h-32 rounded border"
+                className="mx-auto max-h-48 max-w-full rounded-lg border-2 border-green-200 shadow-sm"
                 onError={(e) => {
                   console.error('Image preview error:', e);
-                  e.currentTarget.src = 'https://via.placeholder.com/200x100?text=Image+Preview';
+                  e.currentTarget.src = 'https://via.placeholder.com/400x200?text=Image+Preview+Error';
+                  e.currentTarget.className = 'mx-auto max-h-48 max-w-full rounded-lg border-2 border-red-200 shadow-sm';
                 }}
-                onLoad={() => console.log('Image preview loaded successfully')}
+                onLoad={() => console.log('Image preview loaded successfully:', displayImageUrl)}
               />
-              <div className="absolute top-0 right-0 bg-green-500 text-white text-xs px-2 py-1 rounded-bl">
+              <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full shadow-sm">
                 ✓
               </div>
             </div>
+            
+            <div className="text-sm text-gray-600">
+              <p>Image URL: {displayImageUrl}</p>
+              {uploadedImageUrl && (
+                <p className="text-green-600 font-medium">✓ New image uploaded successfully!</p>
+              )}
+            </div>
           </div>
+        ) : (
+          <>
+            <ImageIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600">
+                {isEdit ? 'Upload new image to replace current one' : 'Upload hero image'}
+              </p>
+              <p className="text-xs text-gray-500">
+                Drag and drop an image here, or{' '}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-blue-600 hover:text-blue-800 underline"
+                >
+                  browse files
+                </button>
+              </p>
+              <p className="text-xs text-gray-400">
+                Supports: JPEG, PNG, WebP, GIF (max 5MB)
+              </p>
+            </div>
+          </>
         )}
 
         {uploading && (
@@ -107,6 +124,21 @@ export const FileUploadArea = ({
           </div>
         )}
       </div>
+      
+      {hasImage && (
+        <div className="flex justify-center space-x-2">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="text-sm text-blue-600 hover:text-blue-800 underline"
+          >
+            {isEdit ? 'Replace Image' : 'Change Image'}
+          </button>
+          {uploadedImageUrl && (
+            <span className="text-sm text-green-600">✓ Uploaded successfully</span>
+          )}
+        </div>
+      )}
     </div>
   );
 };

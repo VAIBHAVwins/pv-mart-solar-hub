@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Save, X, Check } from 'lucide-react';
+import { Save, X, Check, UserPlus } from 'lucide-react';
 import { HeroImageForm as HeroImageFormType } from './types';
 import { FileUploadArea } from './FileUploadArea';
 
@@ -44,12 +44,36 @@ export const HeroImageForm = ({
 }: HeroImageFormProps) => {
   const canSubmit = !loading && !uploading && formData.image_url && formData.title.trim();
 
+  // Preset for "Join as Vendor" button
+  const setJoinAsVendorPreset = () => {
+    onInputChange('title', 'Join as Vendor');
+    onInputChange('description', 'Become a certified solar vendor and grow your business with PV Mart. Access quality products, training, and support.');
+    onInputChange('cta_text', 'Join as Vendor');
+    onInputChange('cta_link', '/vendor/register');
+    onInputChange('order_index', 0);
+    onInputChange('is_active', true);
+  };
+
   return (
     <Card className={`mb-6 ${isEdit ? 'border-blue-200 bg-blue-50' : ''}`}>
       <CardHeader>
         <CardTitle className={`text-lg ${isEdit ? 'text-blue-800' : ''}`}>
           {title}
         </CardTitle>
+        {!isEdit && (
+          <div className="mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={setJoinAsVendorPreset}
+              className="text-green-600 border-green-600 hover:bg-green-50"
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Use "Join as Vendor" Preset
+            </Button>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <FileUploadArea
@@ -105,7 +129,7 @@ export const HeroImageForm = ({
             <Input
               value={formData.cta_link}
               onChange={(e) => onInputChange('cta_link', e.target.value)}
-              placeholder="/about"
+              placeholder="/about or https://example.com"
             />
           </div>
           <div>
