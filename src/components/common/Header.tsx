@@ -86,7 +86,7 @@ const Header = () => {
             <Navigation getLinkClasses={getLinkClasses} />
             
             <div className="flex items-center space-x-4">
-              {/* Dashboard Button for logged-in users */}
+              {/* Dashboard Button for logged-in users - Fixed to show correct dashboard */}
               {user && userType && (
                 <button
                   onClick={handleDashboardClick}

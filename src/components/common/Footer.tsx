@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from 'react-router-dom';
 
 const Footer = () => {
@@ -53,7 +54,7 @@ const Footer = () => {
           <div className="flex-1 min-w-[180px]">
             <h4 className="font-semibold mb-3">For Customers</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/customer/register" className={`${getLinkClasses()} transition-colors`}>Sign Up</Link></li>
+              <li><Link to="/customer/register" className={`${getLinkClasses()} transition-colors`}>Create Account</Link></li>
               <li><Link to="/customer/login" className={`${getLinkClasses()} transition-colors`}>Login</Link></li>
               <li><Link to="/installation-type" className={`${getLinkClasses()} transition-colors`}>Get Quote</Link></li>
             </ul>

@@ -254,21 +254,21 @@ export default function Home() {
                 onLoad={() => console.log('Image loaded successfully:', banner.image_url)}
               />
               
-              {/* Enhanced text overlay with full width and 85% opacity */}
+              {/* Enhanced text overlay with full width and glass effect */}
               <div className="absolute inset-0 z-10 flex items-center justify-center">
                 <div className="w-full h-full flex items-center justify-center">
-                  {/* Full width text box with 85% opacity (15% transparency) */}
-                  <div className="w-full bg-black/85 backdrop-blur-sm flex items-center justify-center min-h-[200px] py-8 px-4">
+                  {/* Full width text box with glass effect - highly transparent */}
+                  <div className="w-full bg-black/15 backdrop-blur-sm border-t border-b border-white/10 flex items-center justify-center min-h-[200px] py-8 px-4">
                     <div className="text-center text-white max-w-7xl mx-auto">
-                      <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6 leading-tight">
+                      <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6 leading-tight drop-shadow-lg">
                         {banner.title}
                       </h1>
                       {banner.subtitle && (
-                        <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-3 sm:mb-4 text-solar-primary">
+                        <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-3 sm:mb-4 text-solar-primary drop-shadow-lg">
                           {banner.subtitle}
                         </p>
                       )}
-                      <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 opacity-90 max-w-3xl mx-auto leading-relaxed">
+                      <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 opacity-90 max-w-3xl mx-auto leading-relaxed drop-shadow-lg">
                         {banner.description}
                       </p>
                       <div className="flex flex-col sm:flex-row gap-4 justify-center">

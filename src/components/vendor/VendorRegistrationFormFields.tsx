@@ -1,202 +1,390 @@
 
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface VendorRegistrationFormData {
-  companyName: string;
-  contactPerson: string;
-  email: string;
-  phone: string;
-  address: string;
-  pmSuryaGharRegistered: string;
-  licenseNumber: string;
-  serviceAreas: string;
-  specializations: string;
-  password: string;
-  confirmPassword: string;
-}
+import { Checkbox } from '@/components/ui/checkbox';
+import { Control } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import { locationData } from '@/lib/locationData';
 
 interface VendorRegistrationFormFieldsProps {
-  formData: VendorRegistrationFormData;
-  loading: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSelectChange: (field: string, value: string) => void;
+  control: Control<any>;
 }
 
-export function VendorRegistrationFormFields({ 
-  formData, 
-  loading, 
-  onChange, 
-  onSelectChange 
-}: VendorRegistrationFormFieldsProps) {
+const VendorRegistrationFormFields = ({ control }: VendorRegistrationFormFieldsProps) => {
+  const [states, setStates] = useState<string[]>([]);
+  const [districts, setDistricts] = useState<string[]>([]);
+  const [selectedState, setSelectedState] = useState<string>('');
+
+  useEffect(() => {
+    setStates(Object.keys(locationData));
+  }, []);
+
+  useEffect(() => {
+    if (selectedState && locationData[selectedState]) {
+      setDistricts(locationData[selectedState]);
+    } else {
+      setDistricts([]);
+    }
+  }, [selectedState]);
+
   return (
     <>
+      {/* Personal Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <Label htmlFor="companyName" className="text-[#171a21]">Company Name</Label>
-          <Input
-            id="companyName"
+        <FormField
+          control={control}
+          name="fullName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name *</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter your full name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email Address *</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="Enter your email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <FormField
+          control={control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Phone Number *</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter your phone number" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password *</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="Create a password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      {/* Business Information */}
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold mb-4">Business Information</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField
+            control={control}
             name="companyName"
-            value={formData.companyName}
-            onChange={onChange}
-            className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-            placeholder="Your company name"
-            required
-            disabled={loading}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Company Name *</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter your company name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
-        <div>
-          <Label htmlFor="contactPerson" className="text-[#171a21]">Contact Person</Label>
-          <Input
-            id="contactPerson"
-            name="contactPerson"
-            value={formData.contactPerson}
-            onChange={onChange}
-            className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-            placeholder="Primary contact name"
-            required
-            disabled={loading}
-          />
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <Label htmlFor="email" className="text-[#171a21]">Email Address</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={onChange}
-            className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-            placeholder="Business email"
-            required
-            disabled={loading}
+          <FormField
+            control={control}
+            name="businessType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Business Type *</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select business type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="installer">Solar Installer</SelectItem>
+                    <SelectItem value="manufacturer">Solar Manufacturer</SelectItem>
+                    <SelectItem value="distributor">Solar Distributor</SelectItem>
+                    <SelectItem value="consultant">Solar Consultant</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
           />
         </div>
-        <div>
-          <Label htmlFor="phone" className="text-[#171a21]">Phone Number</Label>
-          <Input
-            id="phone"
-            name="phone"
-            type="tel"
-            value={formData.phone}
-            onChange={onChange}
-            className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-            placeholder="Business phone"
-            required
-            disabled={loading}
-          />
-        </div>
-      </div>
 
-      <div>
-        <Label htmlFor="address" className="text-[#171a21]">Business Address</Label>
-        <Input
-          id="address"
-          name="address"
-          value={formData.address}
-          onChange={onChange}
-          className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-          placeholder="Complete business address"
-          required
-          disabled={loading}
-          style={{ whiteSpace: 'pre-wrap' }}
+        <FormField
+          control={control}
+          name="businessAddress"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Business Address *</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Enter your complete business address"
+                  className="min-h-[100px] resize-none"
+                  style={{ whiteSpace: 'pre-wrap' }}
+                  onKeyDown={(e) => {
+                    // Allow all standard text input including spaces
+                    if (e.key === ' ') {
+                      e.stopPropagation();
+                    }
+                  }}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <FormField
+            control={control}
+            name="state"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>State *</FormLabel>
+                <Select 
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setSelectedState(value);
+                  }} 
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {states.map((state) => (
+                      <SelectItem key={state} value={state}>
+                        {state}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name="district"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>District *</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select district" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {districts.map((district) => (
+                      <SelectItem key={district} value={district}>
+                        {district}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name="pincode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Pincode *</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter pincode" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
       </div>
 
-      <div>
-        <Label htmlFor="pmSuryaGharRegistered" className="text-[#171a21]">Are you Registered under PM Surya Ghar Yojna?</Label>
-        <Select 
-          value={formData.pmSuryaGharRegistered} 
-          onValueChange={(value) => onSelectChange('pmSuryaGharRegistered', value)}
-          disabled={loading}
-        >
-          <SelectTrigger className="mt-1 border-[#b07e66] focus:border-[#797a83]">
-            <SelectValue placeholder="Select option" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="YES">YES</SelectItem>
-            <SelectItem value="NO">NO</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Certification & Experience */}
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold mb-4">Certification & Experience</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField
+            control={control}
+            name="yearsOfExperience"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Years of Experience *</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select experience" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="0-1">0-1 years</SelectItem>
+                    <SelectItem value="2-5">2-5 years</SelectItem>
+                    <SelectItem value="6-10">6-10 years</SelectItem>
+                    <SelectItem value="11-15">11-15 years</SelectItem>
+                    <SelectItem value="15+">15+ years</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      <div>
-        <Label htmlFor="licenseNumber" className="text-[#171a21]">License Number</Label>
-        <Input
-          id="licenseNumber"
+          <FormField
+            control={control}
+            name="pmSuryaGharRegistered"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Are you Registered under PM Surya Ghar Yojna? *</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select option" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="yes">YES</SelectItem>
+                    <SelectItem value="no">NO</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={control}
           name="licenseNumber"
-          value={formData.licenseNumber}
-          onChange={onChange}
-          className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-          placeholder="Solar installation license number"
-          required
-          disabled={loading}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>License Number</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter your license number (if any)" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="certifications"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Certifications</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="List your relevant certifications"
+                  className="min-h-[100px]"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <Label htmlFor="password" className="text-[#171a21]">Password</Label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            value={formData.password}
-            onChange={onChange}
-            className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-            placeholder="Create a password"
-            required
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <Label htmlFor="confirmPassword" className="text-[#171a21]">Confirm Password</Label>
-          <Input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            value={formData.confirmPassword}
-            onChange={onChange}
-            className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-            placeholder="Confirm password"
-            required
-            disabled={loading}
-          />
-        </div>
+      {/* Service Areas */}
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold mb-4">Service Information</h3>
+        
+        <FormField
+          control={control}
+          name="serviceAreas"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Service Areas *</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="List the areas where you provide services (cities, districts, states)"
+                  className="min-h-[100px]"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="servicesOffered"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Services Offered *</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Describe the solar services you offer"
+                  className="min-h-[100px]"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <Label htmlFor="serviceAreas" className="text-[#171a21]">Service Areas</Label>
-          <Input
-            id="serviceAreas"
-            name="serviceAreas"
-            value={formData.serviceAreas}
-            onChange={onChange}
-            className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-            placeholder="e.g. Delhi, Mumbai, etc."
-            required
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <Label htmlFor="specializations" className="text-[#171a21]">Specializations</Label>
-          <Input
-            id="specializations"
-            name="specializations"
-            value={formData.specializations}
-            onChange={onChange}
-            className="mt-1 border-[#b07e66] focus:border-[#797a83]"
-            placeholder="e.g. Rooftop, Commercial, etc."
-            required
-            disabled={loading}
-          />
-        </div>
-      </div>
+      {/* Terms and Conditions */}
+      <FormField
+        control={control}
+        name="agreeToTerms"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+            <FormControl>
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
+            <div className="space-y-1 leading-none">
+              <FormLabel>
+                I agree to the terms and conditions and privacy policy *
+              </FormLabel>
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </>
   );
-}
+};
+
+export default VendorRegistrationFormFields;
