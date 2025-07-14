@@ -1,6 +1,7 @@
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface VendorRegistrationFormData {
   companyName: string;
@@ -8,6 +9,7 @@ interface VendorRegistrationFormData {
   email: string;
   phone: string;
   address: string;
+  pmSuryaGharRegistered: string;
   licenseNumber: string;
   serviceAreas: string;
   specializations: string;
@@ -19,9 +21,15 @@ interface VendorRegistrationFormFieldsProps {
   formData: VendorRegistrationFormData;
   loading: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSelectChange: (field: string, value: string) => void;
 }
 
-export function VendorRegistrationFormFields({ formData, loading, onChange }: VendorRegistrationFormFieldsProps) {
+export function VendorRegistrationFormFields({ 
+  formData, 
+  loading, 
+  onChange, 
+  onSelectChange 
+}: VendorRegistrationFormFieldsProps) {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -95,7 +103,25 @@ export function VendorRegistrationFormFields({ formData, loading, onChange }: Ve
           placeholder="Complete business address"
           required
           disabled={loading}
+          style={{ whiteSpace: 'pre-wrap' }}
         />
+      </div>
+
+      <div>
+        <Label htmlFor="pmSuryaGharRegistered" className="text-[#171a21]">Are you Registered under PM Surya Ghar Yojna?</Label>
+        <Select 
+          value={formData.pmSuryaGharRegistered} 
+          onValueChange={(value) => onSelectChange('pmSuryaGharRegistered', value)}
+          disabled={loading}
+        >
+          <SelectTrigger className="mt-1 border-[#b07e66] focus:border-[#797a83]">
+            <SelectValue placeholder="Select option" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="YES">YES</SelectItem>
+            <SelectItem value="NO">NO</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div>

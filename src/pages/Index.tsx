@@ -254,12 +254,12 @@ export default function Home() {
                 onLoad={() => console.log('Image loaded successfully:', banner.image_url)}
               />
               
-              {/* Standardized text overlay container */}
+              {/* Enhanced text overlay with full width and 85% opacity */}
               <div className="absolute inset-0 z-10 flex items-center justify-center">
-                <div className="w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-                  {/* Standardized text box with consistent sizing */}
-                  <div className="relative bg-black/50 backdrop-blur-sm rounded-lg p-6 sm:p-8 md:p-12 mx-auto">
-                    <div className="text-center text-white">
+                <div className="w-full h-full flex items-center justify-center">
+                  {/* Full width text box with 85% opacity (15% transparency) */}
+                  <div className="w-full bg-black/85 backdrop-blur-sm flex items-center justify-center min-h-[200px] py-8 px-4">
+                    <div className="text-center text-white max-w-7xl mx-auto">
                       <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6 leading-tight">
                         {banner.title}
                       </h1>
@@ -344,7 +344,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section - Fixed Contact Us button visibility */}
       <section className="solar-section solar-gradient">
         <div className="solar-container text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
@@ -362,7 +362,7 @@ export default function Home() {
               </Button>
             </Link>
             <Link to="/contact">
-              <Button variant="outline" className="border-white text-white hover:bg-white hover:text-solar-primary text-lg px-8 py-4">
+              <Button className="border-2 border-white text-white bg-transparent hover:bg-white hover:text-solar-primary text-lg px-8 py-4 transition-all duration-300">
                 Contact Us
               </Button>
             </Link>

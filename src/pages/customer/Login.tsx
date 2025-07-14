@@ -56,7 +56,7 @@ const CustomerLogin = () => {
         if (signInError.message.includes('Invalid login credentials')) {
           setError('Invalid email or password. Please check your credentials.');
         } else if (signInError.message.includes('Email not confirmed')) {
-          setError('Please check your email and click the confirmation link before signing in.');
+          setError('Please check your email and click the confirmation link before logging in.');
         } else {
           setError(`Login failed: ${signInError.message}`);
         }
@@ -77,7 +77,7 @@ const CustomerLogin = () => {
       <div className="min-h-screen flex flex-col items-center justify-center bg-jonquil py-16 px-4">
         <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
           <h1 className="text-4xl font-extrabold mb-6 text-center text-licorice drop-shadow">Customer Login</h1>
-          <p className="text-brown mb-8 text-center">Sign in to access your solar dashboard</p>
+          <p className="text-brown mb-8 text-center">Login to access your solar dashboard</p>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <Label htmlFor="email" className="text-licorice">Email Address</Label>
@@ -111,16 +111,20 @@ const CustomerLogin = () => {
               className="w-full bg-brown text-white py-3 rounded-lg font-bold hover:bg-licorice shadow-md transition"
               disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
           <div className="mt-6 text-center">
             <p className="text-brown mb-2">
               Don't have an account?{' '}
               <Link to="/customer/register" className="text-licorice hover:underline font-semibold">
-                Sign up here
+                Create Account
               </Link>
             </p>
+            <Link to="/customer/forgot-password" className="text-brown hover:underline">
+              Forgot your password?
+            </Link>
+            <br />
             <Link to="/" className="text-brown hover:underline">
               ← Back to Home
             </Link>

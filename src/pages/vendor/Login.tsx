@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -79,7 +80,7 @@ const VendorLogin = () => {
               className="w-full bg-[#797a83] hover:bg-[#4f4f56] text-[#f7f7f6] font-semibold"
               disabled={loading}
             >
-              {loading ? 'Signing In...' : 'Sign In'}
+              {loading ? 'Logging In...' : 'Login'}
             </Button>
           </form>
 
@@ -87,7 +88,7 @@ const VendorLogin = () => {
             <p className="text-[#4f4f56] mb-2">
               Don't have an account?{' '}
               <Link to="/vendor/register" className="text-[#b07e66] hover:underline font-semibold">
-                Sign up here
+                Create Account
               </Link>
             </p>
             <Link to="/vendor/forgot-password" className="text-[#4f4f56] hover:underline text-sm">

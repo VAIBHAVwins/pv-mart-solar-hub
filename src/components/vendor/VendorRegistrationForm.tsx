@@ -12,6 +12,7 @@ interface VendorRegistrationFormData {
   email: string;
   phone: string;
   address: string;
+  pmSuryaGharRegistered: string;
   licenseNumber: string;
   serviceAreas: string;
   specializations: string;
@@ -27,6 +28,7 @@ export function VendorRegistrationForm() {
     email: '',
     phone: '',
     address: '',
+    pmSuryaGharRegistered: '',
     licenseNumber: '',
     serviceAreas: '',
     specializations: '',
@@ -57,8 +59,15 @@ export function VendorRegistrationForm() {
     }));
   };
 
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const validateForm = () => {
-    const requiredFields = ['companyName', 'contactPerson', 'email', 'phone', 'address', 'licenseNumber', 'serviceAreas', 'specializations'];
+    const requiredFields = ['companyName', 'contactPerson', 'email', 'phone', 'address', 'pmSuryaGharRegistered', 'licenseNumber', 'serviceAreas', 'specializations'];
     
     for (const field of requiredFields) {
       if (!validation.required(formData[field as keyof typeof formData])) {
@@ -127,7 +136,8 @@ export function VendorRegistrationForm() {
           full_name: sanitize.html(formData.contactPerson),
           company_name: sanitize.html(formData.companyName),
           phone: sanitize.html(formData.phone),
-          user_type: 'vendor'
+          user_type: 'vendor',
+          pm_surya_ghar_registered: formData.pmSuryaGharRegistered
         }
       });
       
@@ -172,6 +182,7 @@ export function VendorRegistrationForm() {
           formData={formData}
           loading={loading}
           onChange={handleChange}
+          onSelectChange={handleSelectChange}
         />
         
         <RegistrationMessages error={error} success={success} />

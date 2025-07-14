@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
@@ -11,7 +12,6 @@ export default function VendorQuotationForm({ onClose }: { onClose: () => void }
   const { user } = useSupabaseAuth();
   const [form, setForm] = useState({
     vendor_name: '',
-    vendor_phone: '',
     installation_type: '',
     system_type: '',
     total_price: '',
@@ -44,7 +44,7 @@ export default function VendorQuotationForm({ onClose }: { onClose: () => void }
           vendor_id: user.id,
           vendor_name: form.vendor_name,
           vendor_email: user.email!,
-          vendor_phone: form.vendor_phone,
+          vendor_phone: null, // Removed phone number requirement
           installation_type: form.installation_type as any,
           system_type: form.system_type as any,
           total_price: parseFloat(form.total_price),
@@ -77,24 +77,14 @@ export default function VendorQuotationForm({ onClose }: { onClose: () => void }
         {success && <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">Quotation submitted successfully!</div>}
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="vendor_name">Vendor Name *</Label>
-              <Input
-                id="vendor_name"
-                value={form.vendor_name}
-                onChange={(e) => handleChange('vendor_name', e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="vendor_phone">Phone</Label>
-              <Input
-                id="vendor_phone"
-                value={form.vendor_phone}
-                onChange={(e) => handleChange('vendor_phone', e.target.value)}
-              />
-            </div>
+          <div>
+            <Label htmlFor="vendor_name">Vendor Name *</Label>
+            <Input
+              id="vendor_name"
+              value={form.vendor_name}
+              onChange={(e) => handleChange('vendor_name', e.target.value)}
+              required
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

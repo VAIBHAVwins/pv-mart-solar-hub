@@ -12,7 +12,7 @@ const VendorRegister = () => {
           <p className="text-[#4f4f56] mb-2">
             Already have an account?{' '}
             <Link to="/vendor/login" className="text-[#797a83] hover:underline font-semibold">
-              Sign in here
+              Login here
             </Link>
           </p>
         </div>
