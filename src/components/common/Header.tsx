@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import TopBar from './TopBar';
 import Logo from './Logo';
 import Navigation from './Navigation';
@@ -10,12 +12,34 @@ import MobileMenu from './MobileMenu';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [userType, setUserType] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useSupabaseAuth();
 
   const isCustomerRoute = location.pathname.includes('/customer');
   const isVendorRoute = location.pathname.includes('/vendor');
+  
+  // Fetch user type when user changes
+  useEffect(() => {
+    if (user) {
+      fetchUserType();
+    } else {
+      setUserType(null);
+    }
+  }, [user]);
+
+  const fetchUserType = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('user_type')
+      .eq('user_id', user.id)
+      .single();
+    
+    setUserType(data?.user_type || null);
+  };
   
   // Determine theme based on route
   const getThemeClasses = () => {
@@ -41,6 +65,14 @@ const Header = () => {
     navigate('/');
   };
 
+  const handleDashboardClick = () => {
+    if (userType === 'customer') {
+      navigate('/customer/dashboard');
+    } else if (userType === 'vendor') {
+      navigate('/vendor/dashboard');
+    }
+  };
+
   return (
     <>
       <TopBar />
@@ -53,10 +85,22 @@ const Header = () => {
             
             <Navigation getLinkClasses={getLinkClasses} />
             
-            <AuthButtons 
-              user={user} 
-              handleLogout={handleLogout} 
-            />
+            <div className="flex items-center space-x-4">
+              {/* Dashboard Button for logged-in users */}
+              {user && userType && (
+                <button
+                  onClick={handleDashboardClick}
+                  className="hidden lg:block solar-button-outline px-4 py-2 text-sm"
+                >
+                  {userType === 'customer' ? 'Customer Dashboard' : 'Vendor Dashboard'}
+                </button>
+              )}
+              
+              <AuthButtons 
+                user={user} 
+                handleLogout={handleLogout} 
+              />
+            </div>
 
             {/* Mobile Menu Button */}
             <button
@@ -72,7 +116,9 @@ const Header = () => {
             setIsMenuOpen={setIsMenuOpen}
             getLinkClasses={getLinkClasses}
             user={user}
+            userType={userType}
             handleLogout={handleLogout}
+            handleDashboardClick={handleDashboardClick}
           />
         </div>
       </header>

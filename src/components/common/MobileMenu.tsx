@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -6,7 +7,9 @@ interface MobileMenuProps {
   setIsMenuOpen: (open: boolean) => void;
   getLinkClasses: () => string;
   user: { email?: string; id?: string } | null;
+  userType?: string | null;
   handleLogout: () => void;
+  handleDashboardClick: () => void;
 }
 
 const MobileMenu = ({ 
@@ -14,7 +17,9 @@ const MobileMenu = ({
   setIsMenuOpen, 
   getLinkClasses, 
   user, 
-  handleLogout 
+  userType,
+  handleLogout,
+  handleDashboardClick
 }: MobileMenuProps) => {
   if (!isMenuOpen) return null;
 
@@ -78,15 +83,30 @@ const MobileMenu = ({
               </Link>
             </div>
           ) : (
-            <Button 
-              onClick={() => {
-                handleLogout();
-                setIsMenuOpen(false);
-              }} 
-              className="w-full solar-button-outline border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-            >
-              Logout
-            </Button>
+            <div className="flex flex-col space-y-3">
+              {/* Dashboard Button for mobile */}
+              {userType && (
+                <Button 
+                  onClick={() => {
+                    handleDashboardClick();
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full solar-button-outline"
+                >
+                  {userType === 'customer' ? 'Customer Dashboard' : 'Vendor Dashboard'}
+                </Button>
+              )}
+              
+              <Button 
+                onClick={() => {
+                  handleLogout();
+                  setIsMenuOpen(false);
+                }} 
+                className="w-full solar-button-outline border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+              >
+                Logout
+              </Button>
+            </div>
           )}
         </div>
       </nav>

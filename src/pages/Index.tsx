@@ -177,7 +177,7 @@ export default function Home() {
 
   return (
     <Layout>
-      {/* Hero Section with Carousel */}
+      {/* Hero Section with Carousel - Fixed mobile responsive issues */}
       <section className="relative h-screen overflow-hidden">
         <Carousel
           showThumbs={false}
@@ -186,6 +186,8 @@ export default function Home() {
           autoPlay
           interval={5000}
           className="h-full"
+          swipeable={false}
+          emulateTouch={false}
           renderArrowPrev={(onClickHandler, hasPrev, label) =>
             hasPrev && (
               <button
@@ -239,61 +241,69 @@ export default function Home() {
               <img 
                 src={banner.image_url} 
                 alt={banner.title}
-                className="w-full h-full object-cover"
-                style={{ maxHeight: '100vh' }}
+                className="w-full h-full object-cover object-center"
+                style={{ 
+                  maxHeight: '100vh',
+                  minHeight: '100vh',
+                  objectPosition: 'center center'
+                }}
                 onError={(e) => {
                   console.error('Image failed to load:', banner.image_url);
                   e.currentTarget.src = 'https://via.placeholder.com/1200x600?text=Image+Not+Available';
                 }}
                 onLoad={() => console.log('Image loaded successfully:', banner.image_url)}
               />
-              <div className="absolute inset-0 z-10 flex items-center justify-center h-full">
-                <div className="container-responsive text-center text-white relative">
-                  <div className="absolute inset-0 bg-black/40" style={{ zIndex: 10 }}></div>
-                  <div className="max-w-4xl mx-auto relative z-10">
-                    <h1 className="solar-heading text-white mb-6 animate-fade-in">
-                      {banner.title}
-                    </h1>
-                    {banner.subtitle && (
-                      <p className="text-2xl md:text-3xl font-semibold mb-4 text-solar-primary">
-                        {banner.subtitle}
+              
+              {/* Standardized text overlay container */}
+              <div className="absolute inset-0 z-10 flex items-center justify-center">
+                <div className="w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                  {/* Standardized text box with consistent sizing */}
+                  <div className="relative bg-black/50 backdrop-blur-sm rounded-lg p-6 sm:p-8 md:p-12 mx-auto">
+                    <div className="text-center text-white">
+                      <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6 leading-tight">
+                        {banner.title}
+                      </h1>
+                      {banner.subtitle && (
+                        <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-3 sm:mb-4 text-solar-primary">
+                          {banner.subtitle}
+                        </p>
+                      )}
+                      <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 opacity-90 max-w-3xl mx-auto leading-relaxed">
+                        {banner.description}
                       </p>
-                    )}
-                    <p className="text-lg md:text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-                      {banner.description}
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                      {/* Show CTA button if provided */}
-                      {banner.cta_text && banner.cta_link && (
-                        <>
-                          {banner.cta_link.startsWith('http') || banner.cta_link.startsWith('#') ? (
-                            <Button 
-                              onClick={() => handleCTAClick(banner.cta_link)}
-                              className="solar-button text-lg px-8 py-4"
-                            >
-                              {banner.cta_text}
-                              <ArrowRight className="ml-2 w-5 h-5" />
-                            </Button>
-                          ) : (
-                            <Link to={banner.cta_link}>
-                              <Button className="solar-button text-lg px-8 py-4">
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        {/* Show CTA button if provided */}
+                        {banner.cta_text && banner.cta_link && (
+                          <>
+                            {banner.cta_link.startsWith('http') || banner.cta_link.startsWith('#') ? (
+                              <Button 
+                                onClick={() => handleCTAClick(banner.cta_link)}
+                                className="solar-button text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4"
+                              >
                                 {banner.cta_text}
-                                <ArrowRight className="ml-2 w-5 h-5" />
+                                <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
                               </Button>
-                            </Link>
-                          )}
-                        </>
-                      )}
-                      
-                      {/* Fallback "Join as Vendor" button if no CTA is provided */}
-                      {(!banner.cta_text || !banner.cta_link) && (
-                        <Link to="/vendor/register">
-                          <Button className="solar-button text-lg px-8 py-4">
-                            Join as Vendor
-                            <ArrowRight className="ml-2 w-5 h-5" />
-                          </Button>
-                        </Link>
-                      )}
+                            ) : (
+                              <Link to={banner.cta_link}>
+                                <Button className="solar-button text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto">
+                                  {banner.cta_text}
+                                  <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+                                </Button>
+                              </Link>
+                            )}
+                          </>
+                        )}
+                        
+                        {/* Fallback "Join as Vendor" button if no CTA is provided */}
+                        {(!banner.cta_text || !banner.cta_link) && (
+                          <Link to="/vendor/register">
+                            <Button className="solar-button text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto">
+                              Join as Vendor
+                              <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
