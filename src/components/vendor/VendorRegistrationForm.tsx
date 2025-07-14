@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { validation, sanitize, validationMessages } from '@/lib/validation';
 import { Button } from '@/components/ui/button';
-import { VendorRegistrationFormFields } from './VendorRegistrationFormFields';
+import VendorRegistrationFormFields from './VendorRegistrationFormFields';
 import { RegistrationMessages } from '@/components/customer/RegistrationMessages';
 
 interface VendorRegistrationFormData {
