@@ -18,6 +18,7 @@ export const useBlogManager = () => {
     total: 0,
     published: 0,
     draft: 0,
+    archived: 0,
     pinned: 0
   });
 
@@ -176,10 +177,10 @@ export const useBlogManager = () => {
       }
       
       console.log('Fetched blogs:', data);
-      // After fetching blogs, cast status to 'draft' | 'published' for each blog
+      // After fetching blogs, cast status to include archived
       const blogsTyped = (data || []).map((blog: any) => ({
         ...blog,
-        status: blog.status === 'published' ? 'published' : 'draft'
+        status: blog.status as 'draft' | 'published' | 'archived'
       }));
       setBlogs(blogsTyped);
       // Calculate stats
@@ -199,6 +200,7 @@ export const useBlogManager = () => {
       total: blogData.length,
       published: blogData.filter(blog => blog.status === 'published').length,
       draft: blogData.filter(blog => blog.status === 'draft').length,
+      archived: blogData.filter(blog => blog.status === 'archived').length,
       pinned: blogData.filter(blog => blog.is_pinned).length
     };
     setStats(stats);
@@ -360,22 +362,6 @@ export const useBlogManager = () => {
     }
   };
 
-  // Increment view count (commented out due to type error)
-  // const incrementViewCount = async (id: string) => {
-  //   try {
-  //     const { error } = await supabase
-  //       .from('blogs')
-  //       .update({ view_count: supabase.rpc('increment_view_count', { blog_id: id }) })
-  //       .eq('id', id);
-
-  //     if (error) {
-  //       console.error('Error incrementing view count:', error);
-  //     }
-  //   } catch (err) {
-  //     console.error('Error incrementing view count:', err);
-  //   }
-  // };
-
   // Toggle pin status
   const togglePin = async (id: string, isPinned: boolean) => {
     try {
@@ -500,7 +486,6 @@ export const useBlogManager = () => {
     addBlog,
     updateBlog,
     deleteBlog,
-    // incrementViewCount, // This function is commented out due to type error
     togglePin,
     startEditing,
     cancelEditing,
@@ -512,4 +497,4 @@ export const useBlogManager = () => {
     resetForm,
     fetchBlogs
   };
-}; 
+};

@@ -1,3 +1,4 @@
+
 export interface Blog {
   id: string;
   title: string;
@@ -8,7 +9,7 @@ export interface Blog {
   category?: string;
   tags: string[];
   author: string;
-  status: 'draft' | 'published';
+  status: 'draft' | 'published' | 'archived';
   is_pinned: boolean;
   view_count: number;
   created_at: string;
@@ -25,7 +26,7 @@ export interface BlogForm {
   category: string;
   tags: string[];
   author: string;
-  status: 'draft' | 'published';
+  status: 'draft' | 'published' | 'archived';
   is_pinned: boolean;
 }
 
@@ -43,7 +44,7 @@ export const initialBlogForm: BlogForm = {
 };
 
 export interface BlogFilters {
-  status?: 'draft' | 'published';
+  status?: 'draft' | 'published' | 'archived';
   category?: string;
   is_pinned?: boolean;
   search?: string;
@@ -53,5 +54,6 @@ export interface BlogStats {
   total: number;
   published: number;
   draft: number;
+  archived: number;
   pinned: number;
-} 
+}
