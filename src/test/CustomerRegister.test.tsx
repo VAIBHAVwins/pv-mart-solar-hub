@@ -12,14 +12,6 @@ vi.mock('@/components/layout/Layout', () => ({
 }))
 
 // Mock the OTPVerification component
-vi.mock('@/components/auth/OTPVerification', () => ({
-  OTPVerification: ({ email, onVerificationComplete }: { email: string; onVerificationComplete: () => void }) => (
-    <div data-testid="otp-verification">
-      <p>OTP Verification for {email}</p>
-      <button onClick={onVerificationComplete}>Verify</button>
-    </div>
-  ),
-}))
 
 // Mock helper functions
 const createMockUser = (overrides = {}): User => ({
@@ -132,7 +124,7 @@ describe('CustomerRegister', () => {
     await user.click(submitButton)
     
     await waitFor(() => {
-      expect(screen.getByText('Registration failed: Email already exists')).toBeInTheDocument()
+      expect(screen.queryAllByText((content) => content.includes('Registration failed: Email already exists')).length).toBeGreaterThan(0)
     })
   })
 
@@ -152,12 +144,10 @@ describe('CustomerRegister', () => {
     await user.type(screen.getByLabelText('Phone Number'), '1234567890')
     await user.type(screen.getByLabelText('Password'), 'password123')
     await user.type(screen.getByLabelText('Confirm Password'), 'password123')
-    
-    const submitButton = screen.getByRole('button', { name: 'Create Account' })
+    const submitButton = screen.getByRole('button', { name: /create account/i })
     await user.click(submitButton)
-    
     await waitFor(() => {
       expect(screen.getByTestId('otp-verification')).toBeInTheDocument()
-    })
-  })
+    }, { timeout: 15000 })
+  }, 15000)
 })

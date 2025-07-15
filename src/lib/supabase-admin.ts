@@ -183,3 +183,47 @@ export const quotationComponentsService = {
     if (error) throw error;
   }
 };
+
+// Utility: Delete customer accounts for emails that are registered as both customer and vendor
+export const deleteDuplicateCustomerAccounts = async () => {
+  console.log('🔍 Finding duplicate emails registered as both customer and vendor...');
+  // 1. Get all vendor emails
+  const { data: vendorProfiles, error: vendorError } = await supabaseAdmin
+    .from('profiles')
+    .select('user_id, user_type, full_name, company_name, phone')
+    .eq('user_type', 'vendor');
+  if (vendorError) throw vendorError;
+  const vendorEmails = new Set((vendorProfiles || []).map((v: any) => v.email));
+
+  // 2. Get all customer profiles with those emails
+  const { data: customerProfiles, error: customerError } = await supabaseAdmin
+    .from('profiles')
+    .select('user_id, user_type, email')
+    .eq('user_type', 'customer');
+  if (customerError) throw customerError;
+
+  const duplicates = (customerProfiles || []).filter((c: any) => vendorEmails.has(c.email));
+  if (duplicates.length === 0) {
+    console.log('✅ No duplicate customer accounts found.');
+    return { deleted: 0 };
+  }
+
+  // 3. Delete customer accounts for those emails
+  let deleted = 0;
+  for (const dup of duplicates) {
+    // Delete from auth.users
+    try {
+      const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(dup.user_id);
+      if (authError) {
+        console.error(`❌ Failed to delete customer user_id ${dup.user_id}:`, authError);
+      } else {
+        console.log(`🗑️ Deleted customer user_id ${dup.user_id} (email: ${dup.email})`);
+        deleted++;
+      }
+    } catch (err) {
+      console.error(`❌ Exception deleting user_id ${dup.user_id}:`, err);
+    }
+  }
+  console.log(`🎉 Deleted ${deleted} duplicate customer accounts.`);
+  return { deleted };
+};

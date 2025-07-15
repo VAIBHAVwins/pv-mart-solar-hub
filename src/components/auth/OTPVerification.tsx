@@ -99,7 +99,7 @@ export const OTPVerification = ({ email, onVerificationComplete, onBack }: OTPVe
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto" data-testid="otp-verification">
       <CardHeader>
         <CardTitle className="text-center">Verify Your Email</CardTitle>
         <p className="text-center text-sm text-gray-600">

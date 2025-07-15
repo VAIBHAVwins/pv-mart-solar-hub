@@ -5,6 +5,7 @@ import { validation, sanitize, validationMessages } from '@/lib/validation';
 import { Button } from '@/components/ui/button';
 import VendorRegistrationFormFields from './VendorRegistrationFormFields';
 import { RegistrationMessages } from '@/components/customer/RegistrationMessages';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VendorRegistrationFormData {
   companyName: string;
@@ -125,6 +126,19 @@ export function VendorRegistrationForm() {
 
     setLoading(true);
     try {
+      // Check if email is already used by a customer
+      const { data: customerProfile, error: customerError } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('user_type', 'customer')
+        .eq('email', formData.email)
+        .single();
+      if (customerProfile) {
+        setError('This email is already registered as a customer. Please use a different email.');
+        setLoading(false);
+        return;
+      }
+
       console.log('Attempting vendor registration with:', {
         email: formData.email,
         contactPerson: formData.contactPerson,

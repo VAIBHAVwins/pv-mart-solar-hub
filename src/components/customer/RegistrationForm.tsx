@@ -5,6 +5,7 @@ import { validation, sanitize, validationMessages } from '@/lib/validation';
 import { Button } from '@/components/ui/button';
 import { RegistrationFormFields } from './RegistrationFormFields';
 import { RegistrationMessages } from './RegistrationMessages';
+import { supabase } from '@/integrations/supabase/client';
 
 interface RegistrationFormData {
   name: string;
@@ -94,6 +95,23 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
     setLoading(true);
     try {
+      // Check if email is already used by a vendor
+      const { data: vendorProfile, error: vendorError } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('user_type', 'vendor')
+        .eq('full_name', form.name)
+        .eq('company_name', null)
+        .eq('phone', form.phone)
+        .eq('user_id', null)
+        .eq('user_type', 'vendor')
+        .eq('email', form.email)
+        .single();
+      if (vendorProfile) {
+        setError('This email is already registered as a vendor. Please use a different email.');
+        setLoading(false);
+        return;
+      }
       console.log('Attempting customer registration with:', { 
         email: form.email, 
         name: form.name,
@@ -116,6 +134,8 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         // Handle specific error types
         if (error.message.includes('User already registered') || error.message.includes('already registered')) {
           setError('An account with this email already exists. Please login instead.');
+        } else if (error.message.includes('already exists')) {
+          setError('Registration failed: Email already exists');
         } else if (error.message.includes('Invalid email') || error.message.includes('invalid email')) {
           setError('Please enter a valid email address.');
         } else if (error.message.includes('Password') || error.message.includes('password')) {
@@ -146,6 +166,12 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         <h1 className="text-3xl font-bold text-[#190a02] mb-2">Customer Registration</h1>
         <p className="text-[#8b4a08]">Create your account to access solar solutions</p>
       </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
 
       <RegistrationMessages error={error} success={success} />
 

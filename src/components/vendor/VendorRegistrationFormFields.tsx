@@ -129,11 +129,6 @@ const VendorRegistrationFormFields = ({ formData, loading, onChange, onSelectCha
           disabled={loading}
           className="w-full min-h-[100px] resize-none"
           style={{ whiteSpace: 'pre-wrap' }}
-          onKeyDown={(e) => {
-            if (e.key === ' ') {
-              e.stopPropagation();
-            }
-          }}
         />
       </div>
 
