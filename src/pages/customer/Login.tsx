@@ -56,25 +56,7 @@ const CustomerLogin = () => {
         return;
       }
 
-      // Check if user exists in vendors table
-      const { data: vendorData, error: vendorError } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (vendorError) {
-        console.error('Error checking vendor role:', vendorError);
-        return;
-      }
-
-      if (vendorData) {
-        // User is a vendor trying to login as customer
-        setError('This account is registered as a vendor. Please use the vendor login page.');
-        return;
-      }
-
-      // User not found in either table
+      // User not found in customers table
       setError('Account not found. Please register first or contact support.');
       
     } catch (err) {
@@ -97,6 +79,47 @@ const CustomerLogin = () => {
     setLoading(true);
 
     try {
+      // First, check if user exists as customer before attempting login
+      const { data: customerData, error: customerCheckError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', formData.email)
+        .maybeSingle();
+
+      if (customerCheckError) {
+        console.error('Error checking customer:', customerCheckError);
+        setError('Login failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      if (!customerData) {
+        // Check if email exists as vendor
+        const { data: vendorData, error: vendorCheckError } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('email', formData.email)
+          .maybeSingle();
+
+        if (vendorCheckError) {
+          console.error('Error checking vendor:', vendorCheckError);
+          setError('Login failed. Please try again.');
+          setLoading(false);
+          return;
+        }
+
+        if (vendorData) {
+          setError('This email is registered as a vendor. Please use the vendor login page.');
+          setLoading(false);
+          return;
+        }
+
+        setError('No customer account found with this email. Please register as a customer first.');
+        setLoading(false);
+        return;
+      }
+
+      // Proceed with authentication only if customer exists
       const { error: signInError } = await signIn(formData.email, formData.password);
       
       if (signInError) {
@@ -107,6 +130,7 @@ const CustomerLogin = () => {
         } else {
           setError(`Login failed: ${signInError.message}`);
         }
+        setLoading(false);
         return;
       }
       
@@ -114,7 +138,6 @@ const CustomerLogin = () => {
     } catch (err) {
       console.error('Login error:', err);
       setError('Login failed. Please try again.');
-    } finally {
       setLoading(false);
     }
   };

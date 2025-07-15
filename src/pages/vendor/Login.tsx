@@ -16,61 +16,53 @@ const VendorLogin = () => {
   const { signIn } = useSupabaseAuth();
   const navigate = useNavigate();
 
-  const checkUserRoleAndRedirect = async (userId: string) => {
-    try {
-      // Check if user exists in vendors table
-      const { data: vendorData, error: vendorError } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (vendorError) {
-        console.error('Error checking vendor role:', vendorError);
-        setError('Login failed. Please try again.');
-        return;
-      }
-
-      if (vendorData) {
-        // User is a vendor
-        navigate('/vendor/dashboard');
-        return;
-      }
-
-      // Check if user exists in customers table
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (customerError) {
-        console.error('Error checking customer role:', customerError);
-        setError('Login failed. Please try again.');
-        return;
-      }
-
-      if (customerData) {
-        // User is a customer trying to login as vendor
-        setError('This account is registered as a customer. Please use the customer login page.');
-        return;
-      }
-
-      // User not found in either table
-      setError('Account not found. Please register first or contact support.');
-      
-    } catch (err) {
-      console.error('Error checking user role:', err);
-      setError('Login failed. Please try again.');
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
+      // First, check if user exists as vendor before attempting login
+      const { data: vendorData, error: vendorCheckError } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (vendorCheckError) {
+        console.error('Error checking vendor:', vendorCheckError);
+        setError('Login failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      if (!vendorData) {
+        // Check if email exists as customer
+        const { data: customerData, error: customerCheckError } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('email', email)
+          .maybeSingle();
+
+        if (customerCheckError) {
+          console.error('Error checking customer:', customerCheckError);
+          setError('Login failed. Please try again.');
+          setLoading(false);
+          return;
+        }
+
+        if (customerData) {
+          setError('This email is registered as a customer. Please use the customer login page.');
+          setLoading(false);
+          return;
+        }
+
+        setError('No vendor account found with this email. Please register as a vendor first.');
+        setLoading(false);
+        return;
+      }
+
+      // Proceed with authentication only if vendor exists
       const { error: signInError } = await signIn(email, password);
       
       if (signInError) {
@@ -81,18 +73,16 @@ const VendorLogin = () => {
         } else {
           setError(`Login failed: ${signInError.message}`);
         }
+        setLoading(false);
         return;
       }
 
-      // Get user from auth state after successful login
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await checkUserRoleAndRedirect(user.id);
-      }
+      // Success - redirect to vendor dashboard
+      navigate('/vendor/dashboard');
+
     } catch (error) {
       setError('Failed to login. Please check your credentials.');
       console.error('Login error:', error);
-    } finally {
       setLoading(false);
     }
   };

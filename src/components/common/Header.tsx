@@ -127,14 +127,6 @@ const Header = () => {
                 </button>
               )}
               
-              {/* Admin Dashboard Button - always visible */}
-              <button
-                onClick={() => navigate('/admin/dashboard')}
-                className="hidden lg:block solar-button px-4 py-2 text-sm"
-              >
-                Admin Panel
-              </button>
-              
               <AuthButtons 
                 user={user} 
                 handleLogout={handleLogout} 
@@ -161,14 +153,6 @@ const Header = () => {
           />
         </div>
       </header>
-      {location.pathname === '/' && (
-        <button
-          className="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-          onClick={() => navigate('/admin/dashboard')}
-        >
-          PV MART
-        </button>
-      )}
     </>
   );
 };

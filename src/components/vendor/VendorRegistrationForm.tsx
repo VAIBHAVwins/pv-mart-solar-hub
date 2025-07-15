@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { validation, sanitize, validationMessages } from '@/lib/validation';
@@ -223,7 +222,7 @@ export function VendorRegistrationForm() {
       } else if (data.user) {
         console.log('Vendor registered successfully:', data.user.id);
         
-        // Insert vendor record into vendors table
+        // Insert vendor record into vendors table with PM Surya Ghar data
         const { error: insertError } = await supabase
           .from('vendors')
           .insert({
@@ -233,7 +232,8 @@ export function VendorRegistrationForm() {
             contact_person: sanitize.html(formData.contactPerson),
             phone: sanitize.html(formData.phone),
             address: sanitize.html(formData.address),
-            license_number: formData.licenseNumber ? sanitize.html(formData.licenseNumber) : null
+            license_number: formData.licenseNumber ? sanitize.html(formData.licenseNumber) : null,
+            pm_surya_ghar_registered: formData.pmSuryaGharRegistered === 'yes'
           });
 
         if (insertError) {
