@@ -9,8 +9,19 @@ import BlogManager from './blog/BlogManager';
 import UserManagement from './UserManagement';
 import { Users, Image, Database, Settings, Activity, TrendingUp, FileText } from 'lucide-react';
 
+interface DashboardStats {
+  totalUsers: number;
+  totalHeroImages: number;
+  totalBlogs: number;
+  totalCustomers: number;
+  totalVendors: number;
+  totalAdmins: number;
+  totalCustomerRequirements: number;
+  totalVendorQuotations: number;
+}
+
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalHeroImages: 0,
     totalBlogs: 0,
@@ -68,7 +79,7 @@ const AdminDashboard = () => {
         .from('blogs')
         .select('*', { count: 'exact', head: true });
 
-      const newStats = {
+      const newStats: DashboardStats = {
         totalUsers: profilesCount || 0,
         totalHeroImages: heroImagesCount || 0,
         totalBlogs: blogsCount || 0,
