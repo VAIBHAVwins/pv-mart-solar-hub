@@ -32,7 +32,7 @@ const Footer = () => {
           {/* Company Info */}
           <div className="flex-1 min-w-[180px]">
             <h3 className="text-xl font-bold mb-3">
-              <Link to="/admin" className="hover:underline focus:underline" tabIndex={0} aria-label="Admin Dashboard via PV MART">PV MART</Link>
+              <Link to="/admin/dashboard" className="hover:underline focus:underline" tabIndex={0} aria-label="Admin Dashboard via PV MART">PV MART</Link>
             </h3>
             <p className="text-sm opacity-80">
               Your trusted platform for solar energy solutions. Connecting customers with verified solar vendors.

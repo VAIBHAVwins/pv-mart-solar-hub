@@ -26,7 +26,6 @@ import VendorQuotationSubmission from "./pages/vendor/QuotationSubmission";
 import VendorSupabaseQuotationForm from "./pages/vendor/SupabaseQuotationForm";
 import VendorResetPassword from "./pages/vendor/ResetPassword";
 import VendorForgotPassword from "./pages/vendor/ForgotPassword";
-import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
 import BannerDashboard from "./pages/admin/BannerDashboard";
 import NotFound from "./pages/NotFound";
@@ -76,8 +75,6 @@ function App() {
               <Route path="/vendor/forgot-password" element={<VendorForgotPassword />} />
               
               {/* Admin Routes */}
-              <Route path="/admin" element={<AdminLogin />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/banners" element={<BannerDashboard />} />
               

@@ -35,48 +35,59 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let sanitizedValue = value;
-    
     if (name === 'phone') {
       sanitizedValue = sanitize.phone(value);
+    } else if (name === 'name') {
+      sanitizedValue = value.slice(0, 1000);
+    } else if (name === 'email') {
+      sanitizedValue = value.replace(/\s+/g, '');
+    } else if (name === 'password' || name === 'confirmPassword') {
+      sanitizedValue = value.replace(/\s+/g, '');
     } else {
       sanitizedValue = sanitize.text(value);
     }
-    
     if (!validation.noScriptTags(sanitizedValue)) {
       return;
     }
-    
     setForm({ ...form, [name]: sanitizedValue });
     if (error) setError('');
   };
 
   const validateForm = () => {
-    if (!validation.required(form.name)) {
-      setError('Name is required');
+    const requiredFields = ['name', 'email', 'phone', 'password', 'confirmPassword'];
+    for (const field of requiredFields) {
+      if (!validation.required((form as any)[field])) {
+        setError(`${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
+        return false;
+      }
+    }
+    // No spaces allowed in email, password, confirmPassword
+    if (/[\s]/.test(form.email) || /[\s]/.test(form.password) || /[\s]/.test(form.confirmPassword)) {
+      setError('Spaces are not allowed in Email or Password fields.');
       return false;
     }
-    
-    if (!validation.maxLength(form.name, 100)) {
+
+    if (!validation.maxLength((form as any).name, 100)) {
       setError(validationMessages.maxLength(100));
       return false;
     }
 
-    if (!validation.email(form.email)) {
+    if (!validation.email((form as any).email)) {
       setError(validationMessages.email);
       return false;
     }
 
-    if (!validation.phone(form.phone)) {
+    if (!validation.phone((form as any).phone)) {
       setError(validationMessages.phone);
       return false;
     }
 
-    if (!validation.password(form.password)) {
+    if (!validation.password((form as any).password)) {
       setError(validationMessages.password);
       return false;
     }
 
-    if (form.password !== form.confirmPassword) {
+    if ((form as any).password !== (form as any).confirmPassword) {
       setError(validationMessages.noMatch);
       return false;
     }

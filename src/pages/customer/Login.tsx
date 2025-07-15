@@ -24,6 +24,15 @@ const CustomerLogin = () => {
     }
   }, [user, navigate]);
 
+  // Use the improved input handlers (no spaces)
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, email: e.target.value.replace(/\s+/g, '') }));
+  };
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, password: e.target.value.replace(/\s+/g, '') }));
+  };
+
+  // Use the improved post-login role check logic
   const checkUserRoleAndRedirect = async (userId: string) => {
     try {
       // Check if user exists in customers table
@@ -65,63 +74,13 @@ const CustomerLogin = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // First, check if user exists as customer before attempting login
-      const { data: customerData, error: customerCheckError } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('email', formData.email)
-        .maybeSingle();
-
-      if (customerCheckError) {
-        console.error('Error checking customer:', customerCheckError);
-        setError('Login failed. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      if (!customerData) {
-        // Check if email exists as vendor
-        const { data: vendorData, error: vendorCheckError } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('email', formData.email)
-          .maybeSingle();
-
-        if (vendorCheckError) {
-          console.error('Error checking vendor:', vendorCheckError);
-          setError('Login failed. Please try again.');
-          setLoading(false);
-          return;
-        }
-
-        if (vendorData) {
-          setError('This email is registered as a vendor. Please use the vendor login page.');
-          setLoading(false);
-          return;
-        }
-
-        setError('No customer account found with this email. Please register as a customer first.');
-        setLoading(false);
-        return;
-      }
-
-      // Proceed with authentication only if customer exists
-      const { error: signInError } = await signIn(formData.email, formData.password);
-      
+      const { error: signInError, data } = await signIn(formData.email, formData.password);
       if (signInError) {
         if (signInError.message.includes('Invalid login credentials')) {
           setError('Invalid email or password. Please check your credentials.');
@@ -133,7 +92,20 @@ const CustomerLogin = () => {
         setLoading(false);
         return;
       }
-      
+      // After sign in, check which table the user is in
+      const userId = data?.user?.id || (await supabase.auth.getUser()).data.user?.id;
+      const { data: customer } = await supabase.from('customers').select('id').eq('id', userId).single();
+      const { data: vendor } = await supabase.from('vendors').select('id').eq('id', userId).single();
+      if (customer && vendor) {
+        setError('Account conflict: This user exists as both customer and vendor. Please contact support.');
+        setLoading(false);
+        return;
+      }
+      if (!customer) {
+        setError('No customer account found for this email.');
+        setLoading(false);
+        return;
+      }
       // Success case is handled by useEffect above
     } catch (err) {
       console.error('Login error:', err);
@@ -156,7 +128,7 @@ const CustomerLogin = () => {
                 name="email"
                 type="email"
                 value={formData.email}
-                onChange={handleChange}
+                onChange={handleEmailChange}
                 className="mt-1 border-brown focus:border-licorice"
                 placeholder="Enter your email"
                 required
@@ -169,7 +141,7 @@ const CustomerLogin = () => {
                 name="password"
                 type="password"
                 value={formData.password}
-                onChange={handleChange}
+                onChange={handlePasswordChange}
                 className="mt-1 border-brown focus:border-licorice"
                 placeholder="Enter your password"
                 required

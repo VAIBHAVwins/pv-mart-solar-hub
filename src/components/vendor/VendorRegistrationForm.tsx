@@ -38,22 +38,35 @@ export function VendorRegistrationForm() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     let sanitizedValue = value;
-    
-    if (name === 'phone') {
+
+    // Remove spaces for specific fields
+    if (["companyName", "contactPerson", "email", "licenseNumber"].includes(name)) {
+      sanitizedValue = value.replace(/\s+/g, "");
+    }
+    // Phone: only digits and +
+    else if (name === 'phone') {
       sanitizedValue = sanitize.phone(value);
+    }
+    // Address, serviceAreas, specializations: allow spaces
+    else if ([
+      'address', 'serviceAreas', 'specializations'
+    ].includes(name)) {
+      sanitizedValue = value.slice(0, 1000);
     } else {
       sanitizedValue = sanitize.text(value);
     }
-    
+
     if (!validation.noScriptTags(sanitizedValue)) {
       return;
     }
-    
-    setFormData({ ...formData, [name]: sanitizedValue });
-    if (error) setError('');
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: sanitizedValue
+    }));
   };
 
   const handleSelectChange = (field: string, value: string) => {
@@ -62,9 +75,13 @@ export function VendorRegistrationForm() {
   };
 
   const validateForm = () => {
-    if (!validation.required(formData.contactPerson)) {
-      setError('Contact person name is required');
-      return false;
+    const requiredFields: string[] = ['companyName', 'contactPerson', 'email', 'phone', 'address', 'pmSuryaGharRegistered', 'licenseNumber', 'serviceAreas', 'specializations'];
+    
+    for (const field of requiredFields) {
+      if (!validation.required((formData as any)[field])) {
+        setError(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} is required`);
+        return false;
+      }
     }
     
     if (!validation.maxLength(formData.contactPerson, 100)) {
@@ -114,6 +131,12 @@ export function VendorRegistrationForm() {
 
     if (formData.password !== formData.confirmPassword) {
       setError(validationMessages.noMatch);
+      return false;
+    }
+
+    // No spaces allowed in these fields
+    if ([formData.companyName, formData.contactPerson, formData.email, formData.licenseNumber].some(v => /\s/.test(v))) {
+      setError('Spaces are not allowed in Company Name, Contact Person, Email, or License Number.');
       return false;
     }
 
@@ -172,17 +195,19 @@ export function VendorRegistrationForm() {
 
     setLoading(true);
     try {
-      console.log('Checking if email already exists...');
-      
-      // Check if email already exists in either customers or vendors table
-      const emailCheck = await checkEmailExists(formData.email);
-      
-      if (emailCheck.exists) {
-        if (emailCheck.role === 'customer') {
-          setError('This email is already registered as a customer. Please use a different email or login to your customer account.');
-        } else {
-          setError('An account with this email already exists. Please login instead.');
-        }
+      // Check if email is already used in customers or vendors
+      const { data: customer, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', formData.email)
+        .single();
+      const { data: vendor, error: vendorError } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('email', formData.email)
+        .single();
+      if (customer || vendor) {
+        setError('This email is already registered as a ' + (customer ? 'customer' : 'vendor') + '. Please use a different email.');
         setLoading(false);
         return;
       }

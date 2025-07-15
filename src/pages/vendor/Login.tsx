@@ -16,70 +16,41 @@ const VendorLogin = () => {
   const { signIn } = useSupabaseAuth();
   const navigate = useNavigate();
 
+  // Use the improved input handlers (no spaces)
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value.replace(/\s+/g, ''));
+  };
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value.replace(/\s+/g, ''));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      // First, check if user exists as vendor before attempting login
-      const { data: vendorData, error: vendorCheckError } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (vendorCheckError) {
-        console.error('Error checking vendor:', vendorCheckError);
-        setError('Login failed. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      if (!vendorData) {
-        // Check if email exists as customer
-        const { data: customerData, error: customerCheckError } = await supabase
-          .from('customers')
-          .select('id')
-          .eq('email', email)
-          .maybeSingle();
-
-        if (customerCheckError) {
-          console.error('Error checking customer:', customerCheckError);
-          setError('Login failed. Please try again.');
-          setLoading(false);
-          return;
-        }
-
-        if (customerData) {
-          setError('This email is registered as a customer. Please use the customer login page.');
-          setLoading(false);
-          return;
-        }
-
-        setError('No vendor account found with this email. Please register as a vendor first.');
-        setLoading(false);
-        return;
-      }
-
-      // Proceed with authentication only if vendor exists
-      const { error: signInError } = await signIn(email, password);
-      
+      const { error: signInError, data } = await signIn(email, password);
       if (signInError) {
-        if (signInError.message.includes('Invalid login credentials')) {
-          setError('Invalid email or password. Please check your credentials.');
-        } else if (signInError.message.includes('Email not confirmed')) {
-          setError('Please check your email and click the confirmation link before logging in.');
-        } else {
-          setError(`Login failed: ${signInError.message}`);
-        }
+        setError('Failed to login. Please check your credentials.');
         setLoading(false);
         return;
       }
-
-      // Success - redirect to vendor dashboard
+      // After sign in, check which table the user is in
+      const userId = data?.user?.id || (await supabase.auth.getUser()).data.user?.id;
+      const { data: customer } = await supabase.from('customers').select('id').eq('id', userId).single();
+      const { data: vendor } = await supabase.from('vendors').select('id').eq('id', userId).single();
+      if (customer && vendor) {
+        setError('Account conflict: This user exists as both customer and vendor. Please contact support.');
+        setLoading(false);
+        return;
+      }
+      if (!vendor) {
+        setError('No vendor account found for this email.');
+        setLoading(false);
+        return;
+      }
       navigate('/vendor/dashboard');
-
     } catch (error) {
       setError('Failed to login. Please check your credentials.');
       console.error('Login error:', error);
@@ -109,7 +80,7 @@ const VendorLogin = () => {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 className="mt-1 border-[#b07e66] focus:border-[#797a83]"
                 placeholder="Enter your email"
                 required
@@ -123,7 +94,7 @@ const VendorLogin = () => {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 className="mt-1 border-[#b07e66] focus:border-[#797a83]"
                 placeholder="Enter your password"
                 required
