@@ -9,7 +9,7 @@ import BlogManager from './blog/BlogManager';
 import UserManagement from './UserManagement';
 import { Users, Image, Database, Settings, Activity, TrendingUp, FileText } from 'lucide-react';
 
-interface AdminDashboardStats {
+interface DashboardStatsType {
   totalUsers: number;
   totalHeroImages: number;
   totalBlogs: number;
@@ -21,7 +21,7 @@ interface AdminDashboardStats {
 }
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState<AdminDashboardStats>({
+  const [stats, setStats] = useState<DashboardStatsType>({
     totalUsers: 0,
     totalHeroImages: 0,
     totalBlogs: 0,
