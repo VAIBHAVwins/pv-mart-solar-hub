@@ -9,6 +9,7 @@ import UserManagement from './UserManagement';
 import { Users, Image, Database, Settings, Activity, TrendingUp, FileText } from 'lucide-react';
 
 const AdminDashboard = () => {
+  // Simple state objects to avoid TypeScript recursion issues
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalHeroImages: 0,
@@ -30,15 +31,13 @@ const AdminDashboard = () => {
 
       // Fetch customer count
       const { count: customersCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_type', 'customer');
+        .from('customers')
+        .select('*', { count: 'exact', head: true });
 
       // Fetch vendor count
       const { count: vendorsCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_type', 'vendor');
+        .from('vendors')
+        .select('*', { count: 'exact', head: true });
 
       // Fetch admin count
       const { count: adminsCount } = await supabase
