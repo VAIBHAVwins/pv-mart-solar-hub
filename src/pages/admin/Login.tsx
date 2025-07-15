@@ -8,7 +8,7 @@ import Layout from '@/components/layout/Layout';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-const VendorLogin = () => {
+const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,52 +16,32 @@ const VendorLogin = () => {
   const { signIn } = useSupabaseAuth();
   const navigate = useNavigate();
 
-  const checkUserRoleAndRedirect = async (userId: string) => {
+  const checkAdminRole = async (userId: string) => {
     try {
-      // Check if user exists in vendors table
-      const { data: vendorData, error: vendorError } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('id', userId)
+      const { data: adminRole, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
         .maybeSingle();
 
-      if (vendorError) {
-        console.error('Error checking vendor role:', vendorError);
+      if (roleError) {
+        console.error('Error checking admin role:', roleError);
         setError('Login failed. Please try again.');
-        return;
+        return false;
       }
 
-      if (vendorData) {
-        // User is a vendor
-        navigate('/vendor/dashboard');
-        return;
+      if (adminRole) {
+        navigate('/admin/dashboard');
+        return true;
       }
 
-      // Check if user exists in customers table
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (customerError) {
-        console.error('Error checking customer role:', customerError);
-        setError('Login failed. Please try again.');
-        return;
-      }
-
-      if (customerData) {
-        // User is a customer trying to login as vendor
-        setError('This account is registered as a customer. Please use the customer login page.');
-        return;
-      }
-
-      // User not found in either table
-      setError('Account not found. Please register first or contact support.');
-      
+      setError('Access denied. Admin privileges required.');
+      return false;
     } catch (err) {
-      console.error('Error checking user role:', err);
+      console.error('Error checking admin role:', err);
       setError('Login failed. Please try again.');
+      return false;
     }
   };
 
@@ -71,21 +51,21 @@ const VendorLogin = () => {
     setError('');
 
     try {
-      const result = await signIn(email, password);
+      const { data, error: signInError } = await signIn(email, password);
       
-      if (result.error) {
-        if (result.error.message.includes('Invalid login credentials')) {
+      if (signInError) {
+        if (signInError.message.includes('Invalid login credentials')) {
           setError('Invalid email or password. Please check your credentials.');
-        } else if (result.error.message.includes('Email not confirmed')) {
+        } else if (signInError.message.includes('Email not confirmed')) {
           setError('Please check your email and click the confirmation link before logging in.');
         } else {
-          setError(`Login failed: ${result.error.message}`);
+          setError(`Login failed: ${signInError.message}`);
         }
         return;
       }
 
-      if (result.data?.user) {
-        await checkUserRoleAndRedirect(result.data.user.id);
+      if (data.user) {
+        await checkAdminRole(data.user.id);
       }
     } catch (error) {
       setError('Failed to login. Please check your credentials.');
@@ -100,8 +80,8 @@ const VendorLogin = () => {
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto bg-[#f7f7f6] rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#171a21] mb-2">Vendor Login</h1>
-            <p className="text-[#4f4f56]">Access your vendor dashboard and manage quotations</p>
+            <h1 className="text-3xl font-bold text-[#171a21] mb-2">Admin Login</h1>
+            <p className="text-[#4f4f56]">Access the admin dashboard</p>
           </div>
 
           {error && (
@@ -149,14 +129,8 @@ const VendorLogin = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-[#4f4f56] mb-2">
-              Don't have an account?{' '}
-              <Link to="/vendor/register" className="text-[#b07e66] hover:underline font-semibold">
-                Create Account
-              </Link>
-            </p>
-            <Link to="/vendor/forgot-password" className="text-[#4f4f56] hover:underline text-sm">
-              Forgot your password?
+            <Link to="/" className="text-[#4f4f56] hover:underline text-sm">
+              ← Back to Home
             </Link>
           </div>
         </div>
@@ -165,4 +139,4 @@ const VendorLogin = () => {
   );
 };
 
-export default VendorLogin;
+export default AdminLogin;

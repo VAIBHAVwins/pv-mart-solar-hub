@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
@@ -32,44 +31,94 @@ const Header = () => {
   const fetchUserType = async () => {
     if (!user) return;
     
-    const { data } = await supabase
-      .from('profiles')
-      .select('user_type')
-      .eq('user_id', user.id)
-      .single();
-    
-    setUserType(data?.user_type || null);
+    try {
+      // Check if user exists in customers table
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (customerError) {
+        console.error('Error checking customer:', customerError);
+      }
+
+      if (customerData) {
+        setUserType('customer');
+        return;
+      }
+
+      // Check if user exists in vendors table
+      const { data: vendorData, error: vendorError } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (vendorError) {
+        console.error('Error checking vendor:', vendorError);
+      }
+
+      if (vendorData) {
+        setUserType('vendor');
+        return;
+      }
+
+      // Check if user has admin role
+      const { data: adminRole, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (roleError) {
+        console.error('Error checking admin role:', roleError);
+      }
+
+      if (adminRole) {
+        setUserType('admin');
+        return;
+      }
+
+      setUserType(null);
+    } catch (error) {
+      console.error('Error fetching user type:', error);
+      setUserType(null);
+    }
   };
   
   // Determine theme based on route
-  const getThemeClasses = () => {
+  function getThemeClasses() {
     if (isCustomerRoute) {
       return 'bg-jonquil text-licorice shadow-lg'; // Customer theme
     } else if (isVendorRoute) {
       return 'bg-vendor_gray text-seasalt shadow-lg'; // Vendor theme
     }
     return 'bg-white text-solar-dark shadow-solar'; // Default modern theme
-  };
+  }
 
-  const getLinkClasses = () => {
+  function getLinkClasses() {
     if (isCustomerRoute) {
       return 'nav-link text-brown hover:text-licorice';
     } else if (isVendorRoute) {
       return 'nav-link text-seasalt hover:text-chamoisee';
     }
     return 'nav-link text-solar-dark hover:text-solar-primary';
-  };
+  }
 
-  const handleLogout = async () => {
+  async function handleLogout() {
     await signOut();
     navigate('/');
-  };
+  }
 
-  const handleDashboardClick = () => {
+  function handleDashboardClick() {
     if (userType === 'customer') {
       navigate('/customer/dashboard');
     } else if (userType === 'vendor') {
       navigate('/vendor/dashboard');
+    } else if (userType === 'admin') {
+      navigate('/admin/dashboard');
     }
   };
 
@@ -92,7 +141,7 @@ const Header = () => {
                   onClick={handleDashboardClick}
                   className="hidden lg:block solar-button-outline px-4 py-2 text-sm"
                 >
-                  {userType === 'customer' ? 'Customer Dashboard' : 'Vendor Dashboard'}
+                  {userType === 'customer' ? 'Customer Dashboard' : userType === 'vendor' ? 'Vendor Dashboard' : 'Admin Dashboard'}
                 </button>
               )}
               

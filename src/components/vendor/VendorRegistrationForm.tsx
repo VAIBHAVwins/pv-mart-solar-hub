@@ -11,6 +11,11 @@ interface VendorRegistrationFormData {
   companyName: string;
   email: string;
   phone: string;
+  address: string;
+  pmSuryaGharRegistered: string;
+  licenseNumber: string;
+  serviceAreas: string;
+  specializations: string;
   password: string;
   confirmPassword: string;
 }
@@ -22,6 +27,11 @@ export function VendorRegistrationForm() {
     companyName: '',
     email: '',
     phone: '',
+    address: '',
+    pmSuryaGharRegistered: '',
+    licenseNumber: '',
+    serviceAreas: '',
+    specializations: '',
     password: '',
     confirmPassword: ''
   });
@@ -75,6 +85,26 @@ export function VendorRegistrationForm() {
 
     if (!validation.phone(formData.phone)) {
       setError(validationMessages.phone);
+      return false;
+    }
+
+    if (!validation.required(formData.address)) {
+      setError('Business address is required');
+      return false;
+    }
+
+    if (!validation.required(formData.pmSuryaGharRegistered)) {
+      setError('PM Surya Ghar registration status is required');
+      return false;
+    }
+
+    if (!validation.required(formData.serviceAreas)) {
+      setError('Service areas are required');
+      return false;
+    }
+
+    if (!validation.required(formData.specializations)) {
+      setError('Specializations are required');
       return false;
     }
 
@@ -201,7 +231,9 @@ export function VendorRegistrationForm() {
             email: formData.email,
             company_name: sanitize.html(formData.companyName),
             contact_person: sanitize.html(formData.contactPerson),
-            phone: sanitize.html(formData.phone)
+            phone: sanitize.html(formData.phone),
+            address: sanitize.html(formData.address),
+            license_number: formData.licenseNumber ? sanitize.html(formData.licenseNumber) : null
           });
 
         if (insertError) {
@@ -217,6 +249,11 @@ export function VendorRegistrationForm() {
             companyName: '',
             email: '',
             phone: '',
+            address: '',
+            pmSuryaGharRegistered: '',
+            licenseNumber: '',
+            serviceAreas: '',
+            specializations: '',
             password: '',
             confirmPassword: ''
           });

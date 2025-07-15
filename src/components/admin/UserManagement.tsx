@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,12 +16,12 @@ interface UserProfile {
   id: string;
   user_id: string;
   full_name: string | null;
-  user_type: string | null;
   phone: string | null;
   company_name: string | null;
   created_at: string;
   email?: string;
   roles?: UserRole[];
+  account_type?: 'customer' | 'vendor' | 'unknown';
 }
 
 interface UserRoleData {
@@ -60,97 +59,43 @@ const UserManagement = () => {
 
       if (rolesError) throw rolesError;
 
-      // Combine profiles with roles
-      const usersWithRoles = profiles?.map(profile => ({
-        ...profile,
-        roles: userRoles?.filter(role => role.user_id === profile.user_id).map(role => role.role) || []
-      })) || [];
+      // Fetch customers and vendors to determine account type
+      const { data: customers, error: customersError } = await supabase
+        .from('customers')
+        .select('id, email');
+
+      const { data: vendors, error: vendorsError } = await supabase
+        .from('vendors')
+        .select('id, email');
+
+      if (customersError || vendorsError) {
+        console.error('Error fetching customer/vendor data:', customersError || vendorsError);
+      }
+
+      // Combine profiles with roles and account type
+      const usersWithRoles = profiles?.map(profile => {
+        const profileRoles = userRoles?.filter(role => role.user_id === profile.user_id).map(role => role.role) || [];
+        
+        // Determine account type
+        let accountType: 'customer' | 'vendor' | 'unknown' = 'unknown';
+        if (customers?.some(c => c.id === profile.user_id)) {
+          accountType = 'customer';
+        } else if (vendors?.some(v => v.id === profile.user_id)) {
+          accountType = 'vendor';
+        }
+
+        return {
+          ...profile,
+          roles: profileRoles,
+          account_type: accountType
+        };
+      }) || [];
 
       setUsers(usersWithRoles);
       setRoles(userRoles || []);
     } catch (err) {
       console.error('Error fetching users:', err);
       setError('Failed to load users');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Assign role to user
-  const assignRole = async (userId: string, role: string) => {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const { error } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: role as UserRole
-        });
-
-      if (error && !error.message.includes('duplicate')) {
-        throw error;
-      }
-
-      setSuccess(`Role ${role} assigned successfully!`);
-      fetchUsers();
-    } catch (err: any) {
-      console.error('Error assigning role:', err);
-      setError(err.message || 'Failed to assign role');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Remove role from user
-  const removeRole = async (userId: string, role: UserRole) => {
-    if (!confirm(`Are you sure you want to remove the ${role} role from this user?`)) return;
-
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const { error } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId)
-        .eq('role', role);
-
-      if (error) throw error;
-
-      setSuccess(`Role ${role} removed successfully!`);
-      fetchUsers();
-    } catch (err: any) {
-      console.error('Error removing role:', err);
-      setError(err.message || 'Failed to remove role');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update user profile
-  const updateUserProfile = async (userId: string, updates: Partial<UserProfile>) => {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('user_id', userId);
-
-      if (error) throw error;
-
-      setSuccess('User profile updated successfully!');
-      setEditingUserId(null);
-      fetchUsers();
-    } catch (err: any) {
-      console.error('Error updating user:', err);
-      setError(err.message || 'Failed to update user');
     } finally {
       setLoading(false);
     }
@@ -204,7 +149,7 @@ const UserManagement = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
+                  <TableHead>Account Type</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead>Roles</TableHead>
@@ -226,8 +171,8 @@ const UserManagement = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={userProfile.user_type === 'admin' ? 'destructive' : 'secondary'}>
-                        {userProfile.user_type || 'N/A'}
+                      <Badge variant={userProfile.account_type === 'vendor' ? 'secondary' : userProfile.account_type === 'customer' ? 'default' : 'outline'}>
+                        {userProfile.account_type || 'unknown'}
                       </Badge>
                     </TableCell>
                     <TableCell>{userProfile.phone || 'N/A'}</TableCell>
@@ -283,6 +228,86 @@ const UserManagement = () => {
       </Card>
     </div>
   );
+
+  // Assign role to user
+  async function assignRole(userId: string, role: string) {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: role as UserRole
+        });
+
+      if (error && !error.message.includes('duplicate')) {
+        throw error;
+      }
+
+      setSuccess(`Role ${role} assigned successfully!`);
+      fetchUsers();
+    } catch (err: any) {
+      console.error('Error assigning role:', err);
+      setError(err.message || 'Failed to assign role');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Remove role from user
+  async function removeRole(userId: string, role: UserRole) {
+    if (!confirm(`Are you sure you want to remove the ${role} role from this user?`)) return;
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+        .eq('role', role);
+
+      if (error) throw error;
+
+      setSuccess(`Role ${role} removed successfully!`);
+      fetchUsers();
+    } catch (err: any) {
+      console.error('Error removing role:', err);
+      setError(err.message || 'Failed to remove role');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Update user profile
+  async function updateUserProfile(userId: string, updates: Partial<UserProfile>) {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      setSuccess('User profile updated successfully!');
+      setEditingUserId(null);
+      fetchUsers();
+    } catch (err: any) {
+      console.error('Error updating user:', err);
+      setError(err.message || 'Failed to update user');
+    } finally {
+      setLoading(false);
+    }
+  }
 };
 
 export default UserManagement;
