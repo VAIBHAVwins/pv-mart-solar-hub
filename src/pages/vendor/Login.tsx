@@ -71,21 +71,23 @@ const VendorLogin = () => {
     setError('');
 
     try {
-      const result = await signIn(email, password);
+      const { error: signInError } = await signIn(email, password);
       
-      if (result.error) {
-        if (result.error.message.includes('Invalid login credentials')) {
+      if (signInError) {
+        if (signInError.message.includes('Invalid login credentials')) {
           setError('Invalid email or password. Please check your credentials.');
-        } else if (result.error.message.includes('Email not confirmed')) {
+        } else if (signInError.message.includes('Email not confirmed')) {
           setError('Please check your email and click the confirmation link before logging in.');
         } else {
-          setError(`Login failed: ${result.error.message}`);
+          setError(`Login failed: ${signInError.message}`);
         }
         return;
       }
 
-      if (result.data?.user) {
-        await checkUserRoleAndRedirect(result.data.user.id);
+      // Get user from auth state after successful login
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await checkUserRoleAndRedirect(user.id);
       }
     } catch (error) {
       setError('Failed to login. Please check your credentials.');

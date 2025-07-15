@@ -51,7 +51,7 @@ const AdminLogin = () => {
     setError('');
 
     try {
-      const { data, error: signInError } = await signIn(email, password);
+      const { error: signInError } = await signIn(email, password);
       
       if (signInError) {
         if (signInError.message.includes('Invalid login credentials')) {
@@ -64,8 +64,10 @@ const AdminLogin = () => {
         return;
       }
 
-      if (data.user) {
-        await checkAdminRole(data.user.id);
+      // Get user from auth state after successful login
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await checkAdminRole(user.id);
       }
     } catch (error) {
       setError('Failed to login. Please check your credentials.');
