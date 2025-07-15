@@ -9,19 +9,8 @@ import BlogManager from './blog/BlogManager';
 import UserManagement from './UserManagement';
 import { Users, Image, Database, Settings, Activity, TrendingUp, FileText } from 'lucide-react';
 
-type AdminStats = {
-  totalUsers: number;
-  totalHeroImages: number;
-  totalBlogs: number;
-  totalCustomers: number;
-  totalVendors: number;
-  totalAdmins: number;
-  totalCustomerRequirements: number;
-  totalVendorQuotations: number;
-};
-
 const AdminDashboard = () => {
-  const [stats, setStats] = useState<AdminStats>({
+  const [stats, setStats] = useState({
     totalUsers: 0,
     totalHeroImages: 0,
     totalBlogs: 0,
@@ -79,7 +68,7 @@ const AdminDashboard = () => {
         .from('blogs')
         .select('*', { count: 'exact', head: true });
 
-      setStats({
+      const newStats = {
         totalUsers: profilesCount || 0,
         totalHeroImages: heroImagesCount || 0,
         totalBlogs: blogsCount || 0,
@@ -88,7 +77,9 @@ const AdminDashboard = () => {
         totalAdmins: adminsCount || 0,
         totalCustomerRequirements: requirementsCount || 0,
         totalVendorQuotations: quotationsCount || 0
-      });
+      };
+
+      setStats(newStats);
     } catch (error) {
       console.error('Error fetching admin stats:', error);
     } finally {
