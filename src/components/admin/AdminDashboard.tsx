@@ -10,7 +10,16 @@ import UserManagement from './UserManagement';
 import { Users, Image, Database, Settings, Activity, TrendingUp, FileText } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<{
+    totalUsers: number;
+    totalHeroImages: number;
+    totalBlogs: number;
+    totalCustomers: number;
+    totalVendors: number;
+    totalAdmins: number;
+    totalCustomerRequirements: number;
+    totalVendorQuotations: number;
+  }>({
     totalUsers: 0,
     totalHeroImages: 0,
     totalBlogs: 0,
