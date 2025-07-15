@@ -1,13 +1,15 @@
+
 import { useState } from 'react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { validation, sanitize, validationMessages } from '@/lib/validation';
 import { Button } from '@/components/ui/button';
 import VendorRegistrationFormFields from './VendorRegistrationFormFields';
+import { RegistrationMessages } from '@/components/customer/RegistrationMessages';
 import { supabase } from '@/integrations/supabase/client';
 
 interface VendorRegistrationFormData {
-  contactPerson: string;
   companyName: string;
+  contactPerson: string;
   email: string;
   phone: string;
   address: string;
@@ -22,8 +24,8 @@ interface VendorRegistrationFormData {
 export function VendorRegistrationForm() {
   const { signUp } = useSupabaseAuth();
   const [formData, setFormData] = useState<VendorRegistrationFormData>({
-    contactPerson: '',
     companyName: '',
+    contactPerson: '',
     email: '',
     phone: '',
     address: '',
@@ -41,28 +43,23 @@ export function VendorRegistrationForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     let sanitizedValue = value;
-
-    // Remove spaces for specific fields
-    if (["companyName", "contactPerson", "email", "licenseNumber"].includes(name)) {
-      sanitizedValue = value.replace(/\s+/g, "");
-    }
-    // Phone: only digits and +
-    else if (name === 'phone') {
+    
+    if (name === 'phone') {
       sanitizedValue = sanitize.phone(value);
-    }
-    // Address, serviceAreas, specializations: allow spaces
-    else if ([
-      'address', 'serviceAreas', 'specializations'
+    } else if ([
+      'address', 'serviceAreas', 'specializations',
+      'companyName', 'contactPerson', 'email', 'licenseNumber'
     ].includes(name)) {
-      sanitizedValue = value.slice(0, 1000);
+      // Allow spaces anywhere, do not trim
+      sanitizedValue = value.slice(0, 1000); // Only limit length
     } else {
       sanitizedValue = sanitize.text(value);
     }
-
+    
     if (!validation.noScriptTags(sanitizedValue)) {
       return;
     }
-
+    
     setFormData(prev => ({
       ...prev,
       [name]: sanitizedValue
@@ -70,8 +67,10 @@ export function VendorRegistrationForm() {
   };
 
   const handleSelectChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
-    if (error) setError('');
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const validateForm = () => {
@@ -83,14 +82,14 @@ export function VendorRegistrationForm() {
         return false;
       }
     }
-    
-    if (!validation.maxLength(formData.contactPerson, 100)) {
-      setError(validationMessages.maxLength(100));
+
+    if (!validation.maxLength(formData.companyName, 100)) {
+      setError('Company name ' + validationMessages.maxLength(100));
       return false;
     }
 
-    if (!validation.required(formData.companyName)) {
-      setError('Company name is required');
+    if (!validation.maxLength(formData.contactPerson, 100)) {
+      setError('Contact person name ' + validationMessages.maxLength(100));
       return false;
     }
 
@@ -104,23 +103,8 @@ export function VendorRegistrationForm() {
       return false;
     }
 
-    if (!validation.required(formData.address)) {
-      setError('Business address is required');
-      return false;
-    }
-
-    if (!validation.required(formData.pmSuryaGharRegistered)) {
-      setError('PM Surya Ghar registration status is required');
-      return false;
-    }
-
-    if (!validation.required(formData.serviceAreas)) {
-      setError('Service areas are required');
-      return false;
-    }
-
-    if (!validation.required(formData.specializations)) {
-      setError('Specializations are required');
+    if (!validation.licenseNumber(formData.licenseNumber)) {
+      setError(validationMessages.licenseNumber);
       return false;
     }
 
@@ -134,54 +118,7 @@ export function VendorRegistrationForm() {
       return false;
     }
 
-    // No spaces allowed in these fields
-    if ([formData.companyName, formData.contactPerson, formData.email, formData.licenseNumber].some(v => /\s/.test(v))) {
-      setError('Spaces are not allowed in Company Name, Contact Person, Email, or License Number.');
-      return false;
-    }
-
     return true;
-  };
-
-  const checkEmailExists = async (email: string) => {
-    try {
-      // Check if email exists in customers table
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .select('email')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (customerError) {
-        console.error('Error checking customers table:', customerError);
-        throw customerError;
-      }
-
-      if (customerData) {
-        return { exists: true, role: 'customer' };
-      }
-
-      // Check if email exists in vendors table
-      const { data: vendorData, error: vendorError } = await supabase
-        .from('vendors')
-        .select('email')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (vendorError) {
-        console.error('Error checking vendors table:', vendorError);
-        throw vendorError;
-      }
-
-      if (vendorData) {
-        return { exists: true, role: 'vendor' };
-      }
-
-      return { exists: false, role: null };
-    } catch (error) {
-      console.error('Error checking email existence:', error);
-      throw error;
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -212,79 +149,46 @@ export function VendorRegistrationForm() {
         return;
       }
 
-      console.log('Email is available, proceeding with registration...');
-      
-      const { data, error } = await signUp(formData.email, formData.password, {
+      console.log('Attempting vendor registration with:', {
+        email: formData.email,
+        contactPerson: formData.contactPerson,
+        companyName: formData.companyName
+      });
+
+      const { data, error: signUpError } = await signUp(formData.email, formData.password, {
         data: {
           full_name: sanitize.html(formData.contactPerson),
           company_name: sanitize.html(formData.companyName),
           phone: sanitize.html(formData.phone),
-          user_type: 'vendor'
+          user_type: 'vendor',
+          pm_surya_ghar_registered: formData.pmSuryaGharRegistered
         }
       });
       
-      console.log('Vendor signup response:', { data, error });
+      console.log('Vendor signup response:', { data, error: signUpError });
       
-      if (error) {
-        console.error('Vendor signup error:', error);
+      if (signUpError) {
+        console.error('Vendor SignUp error:', signUpError);
         
-        // Handle specific error types
-        if (error.message.includes('User already registered') || error.message.includes('already registered')) {
+        if (signUpError.message.includes('User already registered') || signUpError.message.includes('already registered')) {
           setError('An account with this email already exists. Please login instead.');
-        } else if (error.message.includes('already exists')) {
-          setError('Registration failed: Email already exists');
-        } else if (error.message.includes('Invalid email') || error.message.includes('invalid email')) {
+        } else if (signUpError.message.includes('Invalid email') || signUpError.message.includes('invalid email')) {
           setError('Please enter a valid email address.');
-        } else if (error.message.includes('Password') || error.message.includes('password')) {
+        } else if (signUpError.message.includes('Password') || signUpError.message.includes('password')) {
           setError('Password must be at least 6 characters long.');
-        } else if (error.message.includes('duplicate key') || error.message.includes('constraint')) {
+        } else if (signUpError.message.includes('duplicate key') || signUpError.message.includes('constraint')) {
           setError('Account creation failed. Please try again or contact support if the issue persists.');
-        } else if (error.message.includes('Database error') || error.message.includes('database')) {
+        } else if (signUpError.message.includes('Database error') || signUpError.message.includes('database')) {
           setError('Registration temporarily unavailable. Please try again in a few moments.');
         } else {
-          setError(`Registration failed: ${error.message}`);
+          setError(`Registration failed: ${signUpError.message}`);
         }
-      } else if (data.user) {
-        console.log('Vendor registered successfully:', data.user.id);
-        
-        // Insert vendor record into vendors table with PM Surya Ghar data
-        const { error: insertError } = await supabase
-          .from('vendors')
-          .insert({
-            id: data.user.id,
-            email: formData.email,
-            company_name: sanitize.html(formData.companyName),
-            contact_person: sanitize.html(formData.contactPerson),
-            phone: sanitize.html(formData.phone),
-            address: sanitize.html(formData.address),
-            license_number: formData.licenseNumber ? sanitize.html(formData.licenseNumber) : null,
-            pm_surya_ghar_registered: formData.pmSuryaGharRegistered === 'yes'
-          });
-
-        if (insertError) {
-          console.error('Error inserting vendor record:', insertError);
-          setError('Account created but profile setup failed. Please contact support.');
-        } else {
-          console.log('Vendor profile created successfully');
-          setSuccess('Account created successfully! Please check your email for verification.');
-          
-          // Reset form
-          setFormData({
-            contactPerson: '',
-            companyName: '',
-            email: '',
-            phone: '',
-            address: '',
-            pmSuryaGharRegistered: '',
-            licenseNumber: '',
-            serviceAreas: '',
-            specializations: '',
-            password: '',
-            confirmPassword: ''
-          });
-        }
+        return;
       }
-    } catch (err: any) {
+      
+      console.log('Vendor registered successfully:', data.user?.id);
+      setSuccess('Registration successful! Please check your email to verify your account.');
+    } catch (err: unknown) {
       console.error('Vendor registration error:', err);
       setError('Registration failed. Please try again.');
     } finally {
@@ -293,49 +197,28 @@ export function VendorRegistrationForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-[#f7f7f6] rounded-lg shadow-lg p-8">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-[#171a21] mb-2">Vendor Registration</h1>
-        <p className="text-[#4f4f56]">Join our network of solar professionals</p>
-      </div>
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-          {success}
-        </div>
-      )}
-
+    <div className="bg-[#e6d3b3] p-10 rounded-2xl shadow-xl w-full max-w-2xl animate-fade-in">
+      <h1 className="text-4xl font-extrabold mb-6 text-center text-[#797a83] drop-shadow">Join as Vendor</h1>
+      <p className="text-[#4f4f56] mb-8 text-center">Register your solar business and start receiving leads</p>
+      
       <form onSubmit={handleSubmit} className="space-y-6">
-        <VendorRegistrationFormFields
+        <VendorRegistrationFormFields 
           formData={formData}
           loading={loading}
           onChange={handleChange}
           onSelectChange={handleSelectChange}
         />
-
+        
+        <RegistrationMessages error={error} success={success} />
+        
         <Button
           type="submit"
-          className="w-full bg-[#797a83] hover:bg-[#4f4f56] text-[#f7f7f6] font-semibold"
+          className="w-full bg-[#797a83] text-white py-3 rounded-lg font-bold hover:bg-[#4f4f56] shadow-md transition"
           disabled={loading}
         >
-          {loading ? 'Creating Account...' : 'Create Account'}
+          {loading ? 'Registering...' : 'Register'}
         </Button>
       </form>
-
-      <div className="mt-6 text-center">
-        <p className="text-[#4f4f56] mb-2">
-          Already have an account?{' '}
-          <a href="/vendor/login" className="text-[#797a83] hover:underline font-semibold">
-            Login here
-          </a>
-        </p>
-      </div>
     </div>
   );
 }

@@ -35,20 +35,20 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let sanitizedValue = value;
+    
     if (name === 'phone') {
       sanitizedValue = sanitize.phone(value);
     } else if (name === 'name') {
-      sanitizedValue = value.slice(0, 1000);
-    } else if (name === 'email') {
-      sanitizedValue = value.replace(/\s+/g, '');
-    } else if (name === 'password' || name === 'confirmPassword') {
-      sanitizedValue = value.replace(/\s+/g, '');
+      // Allow spaces anywhere, do not trim
+      sanitizedValue = value.slice(0, 1000); // Only limit length
     } else {
       sanitizedValue = sanitize.text(value);
     }
+    
     if (!validation.noScriptTags(sanitizedValue)) {
       return;
     }
+    
     setForm({ ...form, [name]: sanitizedValue });
     if (error) setError('');
   };
@@ -60,11 +60,6 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         setError(`${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
         return false;
       }
-    }
-    // No spaces allowed in email, password, confirmPassword
-    if (/[\s]/.test(form.email) || /[\s]/.test(form.password) || /[\s]/.test(form.confirmPassword)) {
-      setError('Spaces are not allowed in Email or Password fields.');
-      return false;
     }
 
     if (!validation.maxLength((form as any).name, 100)) {
@@ -95,47 +90,6 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
     return true;
   };
 
-  const checkEmailExists = async (email: string) => {
-    try {
-      // Check if email exists in customers table
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .select('email')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (customerError) {
-        console.error('Error checking customers table:', customerError);
-        throw customerError;
-      }
-
-      if (customerData) {
-        return { exists: true, role: 'customer' };
-      }
-
-      // Check if email exists in vendors table
-      const { data: vendorData, error: vendorError } = await supabase
-        .from('vendors')
-        .select('email')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (vendorError) {
-        console.error('Error checking vendors table:', vendorError);
-        throw vendorError;
-      }
-
-      if (vendorData) {
-        return { exists: true, role: 'vendor' };
-      }
-
-      return { exists: false, role: null };
-    } catch (error) {
-      console.error('Error checking email existence:', error);
-      throw error;
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -147,22 +101,27 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
     setLoading(true);
     try {
-      console.log('Checking if email already exists...');
-      
-      // Check if email already exists in either customers or vendors table
-      const emailCheck = await checkEmailExists(form.email);
-      
-      if (emailCheck.exists) {
-        if (emailCheck.role === 'vendor') {
-          setError('This email is already registered as a vendor. Please use a different email or login to your vendor account.');
-        } else {
-          setError('An account with this email already exists. Please login instead.');
-        }
+      // Check if email is already used in customers or vendors
+      const { data: customer, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', form.email)
+        .single();
+      const { data: vendor, error: vendorError } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('email', form.email)
+        .single();
+      if (customer || vendor) {
+        setError('This email is already registered as a ' + (customer ? 'customer' : 'vendor') + '. Please use a different email.');
         setLoading(false);
         return;
       }
-
-      console.log('Email is available, proceeding with registration...');
+      console.log('Attempting customer registration with:', { 
+        email: form.email, 
+        name: form.name,
+        phone: form.phone 
+      });
       
       const { data, error } = await signUp(form.email, form.password, {
         data: {
@@ -193,27 +152,10 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         } else {
           setError(`Registration failed: ${error.message}`);
         }
-      } else if (data.user) {
-        console.log('Customer registered successfully:', data.user.id);
-        
-        // Insert customer record into customers table
-        const { error: insertError } = await supabase
-          .from('customers')
-          .insert({
-            id: data.user.id,
-            email: form.email,
-            full_name: sanitize.html(form.name),
-            phone: sanitize.html(form.phone)
-          });
-
-        if (insertError) {
-          console.error('Error inserting customer record:', insertError);
-          setError('Account created but profile setup failed. Please contact support.');
-        } else {
-          console.log('Customer profile created successfully');
-          setSuccess('Account created successfully! Please verify your email with OTP.');
-          onSuccess(form.email);
-        }
+      } else {
+        console.log('Customer registered successfully:', data.user?.id);
+        setSuccess('Account created successfully! Please verify your email with OTP.');
+        onSuccess(form.email);
       }
     } catch (err: any) {
       console.error('Customer registration error:', err);
@@ -229,6 +171,12 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         <h1 className="text-3xl font-bold text-[#190a02] mb-2">Customer Registration</h1>
         <p className="text-[#8b4a08]">Create your account to access solar solutions</p>
       </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
 
       <RegistrationMessages error={error} success={success} />
 

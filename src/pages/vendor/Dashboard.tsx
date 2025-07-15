@@ -10,12 +10,26 @@ export default function VendorDashboard() {
   const { user, signOut, loading } = useSupabaseAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<{ contact_person?: string; company_name?: string } | null>(null);
+  const [isVendor, setIsVendor] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate('/vendor/login');
+    } else if (user) {
+      checkVendor();
     }
   }, [user, loading, navigate]);
+
+  const checkVendor = async () => {
+    if (!user) return;
+    const { data: vendor } = await supabase.from('vendors').select('id').eq('id', user.id).single();
+    if (!vendor) {
+      await supabase.auth.signOut();
+      navigate('/vendor/login');
+    } else {
+      setIsVendor(true);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -39,8 +53,8 @@ export default function VendorDashboard() {
     }
   };
 
-  if (loading) return <div className="text-center py-20">Loading...</div>;
-  if (!user) return null;
+  if (loading || isVendor === null) return <div className="text-center py-20">Loading...</div>;
+  if (!user || !isVendor) return null;
 
   const handleQuotationClick = () => {
     window.open('https://docs.google.com/forms/d/e/1FAIpQLSdjkFe1q934yAptp69UlOghFzFwrYrk7IQpOI101axO3M4WXQ/viewform?usp=header', '_blank');

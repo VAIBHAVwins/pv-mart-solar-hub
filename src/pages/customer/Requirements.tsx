@@ -82,27 +82,15 @@ const CustomerRequirements = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    let sanitizedValue = value;
-    if (name === 'mobileNumber') {
-      sanitizedValue = value.replace(/\D/g, '').slice(0, 15); // Only digits, up to 15
-    } else if (name === 'rooftopArea') {
-      sanitizedValue = value.replace(/\D/g, '').slice(0, 10); // Only digits, max 10
-    } else if (name === 'pincode') {
-      sanitizedValue = value.replace(/\D/g, '').slice(0, 6); // Only digits, max 6
-    } else if (name === 'monthlyBill') {
-      sanitizedValue = value.replace(/\D/g, '').slice(0, 10); // Only digits, max 10
-    } else {
-      sanitizedValue = value;
-    }
     setFormData(prev => ({
       ...prev,
-      [name]: sanitizedValue
+      [name]: value
     }));
 
     if (name === 'state') {
       setFormData(prev => ({
         ...prev,
-        state: sanitizedValue,
+        state: value,
         district: '',
         discom: ''
       }));
@@ -118,27 +106,6 @@ const CustomerRequirements = () => {
     // For test environment, call supabase.from('customer_requirements') first to satisfy test expectation
     if (process.env.NODE_ENV === 'test') {
       supabase.from('customer_requirements');
-    }
-    
-    if (formData.mobileNumber.length < 10) {
-      setError('Mobile number must be at least 10 digits.');
-      setLoading(false);
-      return;
-    }
-    if (formData.rooftopArea.length === 0 || formData.rooftopArea.length > 10) {
-      setError('Rooftop area must be a number up to 10 digits.');
-      setLoading(false);
-      return;
-    }
-    if (formData.pincode.length !== 6) {
-      setError('Pincode must be exactly 6 digits.');
-      setLoading(false);
-      return;
-    }
-    if (formData.monthlyBill.length === 0 || formData.monthlyBill.length > 10) {
-      setError('Monthly bill must be a number up to 10 digits.');
-      setLoading(false);
-      return;
     }
     
     try {

@@ -16,37 +16,46 @@ const VendorLogin = () => {
   const { signIn } = useSupabaseAuth();
   const navigate = useNavigate();
 
-  // Use the improved input handlers (no spaces)
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value.replace(/\s+/g, ''));
-  };
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value.replace(/\s+/g, ''));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      const { error: signInError, data } = await signIn(email, password);
+      // Check if email exists in vendors or customers table
+      const { data: vendor } = await supabase.from('vendors').select('email').eq('email', email).single();
+      const { data: customer } = await supabase.from('customers').select('email').eq('email', email).single();
+      if (!vendor && customer) {
+        setError('This email ID is registered as a customer. Please perform customer login.');
+        setLoading(false);
+        return;
+      }
+      if (!vendor && !customer) {
+        setError('Failed to login. Please check your credentials or create account.');
+        setLoading(false);
+        return;
+      }
+      // Only proceed if vendor exists
+      const { error: signInError } = await signIn(email, password);
       if (signInError) {
         setError('Failed to login. Please check your credentials.');
+        await supabase.auth.signOut(); // Ensure no partial login state
         setLoading(false);
         return;
       }
       // After sign in, check which table the user is in
-      const userId = data?.user?.id || (await supabase.auth.getUser()).data.user?.id;
-      const { data: customer } = await supabase.from('customers').select('id').eq('id', userId).single();
-      const { data: vendor } = await supabase.from('vendors').select('id').eq('id', userId).single();
-      if (customer && vendor) {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const { data: customerCheck } = await supabase.from('customers').select('id').eq('id', userId).single();
+      const { data: vendorCheck } = await supabase.from('vendors').select('id').eq('id', userId).single();
+      if (customerCheck && vendorCheck) {
         setError('Account conflict: This user exists as both customer and vendor. Please contact support.');
+        await supabase.auth.signOut(); // Ensure no partial login state
         setLoading(false);
         return;
       }
-      if (!vendor) {
+      if (!vendorCheck) {
         setError('No vendor account found for this email.');
+        await supabase.auth.signOut(); // Ensure no partial login state
         setLoading(false);
         return;
       }
@@ -54,6 +63,7 @@ const VendorLogin = () => {
     } catch (error) {
       setError('Failed to login. Please check your credentials.');
       console.error('Login error:', error);
+    } finally {
       setLoading(false);
     }
   };
@@ -80,7 +90,7 @@ const VendorLogin = () => {
                 id="email"
                 type="email"
                 value={email}
-                onChange={handleEmailChange}
+                onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 border-[#b07e66] focus:border-[#797a83]"
                 placeholder="Enter your email"
                 required
@@ -94,7 +104,7 @@ const VendorLogin = () => {
                 id="password"
                 type="password"
                 value={password}
-                onChange={handlePasswordChange}
+                onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 border-[#b07e66] focus:border-[#797a83]"
                 placeholder="Enter your password"
                 required

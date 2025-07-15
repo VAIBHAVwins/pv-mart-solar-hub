@@ -17,19 +17,14 @@ export default function VendorQuotationForm({ onClose }: { onClose: () => void }
     total_price: '',
     installation_charge: '',
     warranty_years: '',
-    description: '',
-    vendor_phone: ''
+    description: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   const handleChange = (field: string, value: string) => {
-    let sanitizedValue = value;
-    if (field === 'vendor_phone') {
-      sanitizedValue = value.replace(/\D/g, '').slice(0, 15); // Only digits, up to 15
-    }
-    setForm({ ...form, [field]: sanitizedValue });
+    setForm({ ...form, [field]: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,19 +38,13 @@ export default function VendorQuotationForm({ onClose }: { onClose: () => void }
     setError('');
     setSuccess(false);
     
-    if (form.vendor_phone && form.vendor_phone.length < 10) {
-      setError('Phone number must be at least 10 digits.');
-      setLoading(false);
-      return;
-    }
-
     try {
       const { data, error } = await supabase.from('vendor_quotations').insert([
         {
           vendor_id: user.id,
           vendor_name: form.vendor_name,
           vendor_email: user.email!,
-          vendor_phone: form.vendor_phone || null,
+          vendor_phone: null, // Removed phone number requirement
           installation_type: form.installation_type as any,
           system_type: form.system_type as any,
           total_price: parseFloat(form.total_price),

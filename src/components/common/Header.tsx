@@ -12,7 +12,10 @@ import MobileMenu from './MobileMenu';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userType, setUserType] = useState<string | null>(null);
+  const [userType, setUserType] = useState<string | null>(() => {
+    // Try to get userType from localStorage for instant rendering
+    return localStorage.getItem('userType');
+  });
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useSupabaseAuth();
@@ -26,77 +29,64 @@ const Header = () => {
       fetchUserType();
     } else {
       setUserType(null);
+      localStorage.removeItem('userType');
     }
   }, [user]);
 
   const fetchUserType = async () => {
     if (!user) return;
-    
-    try {
-      // Check if user exists in customers table
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (customerError) {
-        console.error('Error checking customer:', customerError);
-      }
-
-      if (customerData) {
-        setUserType('customer');
-        return;
-      }
-
-      // Check if user exists in vendors table
-      const { data: vendorData, error: vendorError } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (vendorError) {
-        console.error('Error checking vendor:', vendorError);
-      }
-
-      if (vendorData) {
-        setUserType('vendor');
-        return;
-      }
-
-      setUserType(null);
-    } catch (error) {
-      console.error('Error fetching user type:', error);
-      setUserType(null);
+    // Check in customers table
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('id', user.id)
+      .single();
+    if (customer) {
+      setUserType('customer');
+      localStorage.setItem('userType', 'customer');
+      return;
     }
+    // Check in vendors table
+    const { data: vendor } = await supabase
+      .from('vendors')
+      .select('id')
+      .eq('id', user.id)
+      .single();
+    if (vendor) {
+      setUserType('vendor');
+      localStorage.setItem('userType', 'vendor');
+      return;
+    }
+    setUserType(null);
+    localStorage.removeItem('userType');
   };
   
   // Determine theme based on route
-  function getThemeClasses() {
+  const getThemeClasses = () => {
     if (isCustomerRoute) {
       return 'bg-jonquil text-licorice shadow-lg'; // Customer theme
     } else if (isVendorRoute) {
       return 'bg-vendor_gray text-seasalt shadow-lg'; // Vendor theme
     }
     return 'bg-white text-solar-dark shadow-solar'; // Default modern theme
-  }
+  };
 
-  function getLinkClasses() {
+  const getLinkClasses = () => {
     if (isCustomerRoute) {
       return 'nav-link text-brown hover:text-licorice';
     } else if (isVendorRoute) {
       return 'nav-link text-seasalt hover:text-chamoisee';
     }
     return 'nav-link text-solar-dark hover:text-solar-primary';
-  }
+  };
 
-  async function handleLogout() {
+  const handleLogout = async () => {
     await signOut();
+    localStorage.removeItem('userType');
     navigate('/');
-  }
+  };
 
-  function handleDashboardClick() {
+  const handleDashboardClick = () => {
     if (userType === 'customer') {
       navigate('/customer/dashboard');
     } else if (userType === 'vendor') {
@@ -117,7 +107,7 @@ const Header = () => {
             <Navigation getLinkClasses={getLinkClasses} />
             
             <div className="flex items-center space-x-4">
-              {/* Dashboard Button for logged-in users */}
+              {/* Dashboard Button for logged-in users - Fixed to show correct dashboard */}
               {user && userType && (
                 <button
                   onClick={handleDashboardClick}

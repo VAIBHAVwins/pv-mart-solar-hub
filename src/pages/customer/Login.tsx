@@ -20,58 +20,29 @@ const CustomerLogin = () => {
 
   useEffect(() => {
     if (user) {
-      checkUserRoleAndRedirect(user.id);
+      // Check if user came from installation flow
+      const installationType = sessionStorage.getItem('selectedInstallationType');
+      const gridType = sessionStorage.getItem('selectedGridType');
+      
+      if (installationType && gridType) {
+        // Clear the session storage
+        sessionStorage.removeItem('selectedInstallationType');
+        sessionStorage.removeItem('selectedGridType');
+        // Redirect to requirements form
+        navigate('/customer/requirements');
+      } else {
+        // Regular login, go to dashboard
+        navigate('/customer/dashboard');
+      }
     }
   }, [user, navigate]);
 
-  // Use the improved input handlers (no spaces)
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, email: e.target.value.replace(/\s+/g, '') }));
-  };
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, password: e.target.value.replace(/\s+/g, '') }));
-  };
-
-  // Use the improved post-login role check logic
-  const checkUserRoleAndRedirect = async (userId: string) => {
-    try {
-      // Check if user exists in customers table
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (customerError) {
-        console.error('Error checking customer role:', customerError);
-        return;
-      }
-
-      if (customerData) {
-        // User is a customer
-        const installationType = sessionStorage.getItem('selectedInstallationType');
-        const gridType = sessionStorage.getItem('selectedGridType');
-        
-        if (installationType && gridType) {
-          // Clear the session storage
-          sessionStorage.removeItem('selectedInstallationType');
-          sessionStorage.removeItem('selectedGridType');
-          // Redirect to requirements form
-          navigate('/customer/requirements');
-        } else {
-          // Regular login, go to dashboard
-          navigate('/customer/dashboard');
-        }
-        return;
-      }
-
-      // User not found in customers table
-      setError('Account not found. Please register first or contact support.');
-      
-    } catch (err) {
-      console.error('Error checking user role:', err);
-      setError('Login failed. Please try again.');
-    }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,7 +51,21 @@ const CustomerLogin = () => {
     setLoading(true);
 
     try {
-      const { error: signInError, data } = await signIn(formData.email, formData.password);
+      // Check if email exists in customers or vendors table
+      const { data: customer } = await supabase.from('customers').select('email').eq('email', formData.email).single();
+      const { data: vendor } = await supabase.from('vendors').select('email').eq('email', formData.email).single();
+      if (!customer && vendor) {
+        setError('This email ID is registered as a vendor. Please perform vendor login.');
+        setLoading(false);
+        return;
+      }
+      if (!customer && !vendor) {
+        setError('Failed to login. Please check your credentials or create account.');
+        setLoading(false);
+        return;
+      }
+      // Only proceed if customer exists
+      const { error: signInError } = await signIn(formData.email, formData.password);
       if (signInError) {
         if (signInError.message.includes('Invalid login credentials')) {
           setError('Invalid email or password. Please check your credentials.');
@@ -89,20 +74,23 @@ const CustomerLogin = () => {
         } else {
           setError(`Login failed: ${signInError.message}`);
         }
+        await supabase.auth.signOut(); // Ensure no partial login state
         setLoading(false);
         return;
       }
       // After sign in, check which table the user is in
-      const userId = data?.user?.id || (await supabase.auth.getUser()).data.user?.id;
-      const { data: customer } = await supabase.from('customers').select('id').eq('id', userId).single();
-      const { data: vendor } = await supabase.from('vendors').select('id').eq('id', userId).single();
-      if (customer && vendor) {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const { data: customerCheck } = await supabase.from('customers').select('id').eq('id', userId).single();
+      const { data: vendorCheck } = await supabase.from('vendors').select('id').eq('id', userId).single();
+      if (customerCheck && vendorCheck) {
         setError('Account conflict: This user exists as both customer and vendor. Please contact support.');
+        await supabase.auth.signOut(); // Ensure no partial login state
         setLoading(false);
         return;
       }
-      if (!customer) {
+      if (!customerCheck) {
         setError('No customer account found for this email.');
+        await supabase.auth.signOut(); // Ensure no partial login state
         setLoading(false);
         return;
       }
@@ -110,6 +98,7 @@ const CustomerLogin = () => {
     } catch (err) {
       console.error('Login error:', err);
       setError('Login failed. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -128,7 +117,7 @@ const CustomerLogin = () => {
                 name="email"
                 type="email"
                 value={formData.email}
-                onChange={handleEmailChange}
+                onChange={handleChange}
                 className="mt-1 border-brown focus:border-licorice"
                 placeholder="Enter your email"
                 required
@@ -141,7 +130,7 @@ const CustomerLogin = () => {
                 name="password"
                 type="password"
                 value={formData.password}
-                onChange={handlePasswordChange}
+                onChange={handleChange}
                 className="mt-1 border-brown focus:border-licorice"
                 placeholder="Enter your password"
                 required

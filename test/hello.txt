@@ -1,8 +1,1 @@
-
-Completed migration to separate customers and vendors tables with one-role-per-email enforcement.
-- Created new customers and vendors tables
-- Migrated all data from profiles table
-- Updated registration and login logic to enforce policy
-- Added role-based redirection after login
-- Cleaned up duplicate accounts
-- All systems are now robust and future-proof
+Repository updated: Blog and HeroImage management UI/logic (single control, tag input, remove archived, status cleanup)

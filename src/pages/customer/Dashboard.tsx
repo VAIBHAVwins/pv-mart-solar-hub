@@ -10,12 +10,26 @@ export default function CustomerDashboard() {
   const { user, signOut, loading } = useSupabaseAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<{ full_name?: string } | null>(null);
+  const [isCustomer, setIsCustomer] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate('/customer/login');
+    } else if (user) {
+      checkCustomer();
     }
   }, [user, loading, navigate]);
+
+  const checkCustomer = async () => {
+    if (!user) return;
+    const { data: customer } = await supabase.from('customers').select('id').eq('id', user.id).single();
+    if (!customer) {
+      await supabase.auth.signOut();
+      navigate('/customer/login');
+    } else {
+      setIsCustomer(true);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -35,8 +49,8 @@ export default function CustomerDashboard() {
     setProfile(data);
   };
 
-  if (loading) return <div className="text-center py-20">Loading...</div>;
-  if (!user) return null;
+  if (loading || isCustomer === null) return <div className="text-center py-20">Loading...</div>;
+  if (!user || !isCustomer) return null;
 
   const handleRequirementClick = () => {
     navigate('/customer/supabase-requirement');
