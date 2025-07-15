@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 export default function CustomerDashboard() {
   const { user, signOut, loading } = useSupabaseAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{ full_name?: string, company_name?: string } | null>(null);
+  const [profile, setProfile] = useState<{ full_name?: string } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -27,10 +27,10 @@ export default function CustomerDashboard() {
     if (!user) return;
     
     const { data } = await supabase
-      .from('profiles')
-      .select('full_name, company_name')
-      .eq('user_id', user.id)
-      .single();
+      .from('customers')
+      .select('full_name')
+      .eq('id', user.id)
+      .maybeSingle();
     
     setProfile(data);
   };

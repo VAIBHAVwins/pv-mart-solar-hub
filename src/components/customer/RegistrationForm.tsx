@@ -84,6 +84,47 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
     return true;
   };
 
+  const checkEmailExists = async (email: string) => {
+    try {
+      // Check if email exists in customers table
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (customerError) {
+        console.error('Error checking customers table:', customerError);
+        throw customerError;
+      }
+
+      if (customerData) {
+        return { exists: true, role: 'customer' };
+      }
+
+      // Check if email exists in vendors table
+      const { data: vendorData, error: vendorError } = await supabase
+        .from('vendors')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (vendorError) {
+        console.error('Error checking vendors table:', vendorError);
+        throw vendorError;
+      }
+
+      if (vendorData) {
+        return { exists: true, role: 'vendor' };
+      }
+
+      return { exists: false, role: null };
+    } catch (error) {
+      console.error('Error checking email existence:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -95,28 +136,22 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
     setLoading(true);
     try {
-      // Check if email is already used by a vendor
-      const { data: vendorProfile, error: vendorError } = await supabase
-        .from('profiles')
-        .select('user_type')
-        .eq('user_type', 'vendor')
-        .eq('full_name', form.name)
-        .eq('company_name', null)
-        .eq('phone', form.phone)
-        .eq('user_id', null)
-        .eq('user_type', 'vendor')
-        .eq('email', form.email)
-        .single();
-      if (vendorProfile) {
-        setError('This email is already registered as a vendor. Please use a different email.');
+      console.log('Checking if email already exists...');
+      
+      // Check if email already exists in either customers or vendors table
+      const emailCheck = await checkEmailExists(form.email);
+      
+      if (emailCheck.exists) {
+        if (emailCheck.role === 'vendor') {
+          setError('This email is already registered as a vendor. Please use a different email or login to your vendor account.');
+        } else {
+          setError('An account with this email already exists. Please login instead.');
+        }
         setLoading(false);
         return;
       }
-      console.log('Attempting customer registration with:', { 
-        email: form.email, 
-        name: form.name,
-        phone: form.phone 
-      });
+
+      console.log('Email is available, proceeding with registration...');
       
       const { data, error } = await signUp(form.email, form.password, {
         data: {
@@ -147,10 +182,27 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         } else {
           setError(`Registration failed: ${error.message}`);
         }
-      } else {
-        console.log('Customer registered successfully:', data.user?.id);
-        setSuccess('Account created successfully! Please verify your email with OTP.');
-        onSuccess(form.email);
+      } else if (data.user) {
+        console.log('Customer registered successfully:', data.user.id);
+        
+        // Insert customer record into customers table
+        const { error: insertError } = await supabase
+          .from('customers')
+          .insert({
+            id: data.user.id,
+            email: form.email,
+            full_name: sanitize.html(form.name),
+            phone: sanitize.html(form.phone)
+          });
+
+        if (insertError) {
+          console.error('Error inserting customer record:', insertError);
+          setError('Account created but profile setup failed. Please contact support.');
+        } else {
+          console.log('Customer profile created successfully');
+          setSuccess('Account created successfully! Please verify your email with OTP.');
+          onSuccess(form.email);
+        }
       }
     } catch (err: any) {
       console.error('Customer registration error:', err);
@@ -166,12 +218,6 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         <h1 className="text-3xl font-bold text-[#190a02] mb-2">Customer Registration</h1>
         <p className="text-[#8b4a08]">Create your account to access solar solutions</p>
       </div>
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
 
       <RegistrationMessages error={error} success={success} />
 

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const VendorLogin = () => {
   const [email, setEmail] = useState('');
@@ -15,14 +16,77 @@ const VendorLogin = () => {
   const { signIn } = useSupabaseAuth();
   const navigate = useNavigate();
 
+  const checkUserRoleAndRedirect = async (userId: string) => {
+    try {
+      // Check if user exists in vendors table
+      const { data: vendorData, error: vendorError } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (vendorError) {
+        console.error('Error checking vendor role:', vendorError);
+        setError('Login failed. Please try again.');
+        return;
+      }
+
+      if (vendorData) {
+        // User is a vendor
+        navigate('/vendor/dashboard');
+        return;
+      }
+
+      // Check if user exists in customers table
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (customerError) {
+        console.error('Error checking customer role:', customerError);
+        setError('Login failed. Please try again.');
+        return;
+      }
+
+      if (customerData) {
+        // User is a customer trying to login as vendor
+        setError('This account is registered as a customer. Please use the customer login page.');
+        return;
+      }
+
+      // User not found in either table
+      setError('Account not found. Please register first or contact support.');
+      
+    } catch (err) {
+      console.error('Error checking user role:', err);
+      setError('Login failed. Please try again.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      await signIn(email, password);
-      navigate('/vendor/dashboard');
+      const { data, error: signInError } = await signIn(email, password);
+      
+      if (signInError) {
+        if (signInError.message.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please check your credentials.');
+        } else if (signInError.message.includes('Email not confirmed')) {
+          setError('Please check your email and click the confirmation link before logging in.');
+        } else {
+          setError(`Login failed: ${signInError.message}`);
+        }
+        return;
+      }
+
+      if (data.user) {
+        await checkUserRoleAndRedirect(data.user.id);
+      }
     } catch (error) {
       setError('Failed to login. Please check your credentials.');
       console.error('Login error:', error);

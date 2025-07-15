@@ -1,5 +1,4 @@
 
-// ENHANCED BY CURSOR AI: Vendor Dashboard with proper navigation
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
@@ -7,11 +6,10 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-// CURSOR AI: Modern, professional Vendor Dashboard redesign with vendor color palette and UI patterns
 export default function VendorDashboard() {
   const { user, signOut, loading } = useSupabaseAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{ full_name?: string; company_name?: string } | null>(null);
+  const [profile, setProfile] = useState<{ contact_person?: string; company_name?: string } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -29,10 +27,10 @@ export default function VendorDashboard() {
     if (!user) return;
     
     const { data, error } = await supabase
-      .from('profiles')
-      .select('full_name, company_name')
-      .eq('user_id', user.id)
-      .single();
+      .from('vendors')
+      .select('contact_person, company_name')
+      .eq('id', user.id)
+      .maybeSingle();
     
     if (error) {
       console.error('Error fetching profile:', error);
@@ -56,7 +54,7 @@ export default function VendorDashboard() {
   const getWelcomeMessage = () => {
     if (!profile) return 'Vendor';
     
-    const contactPerson = profile.full_name || 'Vendor';
+    const contactPerson = profile.contact_person || 'Vendor';
     const companyName = profile.company_name;
     
     if (contactPerson && companyName) {

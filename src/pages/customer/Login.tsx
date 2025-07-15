@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const CustomerLogin = () => {
   const { signIn, user } = useSupabaseAuth();
@@ -19,22 +20,68 @@ const CustomerLogin = () => {
 
   useEffect(() => {
     if (user) {
-      // Check if user came from installation flow
-      const installationType = sessionStorage.getItem('selectedInstallationType');
-      const gridType = sessionStorage.getItem('selectedGridType');
-      
-      if (installationType && gridType) {
-        // Clear the session storage
-        sessionStorage.removeItem('selectedInstallationType');
-        sessionStorage.removeItem('selectedGridType');
-        // Redirect to requirements form
-        navigate('/customer/requirements');
-      } else {
-        // Regular login, go to dashboard
-        navigate('/customer/dashboard');
-      }
+      checkUserRoleAndRedirect(user.id);
     }
   }, [user, navigate]);
+
+  const checkUserRoleAndRedirect = async (userId: string) => {
+    try {
+      // Check if user exists in customers table
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (customerError) {
+        console.error('Error checking customer role:', customerError);
+        return;
+      }
+
+      if (customerData) {
+        // User is a customer
+        const installationType = sessionStorage.getItem('selectedInstallationType');
+        const gridType = sessionStorage.getItem('selectedGridType');
+        
+        if (installationType && gridType) {
+          // Clear the session storage
+          sessionStorage.removeItem('selectedInstallationType');
+          sessionStorage.removeItem('selectedGridType');
+          // Redirect to requirements form
+          navigate('/customer/requirements');
+        } else {
+          // Regular login, go to dashboard
+          navigate('/customer/dashboard');
+        }
+        return;
+      }
+
+      // Check if user exists in vendors table
+      const { data: vendorData, error: vendorError } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (vendorError) {
+        console.error('Error checking vendor role:', vendorError);
+        return;
+      }
+
+      if (vendorData) {
+        // User is a vendor trying to login as customer
+        setError('This account is registered as a vendor. Please use the vendor login page.');
+        return;
+      }
+
+      // User not found in either table
+      setError('Account not found. Please register first or contact support.');
+      
+    } catch (err) {
+      console.error('Error checking user role:', err);
+      setError('Login failed. Please try again.');
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

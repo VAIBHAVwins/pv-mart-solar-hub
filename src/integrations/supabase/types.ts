@@ -146,6 +146,30 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
       hero_images: {
         Row: {
           created_at: string | null
@@ -194,7 +218,6 @@ export type Database = {
           phone: string | null
           updated_at: string
           user_id: string
-          user_type: string | null
         }
         Insert: {
           company_name?: string | null
@@ -204,7 +227,6 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id: string
-          user_type?: string | null
         }
         Update: {
           company_name?: string | null
@@ -214,7 +236,6 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
-          user_type?: string | null
         }
         Relationships: []
       }
@@ -340,6 +361,39 @@ export type Database = {
           vendor_name?: string
           vendor_phone?: string | null
           warranty_years?: number | null
+        }
+        Relationships: []
+      }
+      vendors: {
+        Row: {
+          address: string | null
+          company_name: string | null
+          contact_person: string | null
+          created_at: string | null
+          email: string
+          id: string
+          license_number: string | null
+          phone: string | null
+        }
+        Insert: {
+          address?: string | null
+          company_name?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email: string
+          id: string
+          license_number?: string | null
+          phone?: string | null
+        }
+        Update: {
+          address?: string | null
+          company_name?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          license_number?: string | null
+          phone?: string | null
         }
         Relationships: []
       }
