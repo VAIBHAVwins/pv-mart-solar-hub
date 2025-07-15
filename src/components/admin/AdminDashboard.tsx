@@ -3,25 +3,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import HeroImageManager from './HeroImageManager';
 import BlogManager from './blog/BlogManager';
 import UserManagement from './UserManagement';
 import { Users, Image, Database, Settings, Activity, TrendingUp, FileText } from 'lucide-react';
 
-interface AdminStats {
-  totalUsers: number;
-  totalHeroImages: number;
-  totalBlogs: number;
-  totalCustomers: number;
-  totalVendors: number;
-  totalAdmins: number;
-  totalCustomerRequirements: number;
-  totalVendorQuotations: number;
-}
-
 const AdminDashboard = () => {
-  const initialStats: AdminStats = {
+  const [stats, setStats] = useState({
     totalUsers: 0,
     totalHeroImages: 0,
     totalBlogs: 0,
@@ -30,11 +18,8 @@ const AdminDashboard = () => {
     totalAdmins: 0,
     totalCustomerRequirements: 0,
     totalVendorQuotations: 0
-  };
-
-  const [stats, setStats] = useState<AdminStats>(initialStats);
+  });
   const [loading, setLoading] = useState(true);
-  const { user } = useSupabaseAuth();
 
   const fetchStats = async () => {
     try {
@@ -81,7 +66,7 @@ const AdminDashboard = () => {
         .from('blogs')
         .select('*', { count: 'exact', head: true });
 
-      const newStats: AdminStats = {
+      setStats({
         totalUsers: profilesCount || 0,
         totalHeroImages: heroImagesCount || 0,
         totalBlogs: blogsCount || 0,
@@ -90,9 +75,7 @@ const AdminDashboard = () => {
         totalAdmins: adminsCount || 0,
         totalCustomerRequirements: requirementsCount || 0,
         totalVendorQuotations: quotationsCount || 0
-      };
-
-      setStats(newStats);
+      });
     } catch (error) {
       console.error('Error fetching admin stats:', error);
     } finally {
@@ -103,19 +86,6 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchStats();
   }, []);
-
-  // Temporary bypass for testing - comment out the user check
-  // if (!user) {
-  //   return (
-  //     <div className="flex items-center justify-center h-64">
-  //       <p className="text-gray-600">Please log in to access the admin dashboard.</p>
-  //     </div>
-  //   );
-  // }
-
-  // Temporary debug info
-  console.log('AdminDashboard - user:', user);
-  console.log('AdminDashboard - bypassing user check for testing');
 
   return (
     <div className="container mx-auto px-4 py-8">

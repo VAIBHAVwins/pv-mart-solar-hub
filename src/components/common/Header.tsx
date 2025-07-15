@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
@@ -64,23 +65,6 @@ const Header = () => {
         return;
       }
 
-      // Check if user has admin role
-      const { data: adminRole, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .maybeSingle();
-
-      if (roleError) {
-        console.error('Error checking admin role:', roleError);
-      }
-
-      if (adminRole) {
-        setUserType('admin');
-        return;
-      }
-
       setUserType(null);
     } catch (error) {
       console.error('Error fetching user type:', error);
@@ -117,8 +101,6 @@ const Header = () => {
       navigate('/customer/dashboard');
     } else if (userType === 'vendor') {
       navigate('/vendor/dashboard');
-    } else if (userType === 'admin') {
-      navigate('/admin/dashboard');
     }
   };
 
@@ -135,15 +117,23 @@ const Header = () => {
             <Navigation getLinkClasses={getLinkClasses} />
             
             <div className="flex items-center space-x-4">
-              {/* Dashboard Button for logged-in users - Fixed to show correct dashboard */}
+              {/* Dashboard Button for logged-in users */}
               {user && userType && (
                 <button
                   onClick={handleDashboardClick}
                   className="hidden lg:block solar-button-outline px-4 py-2 text-sm"
                 >
-                  {userType === 'customer' ? 'Customer Dashboard' : userType === 'vendor' ? 'Vendor Dashboard' : 'Admin Dashboard'}
+                  {userType === 'customer' ? 'Customer Dashboard' : 'Vendor Dashboard'}
                 </button>
               )}
+              
+              {/* Admin Dashboard Button - always visible */}
+              <button
+                onClick={() => navigate('/admin/dashboard')}
+                className="hidden lg:block solar-button px-4 py-2 text-sm"
+              >
+                Admin Panel
+              </button>
               
               <AuthButtons 
                 user={user} 
