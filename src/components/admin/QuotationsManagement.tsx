@@ -5,6 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Database } from '@/integrations/supabase/types';
+
+type InstallationType = Database['public']['Enums']['installation_type'];
+type SystemType = Database['public']['Enums']['system_type'];
 
 interface Quotation {
   id: string;
@@ -12,8 +16,8 @@ interface Quotation {
   vendor_name: string;
   vendor_email: string;
   vendor_phone: string;
-  installation_type: string;
-  system_type: string;
+  installation_type: InstallationType;
+  system_type: SystemType;
   total_price: number;
   installation_charge: number;
   warranty_years: number;
@@ -32,14 +36,27 @@ const QuotationsManagement = () => {
   const fetchQuotations = async () => {
     setLoading(true);
     try {
-      const { data: quotationsData } = await supabase
+      const { data: quotationsData, error: quotationsError } = await supabase
         .from('vendor_quotations')
         .select('*')
         .order('created_at', { ascending: false });
       
-      const { data: usersData } = await supabase
+      if (quotationsError) {
+        console.error('Error fetching quotations:', quotationsError);
+        setLoading(false);
+        return;
+      }
+
+      const { data: usersData, error: usersError } = await supabase
         .from('users')
-        .select('id, company_name');
+        .select('id, company_name')
+        .eq('role', 'vendor');
+      
+      if (usersError) {
+        console.error('Error fetching users:', usersError);
+        setLoading(false);
+        return;
+      }
       
       console.log('Fetched quotations:', quotationsData);
       console.log('Fetched users:', usersData);
@@ -86,8 +103,8 @@ const QuotationsManagement = () => {
       vendor_name: editForm.vendor_name,
       vendor_email: editForm.vendor_email,
       vendor_phone: editForm.vendor_phone,
-      installation_type: editForm.installation_type as any,
-      system_type: editForm.system_type as any,
+      installation_type: editForm.installation_type as InstallationType,
+      system_type: editForm.system_type as SystemType,
       total_price: Number(editForm.total_price),
       installation_charge: Number(editForm.installation_charge),
       warranty_years: Number(editForm.warranty_years),

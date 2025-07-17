@@ -24,6 +24,11 @@ interface RecentQuotation {
   status: string;
 }
 
+interface VendorProfile {
+  contact_person?: string;
+  company_name?: string;
+}
+
 const VendorDashboard = () => {
   const { user } = useSupabaseAuth();
   const [stats, setStats] = useState<DashboardStats>({
@@ -34,7 +39,7 @@ const VendorDashboard = () => {
   });
   const [recentQuotations, setRecentQuotations] = useState<RecentQuotation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [vendorProfile, setVendorProfile] = useState<{ contact_person?: string; company_name?: string }>({});
+  const [vendorProfile, setVendorProfile] = useState<VendorProfile>({});
 
   useEffect(() => {
     if (user) {
@@ -46,14 +51,16 @@ const VendorDashboard = () => {
     if (!user) return;
 
     try {
-      // Fetch vendor profile
-      const { data: userData } = await supabase
+      // Fetch vendor profile from the users table
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .select('contact_person, company_name')
         .eq('id', user.id)
         .single();
 
-      if (userData) {
+      if (userError) {
+        console.error('Error fetching user data:', userError);
+      } else if (userData) {
         setVendorProfile(userData);
       }
 

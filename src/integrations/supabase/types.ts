@@ -318,30 +318,54 @@ export type Database = {
       }
       users: {
         Row: {
+          address: string | null
+          company_name: string | null
+          contact_person: string | null
           created_at: string | null
           email: string
           full_name: string
           id: string
+          is_verified: boolean | null
+          license_number: string | null
           phone: string | null
+          pm_surya_ghar_registered: boolean | null
           role: Database["public"]["Enums"]["user_role"]
+          service_areas: string | null
+          specializations: string | null
           updated_at: string | null
         }
         Insert: {
+          address?: string | null
+          company_name?: string | null
+          contact_person?: string | null
           created_at?: string | null
           email: string
           full_name: string
           id: string
+          is_verified?: boolean | null
+          license_number?: string | null
           phone?: string | null
+          pm_surya_ghar_registered?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
+          service_areas?: string | null
+          specializations?: string | null
           updated_at?: string | null
         }
         Update: {
+          address?: string | null
+          company_name?: string | null
+          contact_person?: string | null
           created_at?: string | null
           email?: string
           full_name?: string
           id?: string
+          is_verified?: boolean | null
+          license_number?: string | null
           phone?: string | null
+          pm_surya_ghar_registered?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
+          service_areas?: string | null
+          specializations?: string | null
           updated_at?: string | null
         }
         Relationships: []

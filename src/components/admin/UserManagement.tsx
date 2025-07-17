@@ -9,6 +9,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Trash2, Edit, Plus, Save, X, UserPlus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Database } from '@/integrations/supabase/types';
+
+type UserRole = Database['public']['Enums']['user_role'];
 
 interface UserProfile {
   id: string;
@@ -16,9 +19,9 @@ interface UserProfile {
   full_name: string | null;
   phone: string | null;
   company_name: string | null;
-  role: string;
+  role: UserRole;
   created_at: string;
-  account_type?: 'customer' | 'vendor' | 'admin';
+  account_type?: UserRole;
 }
 
 const UserManagement = () => {
@@ -44,7 +47,7 @@ const UserManagement = () => {
       // Map users with account type
       const usersWithAccountType = usersData?.map(user => ({
         ...user,
-        account_type: user.role as 'customer' | 'vendor' | 'admin'
+        account_type: user.role as UserRole
       })) || [];
 
       setUsers(usersWithAccountType);
@@ -142,7 +145,7 @@ const UserManagement = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Select onValueChange={(role) => updateUserRole(userProfile.id, role)}>
+                        <Select onValueChange={(role) => updateUserRole(userProfile.id, role as UserRole)}>
                           <SelectTrigger className="w-32">
                             <SelectValue placeholder="Change Role" />
                           </SelectTrigger>
@@ -171,7 +174,7 @@ const UserManagement = () => {
   );
 
   // Update user role
-  async function updateUserRole(userId: string, role: string) {
+  async function updateUserRole(userId: string, role: UserRole) {
     setLoading(true);
     setError('');
     setSuccess('');
@@ -195,7 +198,7 @@ const UserManagement = () => {
   }
 
   // Update user profile
-  async function updateUserProfile(userId: string, updates: Partial<UserProfile>) {
+  async function updateUserProfile(userId: string, updates: Partial<Pick<UserProfile, 'full_name' | 'phone' | 'company_name'>>) {
     setLoading(true);
     setError('');
     setSuccess('');
