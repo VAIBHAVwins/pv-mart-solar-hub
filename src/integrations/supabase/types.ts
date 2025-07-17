@@ -397,6 +397,45 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          id: string;
+          email: string;
+          full_name: string | null;
+          phone: string | null;
+          company_name: string | null;
+          contact_person: string | null;
+          license_number: string | null;
+          address: string | null;
+          role: 'vendor' | 'customer' | 'admin';
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          full_name?: string | null;
+          phone?: string | null;
+          company_name?: string | null;
+          contact_person?: string | null;
+          license_number?: string | null;
+          address?: string | null;
+          role: 'vendor' | 'customer' | 'admin';
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          full_name?: string | null;
+          phone?: string | null;
+          company_name?: string | null;
+          contact_person?: string | null;
+          license_number?: string | null;
+          address?: string | null;
+          role?: 'vendor' | 'customer' | 'admin';
+          created_at?: string;
+        };
+        Relationships: [];
+      },
     }
     Views: {
       [_ in never]: never

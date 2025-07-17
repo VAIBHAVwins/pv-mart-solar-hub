@@ -22,7 +22,7 @@ export default function CustomerDashboard() {
 
   const checkCustomer = async () => {
     if (!user) return;
-    const { data: customer } = await supabase.from('customers').select('id').eq('id', user.id).single();
+    const { data: customer } = await supabase.from('users').select('id, role').eq('id', user.id).eq('role', 'customer').single();
     if (!customer) {
       await supabase.auth.signOut();
       navigate('/customer/login');
@@ -39,13 +39,12 @@ export default function CustomerDashboard() {
 
   const fetchProfile = async () => {
     if (!user) return;
-    
     const { data } = await supabase
-      .from('customers')
+      .from('users')
       .select('full_name')
       .eq('id', user.id)
+      .eq('role', 'customer')
       .maybeSingle();
-    
     setProfile(data);
   };
 

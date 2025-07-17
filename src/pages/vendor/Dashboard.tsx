@@ -22,7 +22,7 @@ export default function VendorDashboard() {
 
   const checkVendor = async () => {
     if (!user) return;
-    const { data: vendor } = await supabase.from('vendors').select('id').eq('id', user.id).single();
+    const { data: vendor } = await supabase.from('users').select('id, role').eq('id', user.id).eq('role', 'vendor').single();
     if (!vendor) {
       await supabase.auth.signOut();
       navigate('/vendor/login');
@@ -39,13 +39,12 @@ export default function VendorDashboard() {
 
   const fetchProfile = async () => {
     if (!user) return;
-    
     const { data, error } = await supabase
-      .from('vendors')
+      .from('users')
       .select('contact_person, company_name')
       .eq('id', user.id)
+      .eq('role', 'vendor')
       .maybeSingle();
-    
     if (error) {
       console.error('Error fetching profile:', error);
     } else {

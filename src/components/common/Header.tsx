@@ -35,26 +35,15 @@ const Header = () => {
 
   const fetchUserType = async () => {
     if (!user) return;
-    // Check in customers table
-    const { data: customer } = await supabase
-      .from('customers')
-      .select('id')
+    // Check in users table
+    const { data: userEntry } = await supabase
+      .from('users')
+      .select('id, role')
       .eq('id', user.id)
       .single();
-    if (customer) {
-      setUserType('customer');
-      localStorage.setItem('userType', 'customer');
-      return;
-    }
-    // Check in vendors table
-    const { data: vendor } = await supabase
-      .from('vendors')
-      .select('id')
-      .eq('id', user.id)
-      .single();
-    if (vendor) {
-      setUserType('vendor');
-      localStorage.setItem('userType', 'vendor');
+    if (userEntry && userEntry.role) {
+      setUserType(userEntry.role);
+      localStorage.setItem('userType', userEntry.role);
       return;
     }
     setUserType(null);

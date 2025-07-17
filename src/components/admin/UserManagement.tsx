@@ -59,30 +59,13 @@ const UserManagement = () => {
 
       if (rolesError) throw rolesError;
 
-      // Fetch customers and vendors to determine account type
-      const { data: customers, error: customersError } = await supabase
-        .from('customers')
-        .select('id, email');
-
-      const { data: vendors, error: vendorsError } = await supabase
-        .from('vendors')
-        .select('id, email');
-
-      if (customersError || vendorsError) {
-        console.error('Error fetching customer/vendor data:', customersError || vendorsError);
-      }
-
       // Combine profiles with roles and account type
       const usersWithRoles = profiles?.map(profile => {
         const profileRoles = userRoles?.filter(role => role.user_id === profile.user_id).map(role => role.role) || [];
         
         // Determine account type
         let accountType: 'customer' | 'vendor' | 'unknown' = 'unknown';
-        if (customers?.some(c => c.id === profile.user_id)) {
-          accountType = 'customer';
-        } else if (vendors?.some(v => v.id === profile.user_id)) {
-          accountType = 'vendor';
-        }
+        // (Remove all code that fetches from 'customers' and 'vendors' tables)
 
         return {
           ...profile,

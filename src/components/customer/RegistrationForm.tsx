@@ -101,66 +101,43 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
     setLoading(true);
     try {
-      // Check if email is already used in customers or vendors
-      const { data: customer, error: customerError } = await supabase
-        .from('customers')
+      // Check if email is already used in users
+      const { data: existingUser, error: userError } = await supabase
+        .from('users')
         .select('id')
         .eq('email', form.email)
         .single();
-      const { data: vendor, error: vendorError } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('email', form.email)
-        .single();
-      if (customer || vendor) {
-        setError('This email is already registered as a ' + (customer ? 'customer' : 'vendor') + '. Please use a different email.');
+      if (existingUser) {
+        setError('This email is already registered. Please use a different email.');
         setLoading(false);
         return;
       }
-      console.log('Attempting customer registration with:', { 
-        email: form.email, 
-        name: form.name,
-        phone: form.phone 
-      });
-      
-      const { data, error } = await signUp(form.email, form.password, {
-        data: {
-          full_name: sanitize.html(form.name),
-          phone: sanitize.html(form.phone),
-          user_type: 'customer'
-        }
-      });
-      
-      console.log('Customer signup response:', { data, error });
-      
-      if (error) {
-        console.error('Customer signup error:', error);
-        
-        // Handle specific error types
-        if (error.message.includes('User already registered') || error.message.includes('already registered')) {
-          setError('An account with this email already exists. Please login instead.');
-        } else if (error.message.includes('already exists')) {
-          setError('Registration failed: Email already exists');
-        } else if (error.message.includes('Invalid email') || error.message.includes('invalid email')) {
-          setError('Please enter a valid email address.');
-        } else if (error.message.includes('Password') || error.message.includes('password')) {
-          setError('Password must be at least 6 characters long.');
-        } else if (error.message.includes('duplicate key') || error.message.includes('constraint')) {
-          setError('Account creation failed. Please try again or contact support if the issue persists.');
-        } else if (error.message.includes('Database error') || error.message.includes('database')) {
-          setError('Registration temporarily unavailable. Please try again in a few moments.');
-        } else {
-          setError(`Registration failed: ${error.message}`);
-        }
-      } else {
-        console.log('Customer registered successfully:', data.user?.id);
-        setSuccess('Account created successfully! Please verify your email with OTP.');
-        onSuccess(form.email);
+      // Register new customer in users table
+      const { data, error: insertError } = await supabase
+        .from('users')
+        .insert([
+          {
+            email: form.email,
+            full_name: form.name,
+            phone: form.phone,
+            company_name: null,
+            contact_person: null,
+            license_number: null,
+            address: null,
+            role: 'customer',
+          }
+        ])
+        .select()
+        .single();
+      if (insertError) {
+        setError('Registration failed. Please try again.');
+        setLoading(false);
+        return;
       }
-    } catch (err: any) {
-      console.error('Customer registration error:', err);
+      setSuccess('Registration successful!');
+      onSuccess(form.email);
+    } catch (error) {
       setError('Registration failed. Please try again.');
-    } finally {
       setLoading(false);
     }
   };

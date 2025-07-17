@@ -5,7 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import HeroImageManager from './HeroImageManager';
 import BlogManager from './blog/BlogManager';
-import UserManagement from './UserManagement';
+import VendorManagement from './VendorManagement';
+import CustomerManagement from './CustomerManagement';
+import QuotationsManagement from './QuotationsManagement';
+import RequirementsManagement from './RequirementsManagement';
 import { Users, Image, Database, Settings, Activity, TrendingUp, FileText } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -31,13 +34,15 @@ const AdminDashboard = () => {
 
       // Fetch customer count
       const { count: customersCount } = await supabase
-        .from('customers')
-        .select('*', { count: 'exact', head: true });
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'customer');
 
       // Fetch vendor count
       const { count: vendorsCount } = await supabase
-        .from('vendors')
-        .select('*', { count: 'exact', head: true });
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'vendor');
 
       // Fetch admin count
       const { count: adminsCount } = await supabase
@@ -97,17 +102,6 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{loading ? '...' : stats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">Registered profiles</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Customers</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -161,18 +155,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Requirements</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{loading ? '...' : stats.totalCustomerRequirements}</div>
-            <p className="text-xs text-muted-foreground">Customer requests</p>
-          </CardContent>
-        </Card>
-
-        <Card>
+        <Card onClick={() => setActiveTab('quotations')} className="cursor-pointer">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Quotations</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -182,11 +165,22 @@ const AdminDashboard = () => {
             <p className="text-xs text-muted-foreground">Vendor quotes</p>
           </CardContent>
         </Card>
+
+        <Card onClick={() => setActiveTab('requirements')} className="cursor-pointer">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Requirements</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{loading ? '...' : stats.totalCustomerRequirements}</div>
+            <p className="text-xs text-muted-foreground">Customer requests</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Admin Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">
             <Database className="w-4 h-4 mr-2" />
             Overview
@@ -199,14 +193,20 @@ const AdminDashboard = () => {
             <FileText className="w-4 h-4 mr-2" />
             Blogs
           </TabsTrigger>
-          <TabsTrigger value="users">
+          <TabsTrigger value="vendors">
             <Users className="w-4 h-4 mr-2" />
-            Users
+            Vendor Management
+          </TabsTrigger>
+          <TabsTrigger value="customers">
+            <Users className="w-4 h-4 mr-2" />
+            Customer Management
           </TabsTrigger>
           <TabsTrigger value="settings">
             <Settings className="w-4 h-4 mr-2" />
             Settings
           </TabsTrigger>
+          <TabsTrigger value="quotations">Quotations Management</TabsTrigger>
+          <TabsTrigger value="requirements">Requirements Management</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -279,8 +279,18 @@ const AdminDashboard = () => {
           <BlogManager />
         </TabsContent>
 
-        <TabsContent value="users" className="space-y-4">
-          <UserManagement />
+        <TabsContent value="vendors" className="space-y-4">
+          <VendorManagement />
+        </TabsContent>
+        <TabsContent value="customers" className="space-y-4">
+          <CustomerManagement />
+        </TabsContent>
+
+        <TabsContent value="quotations" className="space-y-4">
+          <QuotationsManagement />
+        </TabsContent>
+        <TabsContent value="requirements" className="space-y-4">
+          <RequirementsManagement />
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">

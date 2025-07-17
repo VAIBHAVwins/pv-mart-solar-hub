@@ -51,16 +51,15 @@ const CustomerLogin = () => {
     setLoading(true);
 
     try {
-      // Check if email exists in customers or vendors table
-      const { data: customer } = await supabase.from('customers').select('email').eq('email', formData.email).single();
-      const { data: vendor } = await supabase.from('vendors').select('email').eq('email', formData.email).single();
-      if (!customer && vendor) {
-        setError('This email ID is registered as a vendor. Please perform vendor login.');
+      // Check if email exists in users table and get role
+      const { data: userEntry } = await supabase.from('users').select('email, role').eq('email', formData.email).single();
+      if (!userEntry) {
+        setError('Failed to login. Please check your credentials or create account.');
         setLoading(false);
         return;
       }
-      if (!customer && !vendor) {
-        setError('Failed to login. Please check your credentials or create account.');
+      if (userEntry.role !== 'customer') {
+        setError('This email ID is registered as a vendor. Please perform vendor login.');
         setLoading(false);
         return;
       }
@@ -78,26 +77,19 @@ const CustomerLogin = () => {
         setLoading(false);
         return;
       }
-      // After sign in, check which table the user is in
+      // After sign in, check user role
       const userId = (await supabase.auth.getUser()).data.user?.id;
-      const { data: customerCheck } = await supabase.from('customers').select('id').eq('id', userId).single();
-      const { data: vendorCheck } = await supabase.from('vendors').select('id').eq('id', userId).single();
-      if (customerCheck && vendorCheck) {
-        setError('Account conflict: This user exists as both customer and vendor. Please contact support.');
-        await supabase.auth.signOut(); // Ensure no partial login state
-        setLoading(false);
-        return;
-      }
+      const { data: customerCheck } = await supabase.from('users').select('id, role').eq('id', userId).eq('role', 'customer').single();
       if (!customerCheck) {
         setError('No customer account found for this email.');
         await supabase.auth.signOut(); // Ensure no partial login state
         setLoading(false);
         return;
       }
-      // Success case is handled by useEffect above
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('Login failed. Please try again.');
+      navigate('/customer/dashboard');
+    } catch (error) {
+      setError('Failed to login. Please check your credentials.');
+      console.error('Login error:', error);
     } finally {
       setLoading(false);
     }

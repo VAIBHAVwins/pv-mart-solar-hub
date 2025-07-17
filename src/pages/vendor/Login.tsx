@@ -22,16 +22,15 @@ const VendorLogin = () => {
     setError('');
 
     try {
-      // Check if email exists in vendors or customers table
-      const { data: vendor } = await supabase.from('vendors').select('email').eq('email', email).single();
-      const { data: customer } = await supabase.from('customers').select('email').eq('email', email).single();
-      if (!vendor && customer) {
-        setError('This email ID is registered as a customer. Please perform customer login.');
+      // Check if email exists in users table and get role
+      const { data: userEntry } = await supabase.from('users').select('email, role').eq('email', email).single();
+      if (!userEntry) {
+        setError('Failed to login. Please check your credentials or create account.');
         setLoading(false);
         return;
       }
-      if (!vendor && !customer) {
-        setError('Failed to login. Please check your credentials or create account.');
+      if (userEntry.role !== 'vendor') {
+        setError('This email ID is registered as a customer. Please perform customer login.');
         setLoading(false);
         return;
       }
@@ -43,16 +42,9 @@ const VendorLogin = () => {
         setLoading(false);
         return;
       }
-      // After sign in, check which table the user is in
+      // After sign in, check user role
       const userId = (await supabase.auth.getUser()).data.user?.id;
-      const { data: customerCheck } = await supabase.from('customers').select('id').eq('id', userId).single();
-      const { data: vendorCheck } = await supabase.from('vendors').select('id').eq('id', userId).single();
-      if (customerCheck && vendorCheck) {
-        setError('Account conflict: This user exists as both customer and vendor. Please contact support.');
-        await supabase.auth.signOut(); // Ensure no partial login state
-        setLoading(false);
-        return;
-      }
+      const { data: vendorCheck } = await supabase.from('users').select('id, role').eq('id', userId).eq('role', 'vendor').single();
       if (!vendorCheck) {
         setError('No vendor account found for this email.');
         await supabase.auth.signOut(); // Ensure no partial login state

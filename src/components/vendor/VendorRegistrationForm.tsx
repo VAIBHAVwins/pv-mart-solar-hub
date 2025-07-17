@@ -132,66 +132,42 @@ export function VendorRegistrationForm() {
 
     setLoading(true);
     try {
-      // Check if email is already used in customers or vendors
-      const { data: customer, error: customerError } = await supabase
-        .from('customers')
+      // Check if email is already used in users
+      const { data: existingUser, error: userError } = await supabase
+        .from('users')
         .select('id')
         .eq('email', formData.email)
         .single();
-      const { data: vendor, error: vendorError } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('email', formData.email)
-        .single();
-      if (customer || vendor) {
-        setError('This email is already registered as a ' + (customer ? 'customer' : 'vendor') + '. Please use a different email.');
+      if (existingUser) {
+        setError('This email is already registered. Please use a different email.');
         setLoading(false);
         return;
       }
-
-      console.log('Attempting vendor registration with:', {
-        email: formData.email,
-        contactPerson: formData.contactPerson,
-        companyName: formData.companyName
-      });
-
-      const { data, error: signUpError } = await signUp(formData.email, formData.password, {
-        data: {
-          full_name: sanitize.html(formData.contactPerson),
-          company_name: sanitize.html(formData.companyName),
-          phone: sanitize.html(formData.phone),
-          user_type: 'vendor',
-          pm_surya_ghar_registered: formData.pmSuryaGharRegistered
-        }
-      });
-      
-      console.log('Vendor signup response:', { data, error: signUpError });
-      
-      if (signUpError) {
-        console.error('Vendor SignUp error:', signUpError);
-        
-        if (signUpError.message.includes('User already registered') || signUpError.message.includes('already registered')) {
-          setError('An account with this email already exists. Please login instead.');
-        } else if (signUpError.message.includes('Invalid email') || signUpError.message.includes('invalid email')) {
-          setError('Please enter a valid email address.');
-        } else if (signUpError.message.includes('Password') || signUpError.message.includes('password')) {
-          setError('Password must be at least 6 characters long.');
-        } else if (signUpError.message.includes('duplicate key') || signUpError.message.includes('constraint')) {
-          setError('Account creation failed. Please try again or contact support if the issue persists.');
-        } else if (signUpError.message.includes('Database error') || signUpError.message.includes('database')) {
-          setError('Registration temporarily unavailable. Please try again in a few moments.');
-        } else {
-          setError(`Registration failed: ${signUpError.message}`);
-        }
+      // Register new vendor in users table
+      const { data, error: insertError } = await supabase
+        .from('users')
+        .insert([
+          {
+            email: formData.email,
+            full_name: null,
+            phone: formData.phone,
+            company_name: formData.companyName,
+            contact_person: formData.contactPerson,
+            license_number: formData.licenseNumber,
+            address: formData.address,
+            role: 'vendor',
+          }
+        ])
+        .select()
+        .single();
+      if (insertError) {
+        setError('Registration failed. Please try again.');
+        setLoading(false);
         return;
       }
-      
-      console.log('Vendor registered successfully:', data.user?.id);
-      setSuccess('Registration successful! Please check your email to verify your account.');
-    } catch (err: unknown) {
-      console.error('Vendor registration error:', err);
+      setSuccess('Registration successful!');
+    } catch (error) {
       setError('Registration failed. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
