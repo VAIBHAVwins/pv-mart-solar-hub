@@ -52,6 +52,13 @@ export function VendorRegistrationForm({ onSuccess }: VendorRegistrationFormProp
     }));
   };
 
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const validateForm = () => {
     if (!formData.companyName.trim()) {
       setError('Company name is required');
@@ -213,6 +220,7 @@ export function VendorRegistrationForm({ onSuccess }: VendorRegistrationFormProp
             formData={formData}
             loading={loading}
             onChange={handleChange}
+            onSelectChange={handleSelectChange}
           />
           
           {error && (
