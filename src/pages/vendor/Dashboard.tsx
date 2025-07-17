@@ -5,6 +5,8 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { TrendingUp } from 'lucide-react';
 
 export default function VendorDashboard() {
   const { user, signOut, loading } = useSupabaseAuth();
@@ -103,6 +105,17 @@ export default function VendorDashboard() {
                 <h3 className="text-xl font-bold text-[#f7f7f6] mb-2">Supabase Vendor Quotation</h3>
                 <p className="text-[#f7f7f6] opacity-90">Submit detailed quotations with components</p>
               </button>
+
+              <Card onClick={() => navigate('/vendor/my-quotations')} className="cursor-pointer">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">My Quotations</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">View & Manage</div>
+                  <p className="text-xs text-muted-foreground">Your submitted quotations</p>
+                </CardContent>
+              </Card>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -21,7 +21,11 @@ interface VendorRegistrationFormData {
   confirmPassword: string;
 }
 
-export function VendorRegistrationForm() {
+interface VendorRegistrationFormProps {
+  onSuccess: (email: string) => void;
+}
+
+export function VendorRegistrationForm({ onSuccess }: VendorRegistrationFormProps) {
   const { signUp } = useSupabaseAuth();
   const [formData, setFormData] = useState<VendorRegistrationFormData>({
     companyName: '',
@@ -50,8 +54,7 @@ export function VendorRegistrationForm() {
       'address', 'serviceAreas', 'specializations',
       'companyName', 'contactPerson', 'email', 'licenseNumber'
     ].includes(name)) {
-      // Allow spaces anywhere, do not trim
-      sanitizedValue = value.slice(0, 1000); // Only limit length
+      sanitizedValue = value.slice(0, 1000);
     } else {
       sanitizedValue = sanitize.text(value);
     }
@@ -132,8 +135,8 @@ export function VendorRegistrationForm() {
 
     setLoading(true);
     try {
-      // Check if email is already used in users
-      const { data: existingUser, error: userError } = await supabase
+      // Check if email is already used in users table
+      const { data: existingUser } = await supabase
         .from('users')
         .select('id')
         .eq('email', formData.email)
@@ -143,8 +146,32 @@ export function VendorRegistrationForm() {
         setLoading(false);
         return;
       }
-      // Register new vendor in users table
-      const { data, error: insertError } = await supabase
+      // Register new vendor in Supabase Auth
+      const { data, error: signUpError } = await signUp(formData.email, formData.password, {
+        data: {
+          company_name: formData.companyName,
+          contact_person: formData.contactPerson,
+          phone: formData.phone,
+          address: formData.address,
+          pm_surya_ghar_registered: formData.pmSuryaGharRegistered,
+          license_number: formData.licenseNumber,
+          service_areas: formData.serviceAreas,
+          specializations: formData.specializations,
+          role: 'vendor',
+        }
+      });
+      if (signUpError) {
+        setError(signUpError.message || 'Registration failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+      // Only insert into users table if signUp succeeded and user is created
+      if (!data || !data.user) {
+        setError('Registration failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+      await supabase
         .from('users')
         .insert([
           {
@@ -157,26 +184,19 @@ export function VendorRegistrationForm() {
             address: formData.address,
             role: 'vendor',
           }
-        ])
-        .select()
-        .single();
-      if (insertError) {
-        setError('Registration failed. Please try again.');
-        setLoading(false);
-        return;
-      }
+        ]);
       setSuccess('Registration successful!');
-    } catch (error) {
+      if (onSuccess) onSuccess(formData.email);
+    } catch (error: any) {
       setError('Registration failed. Please try again.');
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   return (
     <div className="bg-[#e6d3b3] p-10 rounded-2xl shadow-xl w-full max-w-2xl animate-fade-in">
       <h1 className="text-4xl font-extrabold mb-6 text-center text-[#797a83] drop-shadow">Join as Vendor</h1>
       <p className="text-[#4f4f56] mb-8 text-center">Register your solar business and start receiving leads</p>
-      
       <form onSubmit={handleSubmit} className="space-y-6">
         <VendorRegistrationFormFields 
           formData={formData}
@@ -184,9 +204,7 @@ export function VendorRegistrationForm() {
           onChange={handleChange}
           onSelectChange={handleSelectChange}
         />
-        
         <RegistrationMessages error={error} success={success} />
-        
         <Button
           type="submit"
           className="w-full bg-[#797a83] text-white py-3 rounded-lg font-bold hover:bg-[#4f4f56] shadow-md transition"

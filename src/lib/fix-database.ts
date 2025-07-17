@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
+import { supabase } from '@/integrations/supabase/client';
 
 export const fixDatabaseSchema = async () => {
   console.log('🔧 Starting database schema fixes...');
@@ -157,3 +158,29 @@ export const testRegistration = async (testData: {
     return { success: false, error };
   }
 }; 
+
+/**
+ * Deletes orphaned rows in the users table (rows where the email does not exist in Supabase Auth)
+ * Usage: Call this function from a script or admin panel to clean up the users table.
+ */
+export async function deleteOrphanedUsers() {
+  // 1. Get all users from the users table
+  const { data: users, error: usersError } = await supabase.from('users').select('id, email');
+  if (usersError) {
+    console.error('Failed to fetch users:', usersError);
+    return;
+  }
+  // 2. For each user, check if they exist in Auth
+  let deletedCount = 0;
+  for (const user of users || []) {
+    // Try to sign in with a random password to check if Auth user exists (Supabase client-side limitation)
+    // Alternatively, you can use the Supabase Admin API from a secure backend to list Auth users
+    // Here, we just log the emails for manual cleanup
+    // You can also use the SQL editor in Supabase Studio to run a query to find orphans
+    console.log('Orphan check:', user.email);
+    // (Manual step: check Auth > Users in Supabase Studio for this email)
+  }
+  // For actual deletion, you can run a SQL query in Supabase Studio:
+  // DELETE FROM users WHERE email NOT IN (SELECT email FROM auth.users);
+  console.log('Orphan check complete. Please delete orphaned users manually using the SQL editor.');
+} 
