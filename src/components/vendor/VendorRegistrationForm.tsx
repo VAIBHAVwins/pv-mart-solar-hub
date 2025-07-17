@@ -134,20 +134,27 @@ export function VendorRegistrationForm({ onSuccess }: VendorRegistrationFormProp
     }
 
     setLoading(true);
+    
     try {
-      // Check if email is already used in users table
+      // First check if email already exists in users table
       const { data: existingUser } = await supabase
         .from('users')
-        .select('id')
+        .select('id, email')
         .eq('email', formData.email)
         .single();
+
       if (existingUser) {
         setError('This email is already registered. Please use a different email.');
         setLoading(false);
         return;
       }
-      // Register new vendor in Supabase Auth
-      const { data, error: signUpError } = await signUp(formData.email, formData.password, {
+
+      console.log('🔄 Starting vendor registration for:', formData.email);
+
+      // Register with Supabase Auth first
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data: authData, error: signUpError } = await signUp(formData.email, formData.password, {
         data: {
           company_name: formData.companyName,
           contact_person: formData.contactPerson,
@@ -160,36 +167,67 @@ export function VendorRegistrationForm({ onSuccess }: VendorRegistrationFormProp
           role: 'vendor',
         }
       });
+
       if (signUpError) {
+        console.error('❌ Supabase Auth signUp failed:', signUpError);
         setError(signUpError.message || 'Registration failed. Please try again.');
         setLoading(false);
         return;
       }
-      // Only insert into users table if signUp succeeded and user is created
-      if (!data || !data.user) {
+
+      if (!authData || !authData.user) {
+        console.error('❌ No user data returned from signUp');
         setError('Registration failed. Please try again.');
         setLoading(false);
         return;
       }
-      await supabase
+
+      console.log('✅ Supabase Auth user created:', authData.user.id);
+
+      // Now insert into users table with the Auth user's ID and all vendor details
+      const { error: insertError } = await supabase
         .from('users')
         .insert([
           {
+            id: authData.user.id,
             email: formData.email,
-            full_name: null,
             phone: formData.phone,
             company_name: formData.companyName,
             contact_person: formData.contactPerson,
             license_number: formData.licenseNumber,
             address: formData.address,
+            pm_surya_ghar_registered: formData.pmSuryaGharRegistered,
             role: 'vendor',
           }
         ]);
-      setSuccess('Registration successful!');
-      if (onSuccess) onSuccess(formData.email);
+
+      if (insertError) {
+        console.error('❌ Failed to insert into users table:', insertError);
+        
+        // Clean up the Auth user if database insert fails
+        try {
+          await supabase.auth.signOut();
+        } catch (cleanupError) {
+          console.error('❌ Failed to clean up Auth user:', cleanupError);
+        }
+        
+        setError('Registration failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ User data inserted successfully');
+      setSuccess('Registration successful! Please check your email for verification.');
+      
+      if (onSuccess) {
+        onSuccess(formData.email);
+      }
+      
     } catch (error: any) {
+      console.error('❌ Registration error:', error);
       setError('Registration failed. Please try again.');
     }
+    
     setLoading(false);
   };
 

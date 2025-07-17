@@ -1,3 +1,4 @@
+
 import { supabaseAdmin } from './supabase-admin';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -164,23 +165,112 @@ export const testRegistration = async (testData: {
  * Usage: Call this function from a script or admin panel to clean up the users table.
  */
 export async function deleteOrphanedUsers() {
-  // 1. Get all users from the users table
-  const { data: users, error: usersError } = await supabase.from('users').select('id, email');
-  if (usersError) {
-    console.error('Failed to fetch users:', usersError);
-    return;
+  console.log('🔍 Starting orphaned users cleanup...');
+  
+  try {
+    // Get all users from the users table
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, email, role');
+      
+    if (usersError) {
+      console.error('❌ Failed to fetch users:', usersError);
+      return { success: false, error: usersError };
+    }
+
+    if (!users || users.length === 0) {
+      console.log('✅ No users found in users table');
+      return { success: true, cleaned: 0 };
+    }
+
+    console.log(`📊 Found ${users.length} users in users table`);
+
+    // This is a simplified approach - in production, you'd want to use the Admin API
+    // to check each user against auth.users table
+    const orphanedEmails = [];
+    
+    for (const user of users) {
+      try {
+        // Try to get user from Auth
+        const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(user.id);
+        
+        if (authError || !authUser.user) {
+          console.log(`❌ Orphaned user found: ${user.email} (ID: ${user.id})`);
+          orphanedEmails.push(user.email);
+        } else {
+          console.log(`✅ Valid user: ${user.email}`);
+        }
+      } catch (error) {
+        console.log(`❌ Error checking user ${user.email}: ${error}`);
+        orphanedEmails.push(user.email);
+      }
+    }
+
+    if (orphanedEmails.length === 0) {
+      console.log('✅ No orphaned users found');
+      return { success: true, cleaned: 0 };
+    }
+
+    console.log(`🗑️ Found ${orphanedEmails.length} orphaned users to clean up:`, orphanedEmails);
+
+    // Delete orphaned users
+    const { error: deleteError } = await supabase
+      .from('users')
+      .delete()
+      .in('email', orphanedEmails);
+
+    if (deleteError) {
+      console.error('❌ Failed to delete orphaned users:', deleteError);
+      return { success: false, error: deleteError };
+    }
+
+    console.log(`✅ Successfully cleaned up ${orphanedEmails.length} orphaned users`);
+    return { success: true, cleaned: orphanedEmails.length };
+
+  } catch (error) {
+    console.error('❌ Orphaned users cleanup failed:', error);
+    return { success: false, error };
   }
-  // 2. For each user, check if they exist in Auth
-  let deletedCount = 0;
-  for (const user of users || []) {
-    // Try to sign in with a random password to check if Auth user exists (Supabase client-side limitation)
-    // Alternatively, you can use the Supabase Admin API from a secure backend to list Auth users
-    // Here, we just log the emails for manual cleanup
-    // You can also use the SQL editor in Supabase Studio to run a query to find orphans
-    console.log('Orphan check:', user.email);
-    // (Manual step: check Auth > Users in Supabase Studio for this email)
+}
+
+/**
+ * Clean up specific test emails that might be causing registration issues
+ */
+export async function cleanupTestEmails() {
+  const testEmails = ['ankurvaibhav21@gmail.com', 'ankurvaibhav22@gmail.com'];
+  
+  console.log('🧹 Cleaning up test emails:', testEmails);
+  
+  try {
+    // Check if these emails exist in users table
+    const { data: existingUsers } = await supabase
+      .from('users')
+      .select('id, email, role')
+      .in('email', testEmails);
+
+    if (existingUsers && existingUsers.length > 0) {
+      console.log(`📋 Found ${existingUsers.length} test users to clean up:`, existingUsers);
+      
+      // Delete from users table
+      const { error: deleteError } = await supabase
+        .from('users')
+        .delete()
+        .in('email', testEmails);
+
+      if (deleteError) {
+        console.error('❌ Failed to delete test users:', deleteError);
+        return { success: false, error: deleteError };
+      }
+
+      console.log(`✅ Successfully deleted ${existingUsers.length} test users`);
+      return { success: true, cleaned: existingUsers.length };
+    } else {
+      console.log('✅ No test users found to clean up');
+      return { success: true, cleaned: 0 };
+    }
+    
+  } catch (error) {
+    console.error('❌ Test email cleanup failed:', error);
+    return { success: false, error };
   }
-  // For actual deletion, you can run a SQL query in Supabase Studio:
-  // DELETE FROM users WHERE email NOT IN (SELECT email FROM auth.users);
-  console.log('Orphan check complete. Please delete orphaned users manually using the SQL editor.');
-} 
+}

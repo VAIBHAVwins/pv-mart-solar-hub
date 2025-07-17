@@ -10,15 +10,18 @@ const VendorRegister = () => {
   const [registeredEmail, setRegisteredEmail] = useState('');
 
   const handleRegistrationSuccess = (email: string) => {
+    console.log('✅ Vendor registration success, showing OTP for:', email);
     setRegisteredEmail(email);
     setShowOTP(true);
   };
 
   const handleVerificationComplete = () => {
+    console.log('✅ Email verification complete, redirecting to dashboard');
     window.location.href = '/vendor/dashboard';
   };
 
   const handleBackToRegistration = () => {
+    console.log('🔄 Going back to registration form');
     setShowOTP(false);
     setRegisteredEmail('');
   };

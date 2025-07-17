@@ -144,31 +144,15 @@ export type Database = {
           timeline?: string | null
           updated_at?: string
         }
-        Relationships: []
-      }
-      customers: {
-        Row: {
-          created_at: string | null
-          email: string
-          full_name: string | null
-          id: string
-          phone: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          full_name?: string | null
-          id: string
-          phone?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          full_name?: string | null
-          id?: string
-          phone?: string | null
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_customer_user"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hero_images: {
         Row: {
@@ -314,6 +298,53 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "fk_user_roles_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          address: string | null
+          company_name: string | null
+          contact_person: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          license_number: string | null
+          phone: string | null
+          role: string
+        }
+        Insert: {
+          address?: string | null
+          company_name?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id?: string
+          license_number?: string | null
+          phone?: string | null
+          role: string
+        }
+        Update: {
+          address?: string | null
+          company_name?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          license_number?: string | null
+          phone?: string | null
+          role?: string
+        }
         Relationships: []
       }
       vendor_quotations: {
@@ -362,80 +393,16 @@ export type Database = {
           vendor_phone?: string | null
           warranty_years?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_vendor_user"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      vendors: {
-        Row: {
-          address: string | null
-          company_name: string | null
-          contact_person: string | null
-          created_at: string | null
-          email: string
-          id: string
-          license_number: string | null
-          phone: string | null
-        }
-        Insert: {
-          address?: string | null
-          company_name?: string | null
-          contact_person?: string | null
-          created_at?: string | null
-          email: string
-          id: string
-          license_number?: string | null
-          phone?: string | null
-        }
-        Update: {
-          address?: string | null
-          company_name?: string | null
-          contact_person?: string | null
-          created_at?: string | null
-          email?: string
-          id?: string
-          license_number?: string | null
-          phone?: string | null
-        }
-        Relationships: []
-      }
-      users: {
-        Row: {
-          id: string;
-          email: string;
-          full_name: string | null;
-          phone: string | null;
-          company_name: string | null;
-          contact_person: string | null;
-          license_number: string | null;
-          address: string | null;
-          role: 'vendor' | 'customer' | 'admin';
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          email: string;
-          full_name?: string | null;
-          phone?: string | null;
-          company_name?: string | null;
-          contact_person?: string | null;
-          license_number?: string | null;
-          address?: string | null;
-          role: 'vendor' | 'customer' | 'admin';
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          email?: string;
-          full_name?: string | null;
-          phone?: string | null;
-          company_name?: string | null;
-          contact_person?: string | null;
-          license_number?: string | null;
-          address?: string | null;
-          role?: 'vendor' | 'customer' | 'admin';
-          created_at?: string;
-        };
-        Relationships: [];
-      },
     }
     Views: {
       [_ in never]: never

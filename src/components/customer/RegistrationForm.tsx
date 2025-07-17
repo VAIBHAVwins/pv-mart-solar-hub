@@ -3,14 +3,18 @@ import { useState } from 'react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { validation, sanitize, validationMessages } from '@/lib/validation';
 import { Button } from '@/components/ui/button';
-import { RegistrationFormFields } from './RegistrationFormFields';
+import RegistrationFormFields from './RegistrationFormFields';
 import { RegistrationMessages } from './RegistrationMessages';
 import { supabase } from '@/integrations/supabase/client';
 
-interface RegistrationFormData {
-  name: string;
+interface CustomerRegistrationData {
+  fullName: string;
   email: string;
   phone: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
   password: string;
   confirmPassword: string;
 }
@@ -21,10 +25,14 @@ interface RegistrationFormProps {
 
 export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   const { signUp } = useSupabaseAuth();
-  const [form, setForm] = useState<RegistrationFormData>({ 
-    name: '', 
-    email: '', 
+  const [formData, setFormData] = useState<CustomerRegistrationData>({
+    fullName: '',
+    email: '',
     phone: '',
+    address: '',
+    city: '',
+    state: '',
+    pincode: '',
     password: '',
     confirmPassword: ''
   });
@@ -38,9 +46,10 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
     
     if (name === 'phone') {
       sanitizedValue = sanitize.phone(value);
-    } else if (name === 'name') {
-      // Allow spaces anywhere, do not trim
-      sanitizedValue = value.slice(0, 1000); // Only limit length
+    } else if (name === 'pincode') {
+      sanitizedValue = value.replace(/[^0-9]/g, '').slice(0, 6);
+    } else if (['address', 'fullName', 'email', 'city', 'state'].includes(name)) {
+      sanitizedValue = value.slice(0, 1000);
     } else {
       sanitizedValue = sanitize.text(value);
     }
@@ -49,40 +58,59 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       return;
     }
     
-    setForm({ ...form, [name]: sanitizedValue });
-    if (error) setError('');
+    setFormData(prev => ({
+      ...prev,
+      [name]: sanitizedValue
+    }));
   };
 
   const validateForm = () => {
-    const requiredFields = ['name', 'email', 'phone', 'password', 'confirmPassword'];
-    for (const field of requiredFields) {
-      if (!validation.required((form as any)[field])) {
-        setError(`${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
-        return false;
-      }
-    }
-
-    if (!validation.maxLength((form as any).name, 100)) {
-      setError(validationMessages.maxLength(100));
+    if (!validation.required(formData.fullName)) {
+      setError('Full name is required');
       return false;
     }
 
-    if (!validation.email((form as any).email)) {
+    if (!validation.maxLength(formData.fullName, 100)) {
+      setError('Full name ' + validationMessages.maxLength(100));
+      return false;
+    }
+
+    if (!validation.email(formData.email)) {
       setError(validationMessages.email);
       return false;
     }
 
-    if (!validation.phone((form as any).phone)) {
+    if (!validation.phone(formData.phone)) {
       setError(validationMessages.phone);
       return false;
     }
 
-    if (!validation.password((form as any).password)) {
+    if (!validation.required(formData.address)) {
+      setError('Address is required');
+      return false;
+    }
+
+    if (!validation.required(formData.city)) {
+      setError('City is required');
+      return false;
+    }
+
+    if (!validation.required(formData.state)) {
+      setError('State is required');
+      return false;
+    }
+
+    if (!validation.pincode(formData.pincode)) {
+      setError(validationMessages.pincode);
+      return false;
+    }
+
+    if (!validation.password(formData.password)) {
       setError(validationMessages.password);
       return false;
     }
 
-    if ((form as any).password !== (form as any).confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       setError(validationMessages.noMatch);
       return false;
     }
@@ -92,6 +120,8 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous messages
     setError('');
     setSuccess('');
     
@@ -100,87 +130,117 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
     }
 
     setLoading(true);
+    
     try {
-      // Check if email is already used in users
-      const { data: existingUser, error: userError } = await supabase
+      // First check if email already exists in users table
+      const { data: existingUser } = await supabase
         .from('users')
-        .select('id')
-        .eq('email', form.email)
+        .select('id, email')
+        .eq('email', formData.email)
         .single();
+
       if (existingUser) {
         setError('This email is already registered. Please use a different email.');
         setLoading(false);
         return;
       }
-      // Register new customer in users table
-      const { data, error: insertError } = await supabase
-        .from('users')
-        .insert([
-          {
-            email: form.email,
-            full_name: form.name,
-            phone: form.phone,
-            company_name: null,
-            contact_person: null,
-            license_number: null,
-            address: null,
-            role: 'customer',
-          }
-        ])
-        .select()
-        .single();
-      if (insertError) {
+
+      console.log('🔄 Starting customer registration for:', formData.email);
+
+      // Register with Supabase Auth first
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data: authData, error: signUpError } = await signUp(formData.email, formData.password, {
+        data: {
+          full_name: formData.fullName,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+          role: 'customer',
+        }
+      });
+
+      if (signUpError) {
+        console.error('❌ Supabase Auth signUp failed:', signUpError);
+        setError(signUpError.message || 'Registration failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      if (!authData || !authData.user) {
+        console.error('❌ No user data returned from signUp');
         setError('Registration failed. Please try again.');
         setLoading(false);
         return;
       }
-      setSuccess('Registration successful!');
-      onSuccess(form.email);
-    } catch (error) {
+
+      console.log('✅ Supabase Auth user created:', authData.user.id);
+
+      // Now insert into users table with the Auth user's ID
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert([
+          {
+            id: authData.user.id,
+            email: formData.email,
+            full_name: formData.fullName,
+            phone: formData.phone,
+            address: formData.address,
+            role: 'customer',
+          }
+        ]);
+
+      if (insertError) {
+        console.error('❌ Failed to insert into users table:', insertError);
+        
+        // Clean up the Auth user if database insert fails
+        try {
+          await supabase.auth.signOut();
+        } catch (cleanupError) {
+          console.error('❌ Failed to clean up Auth user:', cleanupError);
+        }
+        
+        setError('Registration failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ User data inserted successfully');
+      setSuccess('Registration successful! Please check your email for verification.');
+      
+      if (onSuccess) {
+        onSuccess(formData.email);
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Registration error:', error);
       setError('Registration failed. Please try again.');
-      setLoading(false);
     }
+    
+    setLoading(false);
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-[#190a02] mb-2">Customer Registration</h1>
-        <p className="text-[#8b4a08]">Create your account to access solar solutions</p>
-      </div>
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
-
-      <RegistrationMessages error={error} success={success} />
-
+    <div className="bg-[#e6d3b3] p-10 rounded-2xl shadow-xl w-full max-w-2xl animate-fade-in">
+      <h1 className="text-4xl font-extrabold mb-6 text-center text-[#797a83] drop-shadow">Customer Registration</h1>
+      <p className="text-[#4f4f56] mb-8 text-center">Create your account to access solar solutions</p>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <RegistrationFormFields
-          form={form}
+        <RegistrationFormFields 
+          formData={formData}
           loading={loading}
           onChange={handleChange}
         />
-
+        <RegistrationMessages error={error} success={success} />
         <Button
           type="submit"
-          className="w-full bg-[#fecb00] hover:bg-[#f8b200] text-[#190a02] font-semibold"
+          className="w-full bg-[#797a83] text-white py-3 rounded-lg font-bold hover:bg-[#4f4f56] shadow-md transition"
           disabled={loading}
         >
           {loading ? 'Creating Account...' : 'Create Account'}
         </Button>
       </form>
-
-      <div className="mt-6 text-center">
-        <p className="text-[#8b4a08] mb-2">
-          Already have an account?{' '}
-          <a href="/customer/login" className="text-[#0895c6] hover:underline font-semibold">
-            Sign in here
-          </a>
-        </p>
-      </div>
     </div>
   );
 }

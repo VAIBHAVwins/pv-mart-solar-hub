@@ -22,39 +22,89 @@ const VendorLogin = () => {
     setError('');
 
     try {
-      // Check if email exists in users table and get role
-      const { data: userEntry } = await supabase.from('users').select('email, role').eq('email', email).single();
-      if (!userEntry) {
-        setError('Failed to login. Please check your credentials or create account.');
+      console.log('🔄 Attempting vendor login for:', email);
+
+      // First check if email exists in users table with vendor role
+      const { data: userEntry, error: userError } = await supabase
+        .from('users')
+        .select('email, role')
+        .eq('email', email)
+        .single();
+
+      if (userError && userError.code !== 'PGRST116') {
+        console.error('❌ Database error:', userError);
+        setError('Failed to login. Please try again.');
         setLoading(false);
         return;
       }
+
+      if (!userEntry) {
+        console.log('❌ No user found in users table for:', email);
+        setError('No vendor account found for this email.');
+        setLoading(false);
+        return;
+      }
+
       if (userEntry.role !== 'vendor') {
+        console.log('❌ User exists but not a vendor:', userEntry.role);
         setError('This email ID is registered as a customer. Please perform customer login.');
         setLoading(false);
         return;
       }
-      // Only proceed if vendor exists
+
+      console.log('✅ Vendor found in users table, attempting Auth login');
+
+      // Proceed with Supabase Auth login
       const { error: signInError } = await signIn(email, password);
+      
       if (signInError) {
-        setError('Failed to login. Please check your credentials.');
-        await supabase.auth.signOut(); // Ensure no partial login state
+        console.error('❌ Supabase Auth login failed:', signInError);
+        
+        if (signInError.message?.includes('Email not confirmed')) {
+          setError('Please verify your email address before logging in. Check your inbox for a verification email.');
+        } else if (signInError.message?.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please check your credentials.');
+        } else {
+          setError('Failed to login. Please check your credentials.');
+        }
+        
         setLoading(false);
         return;
       }
-      // After sign in, check user role
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      const { data: vendorCheck } = await supabase.from('users').select('id, role').eq('id', userId).eq('role', 'vendor').single();
+
+      console.log('✅ Auth login successful, verifying vendor access');
+
+      // Verify the logged-in user is indeed a vendor
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('❌ No authenticated user found after login');
+        setError('Login failed. Please try again.');
+        await supabase.auth.signOut();
+        setLoading(false);
+        return;
+      }
+
+      const { data: vendorCheck } = await supabase
+        .from('users')
+        .select('id, role')
+        .eq('id', user.id)
+        .eq('role', 'vendor')
+        .single();
+
       if (!vendorCheck) {
+        console.error('❌ User authenticated but no vendor record found');
         setError('No vendor account found for this email.');
-        await supabase.auth.signOut(); // Ensure no partial login state
+        await supabase.auth.signOut();
         setLoading(false);
         return;
       }
+
+      console.log('✅ Vendor login successful, redirecting to dashboard');
       navigate('/vendor/dashboard');
+      
     } catch (error) {
+      console.error('❌ Login error:', error);
       setError('Failed to login. Please check your credentials.');
-      console.error('Login error:', error);
     } finally {
       setLoading(false);
     }
