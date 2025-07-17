@@ -9,9 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Trash2, Edit, Plus, Save, X, UserPlus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Database } from '@/integrations/supabase/types';
-
-type UserRole = Database['public']['Enums']['user_role'];
 
 interface UserProfile {
   id: string;
@@ -182,7 +179,7 @@ const UserManagement = () => {
     try {
       const { error } = await supabase
         .from('users')
-        .update({ role: role as UserRole })
+        .update({ role })
         .eq('id', userId);
 
       if (error) throw error;

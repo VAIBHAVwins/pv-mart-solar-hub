@@ -22,11 +22,6 @@ interface Quotation {
   company_name?: string;
 }
 
-interface User {
-  id: string;
-  company_name?: string;
-}
-
 const QuotationsManagement = () => {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,8 +45,8 @@ const QuotationsManagement = () => {
       console.log('Fetched users:', usersData);
       
       const userMap: Record<string, string> = {};
-      (usersData || []).forEach((u: User) => {
-        if (u.id) userMap[u.id] = u.company_name || '';
+      (usersData || []).forEach((u) => {
+        if (u.id) userMap[u.id] = u.company_name || 'Unknown Vendor';
       });
       
       setQuotations((quotationsData || []).map((q: any) => ({ 
@@ -73,14 +68,17 @@ const QuotationsManagement = () => {
     setEditing(q);
     setEditForm({ ...q });
   };
+  
   const closeEdit = () => {
     setEditing(null);
     setEditForm({});
   };
+  
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setEditForm({ ...editForm, [name]: value });
   };
+  
   const saveEdit = async () => {
     if (!editing) return;
     setEditLoading(true);
@@ -88,8 +86,8 @@ const QuotationsManagement = () => {
       vendor_name: editForm.vendor_name,
       vendor_email: editForm.vendor_email,
       vendor_phone: editForm.vendor_phone,
-      installation_type: editForm.installation_type,
-      system_type: editForm.system_type,
+      installation_type: editForm.installation_type as any,
+      system_type: editForm.system_type as any,
       total_price: Number(editForm.total_price),
       installation_charge: Number(editForm.installation_charge),
       warranty_years: Number(editForm.warranty_years),
@@ -99,12 +97,14 @@ const QuotationsManagement = () => {
     closeEdit();
     fetchQuotations();
   };
+  
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this quotation?')) return;
     setLoading(true);
     await supabase.from('vendor_quotations').delete().eq('id', id);
     fetchQuotations();
   };
+  
   const handleDownloadCSV = () => {
     const csv = [
       ['Company Name', 'Vendor Name', 'Email', 'Phone', 'Installation Type', 'System Type', 'Total Price', 'Created At'],

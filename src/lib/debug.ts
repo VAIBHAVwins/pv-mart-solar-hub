@@ -1,86 +1,121 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
-export const debugCustomerRegistration = async () => {
-  console.log('=== Customer Registration Debug ===');
+export const debugUserProfiles = async () => {
+  console.log('🔍 Debugging user profiles...');
   
-  // Test Supabase connection
   try {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    console.log('Current session:', session);
-    console.log('Session error:', error);
-  } catch (err) {
-    console.error('Error getting session:', err);
+    // Check auth users
+    const { data: authUser, error: authError } = await supabase.auth.getUser();
+    console.log('Auth user:', authUser, 'Error:', authError);
+    
+    // Check users table
+    const { data: usersData, error: usersError } = await supabase
+      .from('users')
+      .select('*');
+    
+    console.log('Users data:', usersData);
+    console.log('Users error:', usersError);
+    
+    return { usersData, usersError };
+  } catch (error) {
+    console.error('Debug error:', error);
+    return { error };
   }
-  
-  // Test profiles table access
-  try {
-    const { data: profiles, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .limit(5);
-    console.log('Recent profiles:', profiles);
-    console.log('Profiles error:', error);
-  } catch (err) {
-    console.error('Error accessing profiles:', err);
-  }
-  
-  // Test customer_requirements table access
-  try {
-    const { data: requirements, error } = await supabase
-      .from('customer_requirements')
-      .select('*')
-      .limit(5);
-    console.log('Recent customer requirements:', requirements);
-    console.log('Requirements error:', error);
-  } catch (err) {
-    console.error('Error accessing customer_requirements:', err);
-  }
-  
-  console.log('=== End Debug ===');
 };
 
-export const testCustomerRegistration = async (testData: {
-  email: string;
-  password: string;
-  name: string;
-  phone: string;
-}) => {
-  console.log('=== Testing Customer Registration ===');
-  console.log('Test data:', testData);
+export const debugCustomerRegistration = async (email: string) => {
+  console.log('🔍 Debugging customer registration for email:', email);
   
   try {
-    const { data, error } = await supabase.auth.signUp({
-      email: testData.email,
-      password: testData.password,
+    // Check if user exists in auth
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const authUser = authUsers?.users?.find(u => u.email === email);
+    console.log('Auth user found:', authUser);
+    
+    // Check if user exists in users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email);
+    
+    console.log('User table data:', userData);
+    console.log('User table error:', userError);
+    
+    return { authUser, userData, userError };
+  } catch (error) {
+    console.error('Debug customer registration error:', error);
+    return { error };
+  }
+};
+
+export const debugVendorRegistration = async (email: string) => {
+  console.log('🔍 Debugging vendor registration for email:', email);
+  
+  try {
+    // Check if user exists in auth
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const authUser = authUsers?.users?.find(u => u.email === email);
+    console.log('Auth user found:', authUser);
+    
+    // Check if user exists in users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email);
+    
+    console.log('User table data:', userData);
+    console.log('User table error:', userError);
+    
+    return { authUser, userData, userError };
+  } catch (error) {
+    console.error('Debug vendor registration error:', error);
+    return { error };
+  }
+};
+
+export const testUserCreation = async () => {
+  console.log('🧪 Testing user creation...');
+  
+  try {
+    const testEmail = `test-${Date.now()}@example.com`;
+    const testPassword = 'testpassword123';
+    
+    // Try to create a test user
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: testEmail,
+      password: testPassword,
       options: {
         data: {
-          full_name: testData.name,
-          phone: testData.phone,
-          user_type: 'customer'
+          full_name: 'Test User',
+          role: 'customer'
         }
       }
     });
     
-    console.log('SignUp result:', { data, error });
+    console.log('Sign up result:', signUpData, 'Error:', signUpError);
     
-    if (data.user) {
-      console.log('User created with ID:', data.user.id);
+    // Check if user was created in users table
+    if (signUpData.user) {
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for trigger
       
-      // Check if profile was created
-      setTimeout(async () => {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', data.user.id)
-          .single();
-        
-        console.log('Profile check result:', { profile, profileError });
-      }, 2000);
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', signUpData.user.id);
+      
+      console.log('User table after creation:', userData, 'Error:', userError);
+      
+      // Clean up test user
+      if (signUpData.user.id) {
+        await supabase.auth.admin.deleteUser(signUpData.user.id);
+        console.log('Test user cleaned up');
+      }
     }
     
-  } catch (err) {
-    console.error('Test registration error:', err);
+    return { signUpData, signUpError };
+  } catch (error) {
+    console.error('Test user creation error:', error);
+    return { error };
   }
-  
-  console.log('=== End Test ===');
-}; 
+};
