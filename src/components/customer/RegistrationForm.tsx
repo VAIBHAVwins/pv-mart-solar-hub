@@ -132,10 +132,12 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
     setLoading(true);
     
     try {
-      // First check if email already exists in users table
+      console.log('🔄 Starting customer registration for:', formData.email);
+
+      // Step 1: Check if email already exists in users table
       const { data: existingUser } = await supabase
         .from('users')
-        .select('id, email')
+        .select('id, email, role')
         .eq('email', formData.email)
         .single();
 
@@ -145,10 +147,8 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         return;
       }
 
-      console.log('🔄 Starting customer registration for:', formData.email);
-
-      // Register with Supabase Auth first
-      const redirectUrl = `${window.location.origin}/`;
+      // Step 2: Create Supabase Auth user
+      const redirectUrl = `${window.location.origin}/customer/dashboard`;
       
       const { data: authData, error: signUpError } = await signUp(formData.email, formData.password, {
         data: {
@@ -164,7 +164,11 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
       if (signUpError) {
         console.error('❌ Supabase Auth signUp failed:', signUpError);
-        setError(signUpError.message || 'Registration failed. Please try again.');
+        if (signUpError.message.includes('already registered')) {
+          setError('This email is already registered. Please use a different email.');
+        } else {
+          setError(signUpError.message || 'Registration failed. Please try again.');
+        }
         setLoading(false);
         return;
       }
@@ -178,7 +182,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
       console.log('✅ Supabase Auth user created:', authData.user.id);
 
-      // Now insert into users table with the Auth user's ID
+      // Step 3: Insert into users table with the Auth user's ID
       const { error: insertError } = await supabase
         .from('users')
         .insert([
@@ -207,7 +211,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         return;
       }
 
-      console.log('✅ User data inserted successfully');
+      console.log('✅ Customer data inserted successfully');
       setSuccess('Registration successful! Please check your email for verification.');
       
       if (onSuccess) {
