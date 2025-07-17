@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string | null
+          id: string
+          permissions: string[] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permissions?: string[] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permissions?: string[] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_users_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blogs: {
         Row: {
           author: string | null
@@ -68,13 +97,54 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_profiles: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string | null
+          id: string
+          pincode: string | null
+          state: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          pincode?: string | null
+          state?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          pincode?: string | null
+          state?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_requirements: {
         Row: {
           additional_requirements: string | null
           address: string
           budget_range: string | null
           city: string
-          created_at: string
+          created_at: string | null
           customer_email: string
           customer_id: string
           customer_name: string
@@ -89,17 +159,17 @@ export type Database = {
           roof_type: string
           rooftop_area: string | null
           state: string
-          status: string | null
+          status: Database["public"]["Enums"]["requirement_status"] | null
           system_type: Database["public"]["Enums"]["system_type"]
           timeline: string | null
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           additional_requirements?: string | null
           address: string
           budget_range?: string | null
           city: string
-          created_at?: string
+          created_at?: string | null
           customer_email: string
           customer_id: string
           customer_name: string
@@ -114,17 +184,17 @@ export type Database = {
           roof_type: string
           rooftop_area?: string | null
           state: string
-          status?: string | null
+          status?: Database["public"]["Enums"]["requirement_status"] | null
           system_type: Database["public"]["Enums"]["system_type"]
           timeline?: string | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
           additional_requirements?: string | null
           address?: string
           budget_range?: string | null
           city?: string
-          created_at?: string
+          created_at?: string | null
           customer_email?: string
           customer_id?: string
           customer_name?: string
@@ -139,14 +209,14 @@ export type Database = {
           roof_type?: string
           rooftop_area?: string | null
           state?: string
-          status?: string | null
+          status?: Database["public"]["Enums"]["requirement_status"] | null
           system_type?: Database["public"]["Enums"]["system_type"]
           timeline?: string | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "fk_customer_user"
+            foreignKeyName: "customer_requirements_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -193,41 +263,11 @@ export type Database = {
         }
         Relationships: []
       }
-      profiles: {
-        Row: {
-          company_name: string | null
-          created_at: string
-          full_name: string | null
-          id: string
-          phone: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          company_name?: string | null
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          phone?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          company_name?: string | null
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          phone?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       quotation_components: {
         Row: {
           brand: string
           component_type: Database["public"]["Enums"]["component_type"]
-          created_at: string
+          created_at: string | null
           id: string
           included_length_meters: number | null
           model: string | null
@@ -241,7 +281,7 @@ export type Database = {
         Insert: {
           brand: string
           component_type: Database["public"]["Enums"]["component_type"]
-          created_at?: string
+          created_at?: string | null
           id?: string
           included_length_meters?: number | null
           model?: string | null
@@ -255,7 +295,7 @@ export type Database = {
         Update: {
           brand?: string
           component_type?: Database["public"]["Enums"]["component_type"]
-          created_at?: string
+          created_at?: string | null
           id?: string
           included_length_meters?: number | null
           model?: string | null
@@ -276,87 +316,101 @@ export type Database = {
           },
         ]
       }
-      user_roles: {
+      users: {
         Row: {
-          created_at: string
+          created_at: string | null
+          email: string
+          full_name: string
           id: string
-          role: Database["public"]["Enums"]["app_role"]
-          updated_at: string
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name: string
+          id: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      vendor_profiles: {
+        Row: {
+          address: string | null
+          company_name: string
+          contact_person: string
+          created_at: string | null
+          id: string
+          is_verified: boolean | null
+          license_number: string | null
+          pm_surya_ghar_registered: boolean | null
+          service_areas: string | null
+          specializations: string | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          created_at?: string
+          address?: string | null
+          company_name: string
+          contact_person: string
+          created_at?: string | null
           id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
+          is_verified?: boolean | null
+          license_number?: string | null
+          pm_surya_ghar_registered?: boolean | null
+          service_areas?: string | null
+          specializations?: string | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string
+          address?: string | null
+          company_name?: string
+          contact_person?: string
+          created_at?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
+          is_verified?: boolean | null
+          license_number?: string | null
+          pm_surya_ghar_registered?: boolean | null
+          service_areas?: string | null
+          specializations?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "fk_user_roles_user"
+            foreignKeyName: "vendor_profiles_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
       }
-      users: {
-        Row: {
-          address: string | null
-          company_name: string | null
-          contact_person: string | null
-          created_at: string | null
-          email: string
-          full_name: string | null
-          id: string
-          license_number: string | null
-          phone: string | null
-          role: string
-        }
-        Insert: {
-          address?: string | null
-          company_name?: string | null
-          contact_person?: string | null
-          created_at?: string | null
-          email: string
-          full_name?: string | null
-          id?: string
-          license_number?: string | null
-          phone?: string | null
-          role: string
-        }
-        Update: {
-          address?: string | null
-          company_name?: string | null
-          contact_person?: string | null
-          created_at?: string | null
-          email?: string
-          full_name?: string | null
-          id?: string
-          license_number?: string | null
-          phone?: string | null
-          role?: string
-        }
-        Relationships: []
-      }
       vendor_quotations: {
         Row: {
-          created_at: string
+          created_at: string | null
+          customer_requirement_id: string | null
           description: string | null
           id: string
           installation_charge: number | null
           installation_type: Database["public"]["Enums"]["installation_type"]
+          status: Database["public"]["Enums"]["quotation_status"] | null
           system_type: Database["public"]["Enums"]["system_type"]
           total_price: number
-          updated_at: string
+          updated_at: string | null
           vendor_email: string
           vendor_id: string
           vendor_name: string
@@ -364,14 +418,16 @@ export type Database = {
           warranty_years: number | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
+          customer_requirement_id?: string | null
           description?: string | null
           id?: string
           installation_charge?: number | null
           installation_type: Database["public"]["Enums"]["installation_type"]
+          status?: Database["public"]["Enums"]["quotation_status"] | null
           system_type: Database["public"]["Enums"]["system_type"]
-          total_price: number
-          updated_at?: string
+          total_price?: number
+          updated_at?: string | null
           vendor_email: string
           vendor_id: string
           vendor_name: string
@@ -379,14 +435,16 @@ export type Database = {
           warranty_years?: number | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
+          customer_requirement_id?: string | null
           description?: string | null
           id?: string
           installation_charge?: number | null
           installation_type?: Database["public"]["Enums"]["installation_type"]
+          status?: Database["public"]["Enums"]["quotation_status"] | null
           system_type?: Database["public"]["Enums"]["system_type"]
           total_price?: number
-          updated_at?: string
+          updated_at?: string | null
           vendor_email?: string
           vendor_id?: string
           vendor_name?: string
@@ -395,7 +453,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_vendor_user"
+            foreignKeyName: "vendor_quotations_customer_requirement_id_fkey"
+            columns: ["customer_requirement_id"]
+            isOneToOne: false
+            referencedRelation: "customer_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_quotations_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -408,45 +473,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: Database["public"]["Enums"]["app_role"]
+      is_admin: {
+        Args: { user_uuid?: string }
+        Returns: boolean
       }
-      has_role: {
-        Args: {
-          _user_id: string
-          _role: Database["public"]["Enums"]["app_role"]
-        }
+      is_customer: {
+        Args: { user_uuid?: string }
+        Returns: boolean
+      }
+      is_vendor: {
+        Args: { user_uuid?: string }
         Returns: boolean
       }
     }
     Enums: {
-      app_role: "admin" | "customer" | "vendor"
       component_type:
         | "solar_panel"
         | "inverter"
         | "battery"
-        | "cable_ac"
-        | "cable_dc"
         | "mounting_structure"
-        | "earthing"
-        | "lightning_arrestor"
-        | "mc4_connector"
-        | "junction_box"
+        | "cables"
         | "other"
-      installation_type:
-        | "1KW"
-        | "2KW"
-        | "3KW"
-        | "4KW"
-        | "5KW"
-        | "6KW"
-        | "7KW"
-        | "8KW"
-        | "9KW"
-        | "10KW"
-        | "custom"
-      system_type: "on-grid" | "off-grid" | "hybrid"
+      installation_type: "on_grid" | "off_grid" | "hybrid"
+      quotation_status: "draft" | "submitted" | "accepted" | "rejected"
+      requirement_status: "pending" | "active" | "completed" | "cancelled"
+      system_type: "residential" | "commercial" | "industrial"
+      user_role: "customer" | "vendor" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -574,34 +626,19 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "customer", "vendor"],
       component_type: [
         "solar_panel",
         "inverter",
         "battery",
-        "cable_ac",
-        "cable_dc",
         "mounting_structure",
-        "earthing",
-        "lightning_arrestor",
-        "mc4_connector",
-        "junction_box",
+        "cables",
         "other",
       ],
-      installation_type: [
-        "1KW",
-        "2KW",
-        "3KW",
-        "4KW",
-        "5KW",
-        "6KW",
-        "7KW",
-        "8KW",
-        "9KW",
-        "10KW",
-        "custom",
-      ],
-      system_type: ["on-grid", "off-grid", "hybrid"],
+      installation_type: ["on_grid", "off_grid", "hybrid"],
+      quotation_status: ["draft", "submitted", "accepted", "rejected"],
+      requirement_status: ["pending", "active", "completed", "cancelled"],
+      system_type: ["residential", "commercial", "industrial"],
+      user_role: ["customer", "vendor", "admin"],
     },
   },
 } as const

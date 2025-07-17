@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -119,20 +120,21 @@ export function VendorRegistrationForm({ onSuccess }: VendorRegistrationFormProp
         return;
       }
 
-      // Step 2: Create Supabase Auth user
+      // Step 2: Create Supabase Auth user with vendor metadata
       const redirectUrl = `${window.location.origin}/vendor/dashboard`;
       
       const { data: authData, error: signUpError } = await signUp(formData.email, formData.password, {
         data: {
           full_name: formData.contactPerson,
-          company_name: formData.companyName,
           phone: formData.phone,
-          address: formData.address,
           role: 'vendor',
-          pm_surya_ghar_registered: formData.pmSuryaGharRegistered,
+          company_name: formData.companyName,
+          contact_person: formData.contactPerson,
           license_number: formData.licenseNumber,
+          address: formData.address,
           service_areas: formData.serviceAreas,
-          specializations: formData.specializations
+          specializations: formData.specializations,
+          pm_surya_ghar_registered: formData.pmSuryaGharRegistered === 'YES'
         }
       });
 
@@ -154,42 +156,7 @@ export function VendorRegistrationForm({ onSuccess }: VendorRegistrationFormProp
         return;
       }
 
-      console.log('✅ Supabase Auth user created:', authData.user.id);
-
-      // Step 3: Insert into users table with the Auth user's ID
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert([
-          {
-            id: authData.user.id,
-            email: formData.email,
-            full_name: formData.contactPerson,
-            phone: formData.phone,
-            company_name: formData.companyName,
-            contact_person: formData.contactPerson,
-            license_number: formData.licenseNumber,
-            address: formData.address,
-            role: 'vendor',
-            pm_surya_ghar_registered: formData.pmSuryaGharRegistered
-          }
-        ]);
-
-      if (insertError) {
-        console.error('❌ Failed to insert into users table:', insertError);
-        
-        // Clean up the Auth user if database insert fails
-        try {
-          await supabase.auth.signOut();
-        } catch (cleanupError) {
-          console.error('❌ Failed to clean up Auth user:', cleanupError);
-        }
-        
-        setError('Registration failed. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      console.log('✅ Vendor data inserted successfully');
+      console.log('✅ Vendor registration successful! User will be created via trigger.');
       setSuccess('Registration successful! Please check your email for verification.');
       
       if (onSuccess) {
