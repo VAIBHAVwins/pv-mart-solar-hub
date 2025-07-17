@@ -1,9 +1,14 @@
+
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Database } from '@/integrations/supabase/types';
+
+type InstallationType = Database['public']['Enums']['installation_type'];
+type SystemType = Database['public']['Enums']['system_type'];
 
 interface Quotation {
   id: string;
@@ -11,8 +16,8 @@ interface Quotation {
   vendor_name: string;
   vendor_email: string;
   vendor_phone: string;
-  installation_type: string;
-  system_type: string;
+  installation_type: InstallationType;
+  system_type: SystemType;
   total_price: number;
   installation_charge: number;
   warranty_years: number;
@@ -65,7 +70,8 @@ const QuotationsManagement = () => {
     setEditForm({});
   };
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setEditForm({ ...editForm, [name]: value });
   };
   const saveEdit = async () => {
     if (!editing) return;
@@ -74,11 +80,11 @@ const QuotationsManagement = () => {
       vendor_name: editForm.vendor_name,
       vendor_email: editForm.vendor_email,
       vendor_phone: editForm.vendor_phone,
-      installation_type: editForm.installation_type,
-      system_type: editForm.system_type,
-      total_price: editForm.total_price,
-      installation_charge: editForm.installation_charge,
-      warranty_years: editForm.warranty_years,
+      installation_type: editForm.installation_type as InstallationType,
+      system_type: editForm.system_type as SystemType,
+      total_price: Number(editForm.total_price),
+      installation_charge: Number(editForm.installation_charge),
+      warranty_years: Number(editForm.warranty_years),
       description: editForm.description,
     }).eq('id', editing.id);
     setEditLoading(false);
@@ -177,4 +183,4 @@ const QuotationsManagement = () => {
   );
 };
 
-export default QuotationsManagement; 
+export default QuotationsManagement;

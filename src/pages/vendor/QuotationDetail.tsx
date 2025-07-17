@@ -1,14 +1,19 @@
+
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
+
+type InstallationType = Database['public']['Enums']['installation_type'];
+type SystemType = Database['public']['Enums']['system_type'];
 
 interface Quotation {
   id: string;
-  installation_type: string;
-  system_type: string;
+  installation_type: InstallationType;
+  system_type: SystemType;
   total_price: number;
   installation_charge: number;
   warranty_years: number;
@@ -48,7 +53,17 @@ const QuotationDetail = () => {
   const handleSave = async () => {
     if (!id) return;
     setLoading(true);
-    await supabase.from('vendor_quotations').update(form).eq('id', id);
+    
+    const updateData = {
+      ...form,
+      installation_type: form.installation_type as InstallationType,
+      system_type: form.system_type as SystemType,
+      total_price: Number(form.total_price),
+      installation_charge: Number(form.installation_charge),
+      warranty_years: Number(form.warranty_years),
+    };
+    
+    await supabase.from('vendor_quotations').update(updateData).eq('id', id);
     setEditMode(false);
     setLoading(false);
     // Optionally refetch
@@ -92,4 +107,4 @@ const QuotationDetail = () => {
   );
 };
 
-export default QuotationDetail; 
+export default QuotationDetail;

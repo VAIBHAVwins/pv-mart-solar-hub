@@ -1,9 +1,14 @@
+
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Database } from '@/integrations/supabase/types';
+
+type InstallationType = Database['public']['Enums']['installation_type'];
+type SystemType = Database['public']['Enums']['system_type'];
 
 interface Requirement {
   id: string;
@@ -12,8 +17,8 @@ interface Requirement {
   customer_email: string;
   customer_phone: string;
   address: string;
-  installation_type: string;
-  system_type: string;
+  installation_type: InstallationType;
+  system_type: SystemType;
   monthly_bill: number;
   pincode: string;
   created_at: string;
@@ -63,7 +68,8 @@ const RequirementsManagement = () => {
     setEditForm({});
   };
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setEditForm({ ...editForm, [name]: value });
   };
   const saveEdit = async () => {
     if (!editing) return;
@@ -73,9 +79,9 @@ const RequirementsManagement = () => {
       customer_email: editForm.customer_email,
       customer_phone: editForm.customer_phone,
       address: editForm.address,
-      installation_type: editForm.installation_type,
-      system_type: editForm.system_type,
-      monthly_bill: editForm.monthly_bill,
+      installation_type: editForm.installation_type as InstallationType,
+      system_type: editForm.system_type as SystemType,
+      monthly_bill: Number(editForm.monthly_bill),
       pincode: editForm.pincode,
     }).eq('id', editing.id);
     setEditLoading(false);
@@ -175,4 +181,4 @@ const RequirementsManagement = () => {
   );
 };
 
-export default RequirementsManagement; 
+export default RequirementsManagement;

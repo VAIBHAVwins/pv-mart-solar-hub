@@ -12,6 +12,8 @@ import RequirementsManagement from './RequirementsManagement';
 import { Users, Image, Database, Settings, Activity, TrendingUp, FileText } from 'lucide-react';
 
 const AdminDashboard = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  
   // Simple state objects to avoid TypeScript recursion issues
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -179,7 +181,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Admin Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">
             <Database className="w-4 h-4 mr-2" />

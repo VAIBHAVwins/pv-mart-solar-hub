@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { validation, sanitize, validationMessages } from '@/lib/validation';
 import { Button } from '@/components/ui/button';
-import RegistrationFormFields from './RegistrationFormFields';
+import { RegistrationFormFields } from './RegistrationFormFields';
 import { RegistrationMessages } from './RegistrationMessages';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -100,8 +100,8 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       return false;
     }
 
-    if (!validation.pincode(formData.pincode)) {
-      setError(validationMessages.pincode);
+    if (!validation.required(formData.pincode) || formData.pincode.length !== 6) {
+      setError('Please enter a valid 6-digit pincode');
       return false;
     }
 
@@ -228,7 +228,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       <p className="text-[#4f4f56] mb-8 text-center">Create your account to access solar solutions</p>
       <form onSubmit={handleSubmit} className="space-y-6">
         <RegistrationFormFields 
-          formData={formData}
+          form={formData}
           loading={loading}
           onChange={handleChange}
         />
