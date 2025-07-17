@@ -29,9 +29,9 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      // Fetch user profiles count
-      const { count: profilesCount } = await supabase
-        .from('profiles')
+      // Fetch total users count
+      const { count: usersCount } = await supabase
+        .from('users')
         .select('*', { count: 'exact', head: true });
 
       // Fetch customer count
@@ -48,7 +48,7 @@ const AdminDashboard = () => {
 
       // Fetch admin count
       const { count: adminsCount } = await supabase
-        .from('user_roles')
+        .from('users')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'admin');
 
@@ -73,7 +73,7 @@ const AdminDashboard = () => {
         .select('*', { count: 'exact', head: true });
 
       setStats({
-        totalUsers: profilesCount || 0,
+        totalUsers: usersCount || 0,
         totalHeroImages: heroImagesCount || 0,
         totalBlogs: blogsCount || 0,
         totalCustomers: customersCount || 0,

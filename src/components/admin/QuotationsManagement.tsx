@@ -5,10 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Database } from '@/integrations/supabase/types';
-
-type InstallationType = Database['public']['Enums']['installation_type'];
-type SystemType = Database['public']['Enums']['system_type'];
 
 interface Quotation {
   id: string;
@@ -16,8 +12,8 @@ interface Quotation {
   vendor_name: string;
   vendor_email: string;
   vendor_phone: string;
-  installation_type: InstallationType;
-  system_type: SystemType;
+  installation_type: string;
+  system_type: string;
   total_price: number;
   installation_charge: number;
   warranty_years: number;
@@ -40,21 +36,33 @@ const QuotationsManagement = () => {
 
   const fetchQuotations = async () => {
     setLoading(true);
-    const { data: quotationsData } = await supabase
-      .from('vendor_quotations')
-      .select('*')
-      .order('created_at', { ascending: false });
-    const { data: usersData } = await supabase
-      .from('users')
-      .select('id, company_name');
-    console.log('Fetched quotations:', quotationsData);
-    console.log('Fetched users:', usersData);
-    const userMap: Record<string, string> = {};
-    (usersData || []).forEach((u: User) => {
-      if (u.id) userMap[u.id] = u.company_name || '';
-    });
-    setQuotations((quotationsData || []).map((q: Quotation) => ({ ...q, company_name: userMap[q.vendor_id] || 'Unknown Vendor' })));
-    setLoading(false);
+    try {
+      const { data: quotationsData } = await supabase
+        .from('vendor_quotations')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      const { data: usersData } = await supabase
+        .from('users')
+        .select('id, company_name');
+      
+      console.log('Fetched quotations:', quotationsData);
+      console.log('Fetched users:', usersData);
+      
+      const userMap: Record<string, string> = {};
+      (usersData || []).forEach((u: User) => {
+        if (u.id) userMap[u.id] = u.company_name || '';
+      });
+      
+      setQuotations((quotationsData || []).map((q: any) => ({ 
+        ...q, 
+        company_name: userMap[q.vendor_id] || 'Unknown Vendor' 
+      })));
+    } catch (error) {
+      console.error('Error fetching quotations:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -80,8 +88,8 @@ const QuotationsManagement = () => {
       vendor_name: editForm.vendor_name,
       vendor_email: editForm.vendor_email,
       vendor_phone: editForm.vendor_phone,
-      installation_type: editForm.installation_type as InstallationType,
-      system_type: editForm.system_type as SystemType,
+      installation_type: editForm.installation_type,
+      system_type: editForm.system_type,
       total_price: Number(editForm.total_price),
       installation_charge: Number(editForm.installation_charge),
       warranty_years: Number(editForm.warranty_years),
