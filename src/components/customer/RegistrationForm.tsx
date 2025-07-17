@@ -180,38 +180,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         return;
       }
 
-      console.log('✅ Supabase Auth user created:', authData.user.id);
-
-      // Step 3: Insert into users table with the Auth user's ID
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert([
-          {
-            id: authData.user.id,
-            email: formData.email,
-            full_name: formData.fullName,
-            phone: formData.phone,
-            address: formData.address,
-            role: 'customer',
-          }
-        ]);
-
-      if (insertError) {
-        console.error('❌ Failed to insert into users table:', insertError);
-        
-        // Clean up the Auth user if database insert fails
-        try {
-          await supabase.auth.signOut();
-        } catch (cleanupError) {
-          console.error('❌ Failed to clean up Auth user:', cleanupError);
-        }
-        
-        setError('Registration failed. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      console.log('✅ Customer data inserted successfully');
+      console.log('✅ Customer registration successful! User will be created via trigger.');
       setSuccess('Registration successful! Please check your email for verification.');
       
       if (onSuccess) {

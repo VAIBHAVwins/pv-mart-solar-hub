@@ -134,7 +134,7 @@ export function VendorRegistrationForm({ onSuccess }: VendorRegistrationFormProp
           address: formData.address,
           service_areas: formData.serviceAreas,
           specializations: formData.specializations,
-          pm_surya_ghar_registered: formData.pmSuryaGharRegistered === 'YES'
+          pm_surya_ghar_registered: formData.pmSuryaGharRegistered
         }
       });
 
