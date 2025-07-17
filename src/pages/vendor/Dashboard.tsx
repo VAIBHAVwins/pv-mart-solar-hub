@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/layout/Layout';
@@ -44,7 +43,14 @@ const VendorDashboard = () => {
         }
 
         console.log('✅ Vendor data fetched successfully:', data);
-        setVendorData(data || {});
+        // Convert boolean pm_surya_ghar_registered to string if needed
+        const processedData = {
+          ...data,
+          pm_surya_ghar_registered: typeof data?.pm_surya_ghar_registered === 'boolean' 
+            ? (data.pm_surya_ghar_registered ? 'YES' : 'NO')
+            : data?.pm_surya_ghar_registered || 'NO'
+        };
+        setVendorData(processedData || {});
       } catch (error) {
         console.error('❌ Error in fetchVendorData:', error);
         setError('Failed to load vendor data');
