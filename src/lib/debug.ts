@@ -28,11 +28,6 @@ export const debugCustomerRegistration = async (email: string) => {
   console.log('🔍 Debugging customer registration for email:', email);
   
   try {
-    // Check if user exists in auth
-    const { data: authUsers } = await supabase.auth.admin.listUsers();
-    const authUser = authUsers?.users?.find(u => u.email === email);
-    console.log('Auth user found:', authUser);
-    
     // Check if user exists in users table
     const { data: userData, error: userError } = await supabase
       .from('users')
@@ -42,7 +37,7 @@ export const debugCustomerRegistration = async (email: string) => {
     console.log('User table data:', userData);
     console.log('User table error:', userError);
     
-    return { authUser, userData, userError };
+    return { userData, userError };
   } catch (error) {
     console.error('Debug customer registration error:', error);
     return { error };
@@ -53,11 +48,6 @@ export const debugVendorRegistration = async (email: string) => {
   console.log('🔍 Debugging vendor registration for email:', email);
   
   try {
-    // Check if user exists in auth
-    const { data: authUsers } = await supabase.auth.admin.listUsers();
-    const authUser = authUsers?.users?.find(u => u.email === email);
-    console.log('Auth user found:', authUser);
-    
     // Check if user exists in users table
     const { data: userData, error: userError } = await supabase
       .from('users')
@@ -67,7 +57,7 @@ export const debugVendorRegistration = async (email: string) => {
     console.log('User table data:', userData);
     console.log('User table error:', userError);
     
-    return { authUser, userData, userError };
+    return { userData, userError };
   } catch (error) {
     console.error('Debug vendor registration error:', error);
     return { error };
