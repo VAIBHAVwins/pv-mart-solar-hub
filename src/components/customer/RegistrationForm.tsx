@@ -7,14 +7,10 @@ import { RegistrationFormFields } from './RegistrationFormFields';
 import { RegistrationMessages } from './RegistrationMessages';
 import { supabase } from '@/integrations/supabase/client';
 
-interface CustomerRegistrationData {
-  fullName: string;
+interface RegistrationFormData {
+  name: string;
   email: string;
   phone: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
   password: string;
   confirmPassword: string;
 }
@@ -25,14 +21,10 @@ interface RegistrationFormProps {
 
 export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   const { signUp } = useSupabaseAuth();
-  const [formData, setFormData] = useState<CustomerRegistrationData>({
-    fullName: '',
-    email: '',
+  const [form, setForm] = useState<RegistrationFormData>({ 
+    name: '', 
+    email: '', 
     phone: '',
-    address: '',
-    city: '',
-    state: '',
-    pincode: '',
     password: '',
     confirmPassword: ''
   });
@@ -46,10 +38,9 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
     
     if (name === 'phone') {
       sanitizedValue = sanitize.phone(value);
-    } else if (name === 'pincode') {
-      sanitizedValue = value.replace(/[^0-9]/g, '').slice(0, 6);
-    } else if (['address', 'fullName', 'email', 'city', 'state'].includes(name)) {
-      sanitizedValue = value.slice(0, 1000);
+    } else if (name === 'name') {
+      // Allow spaces anywhere, do not trim
+      sanitizedValue = value.slice(0, 1000); // Only limit length
     } else {
       sanitizedValue = sanitize.text(value);
     }
@@ -58,59 +49,40 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       return;
     }
     
-    setFormData(prev => ({
-      ...prev,
-      [name]: sanitizedValue
-    }));
+    setForm({ ...form, [name]: sanitizedValue });
+    if (error) setError('');
   };
 
   const validateForm = () => {
-    if (!validation.required(formData.fullName)) {
-      setError('Full name is required');
+    const requiredFields = ['name', 'email', 'phone', 'password', 'confirmPassword'];
+    for (const field of requiredFields) {
+      if (!validation.required((form as any)[field])) {
+        setError(`${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
+        return false;
+      }
+    }
+
+    if (!validation.maxLength((form as any).name, 100)) {
+      setError(validationMessages.maxLength(100));
       return false;
     }
 
-    if (!validation.maxLength(formData.fullName, 100)) {
-      setError('Full name ' + validationMessages.maxLength(100));
-      return false;
-    }
-
-    if (!validation.email(formData.email)) {
+    if (!validation.email((form as any).email)) {
       setError(validationMessages.email);
       return false;
     }
 
-    if (!validation.phone(formData.phone)) {
+    if (!validation.phone((form as any).phone)) {
       setError(validationMessages.phone);
       return false;
     }
 
-    if (!validation.required(formData.address)) {
-      setError('Address is required');
-      return false;
-    }
-
-    if (!validation.required(formData.city)) {
-      setError('City is required');
-      return false;
-    }
-
-    if (!validation.required(formData.state)) {
-      setError('State is required');
-      return false;
-    }
-
-    if (!validation.required(formData.pincode) || formData.pincode.length !== 6) {
-      setError('Please enter a valid 6-digit pincode');
-      return false;
-    }
-
-    if (!validation.password(formData.password)) {
+    if (!validation.password((form as any).password)) {
       setError(validationMessages.password);
       return false;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if ((form as any).password !== (form as any).confirmPassword) {
       setError(validationMessages.noMatch);
       return false;
     }
@@ -120,8 +92,6 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Clear previous messages
     setError('');
     setSuccess('');
     
@@ -130,95 +100,87 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
     }
 
     setLoading(true);
-    
     try {
-      console.log('🔄 Starting customer registration for:', formData.email);
-
-      // Step 1: Check if email already exists in users table
-      const { data: existingUser } = await supabase
+      // Check if email is already used in users
+      const { data: existingUser, error: userError } = await supabase
         .from('users')
-        .select('id, email, role')
-        .eq('email', formData.email)
-        .maybeSingle();
-
+        .select('id')
+        .eq('email', form.email)
+        .single();
       if (existingUser) {
         setError('This email is already registered. Please use a different email.');
         setLoading(false);
         return;
       }
-
-      // Step 2: Create Supabase Auth user with complete customer metadata
-      const redirectUrl = `${window.location.origin}/customer/dashboard`;
-      
-      const { data: authData, error: signUpError } = await signUp(formData.email, formData.password, {
-        data: {
-          role: 'customer',
-          full_name: formData.fullName,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          pincode: formData.pincode,
-        }
-      });
-
-      if (signUpError) {
-        console.error('❌ Supabase Auth signUp failed:', signUpError);
-        if (signUpError.message.includes('already registered') || signUpError.message.includes('already been registered')) {
-          setError('This email is already registered. Please use a different email.');
-        } else if (signUpError.message.includes('email not confirmed')) {
-          setError('Please check your email and verify your account before logging in.');
-        } else {
-          setError(signUpError.message || 'Registration failed. Please try again.');
-        }
-        setLoading(false);
-        return;
-      }
-
-      if (!authData || !authData.user) {
-        console.error('❌ No user data returned from signUp');
+      // Register new customer in users table
+      const { data, error: insertError } = await supabase
+        .from('users')
+        .insert([
+          {
+            email: form.email,
+            full_name: form.name,
+            phone: form.phone,
+            company_name: null,
+            contact_person: null,
+            license_number: null,
+            address: null,
+            role: 'customer',
+          }
+        ])
+        .select()
+        .single();
+      if (insertError) {
         setError('Registration failed. Please try again.');
         setLoading(false);
         return;
       }
-
-      console.log('✅ Customer registration successful! User will be created via trigger.');
-      setSuccess('Registration successful! Please check your email for verification.');
-      
-      // Give the trigger some time to process, then call onSuccess
-      setTimeout(() => {
-        if (onSuccess) {
-          onSuccess(formData.email);
-        }
-      }, 1000);
-      
-    } catch (error: any) {
-      console.error('❌ Registration error:', error);
+      setSuccess('Registration successful!');
+      onSuccess(form.email);
+    } catch (error) {
       setError('Registration failed. Please try again.');
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
-    <div className="bg-[#e6d3b3] p-10 rounded-2xl shadow-xl w-full max-w-2xl animate-fade-in">
-      <h1 className="text-4xl font-extrabold mb-6 text-center text-[#797a83] drop-shadow">Customer Registration</h1>
-      <p className="text-[#4f4f56] mb-8 text-center">Create your account to access solar solutions</p>
+    <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-[#190a02] mb-2">Customer Registration</h1>
+        <p className="text-[#8b4a08]">Create your account to access solar solutions</p>
+      </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
+
+      <RegistrationMessages error={error} success={success} />
+
       <form onSubmit={handleSubmit} className="space-y-6">
-        <RegistrationFormFields 
-          form={formData}
+        <RegistrationFormFields
+          form={form}
           loading={loading}
           onChange={handleChange}
         />
-        <RegistrationMessages error={error} success={success} />
+
         <Button
           type="submit"
-          className="w-full bg-[#797a83] text-white py-3 rounded-lg font-bold hover:bg-[#4f4f56] shadow-md transition"
+          className="w-full bg-[#fecb00] hover:bg-[#f8b200] text-[#190a02] font-semibold"
           disabled={loading}
         >
           {loading ? 'Creating Account...' : 'Create Account'}
         </Button>
       </form>
+
+      <div className="mt-6 text-center">
+        <p className="text-[#8b4a08] mb-2">
+          Already have an account?{' '}
+          <a href="/customer/login" className="text-[#0895c6] hover:underline font-semibold">
+            Sign in here
+          </a>
+        </p>
+      </div>
     </div>
   );
 }

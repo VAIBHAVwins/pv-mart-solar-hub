@@ -1,14 +1,9 @@
-
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Database } from '@/integrations/supabase/types';
-
-type InstallationType = Database['public']['Enums']['installation_type'];
-type SystemType = Database['public']['Enums']['system_type'];
 
 interface Quotation {
   id: string;
@@ -16,13 +11,18 @@ interface Quotation {
   vendor_name: string;
   vendor_email: string;
   vendor_phone: string;
-  installation_type: InstallationType;
-  system_type: SystemType;
+  installation_type: string;
+  system_type: string;
   total_price: number;
   installation_charge: number;
   warranty_years: number;
   description: string;
   created_at: string;
+  company_name?: string;
+}
+
+interface User {
+  id: string;
   company_name?: string;
 }
 
@@ -35,46 +35,21 @@ const QuotationsManagement = () => {
 
   const fetchQuotations = async () => {
     setLoading(true);
-    try {
-      const { data: quotationsData, error: quotationsError } = await supabase
-        .from('vendor_quotations')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (quotationsError) {
-        console.error('Error fetching quotations:', quotationsError);
-        setLoading(false);
-        return;
-      }
-
-      const { data: usersData, error: usersError } = await supabase
-        .from('users')
-        .select('id, company_name')
-        .eq('role', 'vendor');
-      
-      if (usersError) {
-        console.error('Error fetching users:', usersError);
-        setLoading(false);
-        return;
-      }
-      
-      console.log('Fetched quotations:', quotationsData);
-      console.log('Fetched users:', usersData);
-      
-      const userMap: Record<string, string> = {};
-      (usersData || []).forEach((u) => {
-        if (u.id) userMap[u.id] = u.company_name || 'Unknown Vendor';
-      });
-      
-      setQuotations((quotationsData || []).map((q: any) => ({ 
-        ...q, 
-        company_name: userMap[q.vendor_id] || 'Unknown Vendor' 
-      })));
-    } catch (error) {
-      console.error('Error fetching quotations:', error);
-    } finally {
-      setLoading(false);
-    }
+    const { data: quotationsData } = await supabase
+      .from('vendor_quotations')
+      .select('*')
+      .order('created_at', { ascending: false });
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, company_name');
+    console.log('Fetched quotations:', quotationsData);
+    console.log('Fetched users:', usersData);
+    const userMap: Record<string, string> = {};
+    (usersData || []).forEach((u: User) => {
+      if (u.id) userMap[u.id] = u.company_name || '';
+    });
+    setQuotations((quotationsData || []).map((q: Quotation) => ({ ...q, company_name: userMap[q.vendor_id] || 'Unknown Vendor' })));
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -85,17 +60,13 @@ const QuotationsManagement = () => {
     setEditing(q);
     setEditForm({ ...q });
   };
-  
   const closeEdit = () => {
     setEditing(null);
     setEditForm({});
   };
-  
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setEditForm({ ...editForm, [name]: value });
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
-  
   const saveEdit = async () => {
     if (!editing) return;
     setEditLoading(true);
@@ -103,25 +74,23 @@ const QuotationsManagement = () => {
       vendor_name: editForm.vendor_name,
       vendor_email: editForm.vendor_email,
       vendor_phone: editForm.vendor_phone,
-      installation_type: editForm.installation_type as InstallationType,
-      system_type: editForm.system_type as SystemType,
-      total_price: Number(editForm.total_price),
-      installation_charge: Number(editForm.installation_charge),
-      warranty_years: Number(editForm.warranty_years),
+      installation_type: editForm.installation_type,
+      system_type: editForm.system_type,
+      total_price: editForm.total_price,
+      installation_charge: editForm.installation_charge,
+      warranty_years: editForm.warranty_years,
       description: editForm.description,
     }).eq('id', editing.id);
     setEditLoading(false);
     closeEdit();
     fetchQuotations();
   };
-  
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this quotation?')) return;
     setLoading(true);
     await supabase.from('vendor_quotations').delete().eq('id', id);
     fetchQuotations();
   };
-  
   const handleDownloadCSV = () => {
     const csv = [
       ['Company Name', 'Vendor Name', 'Email', 'Phone', 'Installation Type', 'System Type', 'Total Price', 'Created At'],
@@ -208,4 +177,4 @@ const QuotationsManagement = () => {
   );
 };
 
-export default QuotationsManagement;
+export default QuotationsManagement; 

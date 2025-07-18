@@ -1,81 +1,95 @@
 
-import { useState } from 'react';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Layout from '@/components/layout/Layout';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-export default function CustomerLogin() {
-  const { signIn } = useSupabaseAuth();
+const CustomerLogin = () => {
+  const { signIn, user } = useSupabaseAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Get any message from state (e.g., from password reset)
-  const message = location.state?.message;
+  useEffect(() => {
+    if (user) {
+      // Check if user came from installation flow
+      const installationType = sessionStorage.getItem('selectedInstallationType');
+      const gridType = sessionStorage.getItem('selectedGridType');
+      
+      if (installationType && gridType) {
+        // Clear the session storage
+        sessionStorage.removeItem('selectedInstallationType');
+        sessionStorage.removeItem('selectedGridType');
+        // Redirect to requirements form
+        navigate('/customer/requirements');
+      } else {
+        // Regular login, go to dashboard
+        navigate('/customer/dashboard');
+      }
+    }
+  }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
     try {
-      console.log('🔄 Attempting customer login for:', form.email);
-      
-      // Step 1: Try to sign in with Supabase Auth
-      const { error: signInError } = await signIn(form.email, form.password);
-      
+      // Check if email exists in users table and get role
+      const { data: userEntry } = await supabase.from('users').select('email, role').eq('email', formData.email).single();
+      if (!userEntry) {
+        setError('Failed to login. Please check your credentials or create account.');
+        setLoading(false);
+        return;
+      }
+      if (userEntry.role !== 'customer') {
+        setError('This email ID is registered as a vendor. Please perform vendor login.');
+        setLoading(false);
+        return;
+      }
+      // Only proceed if customer exists
+      const { error: signInError } = await signIn(formData.email, formData.password);
       if (signInError) {
-        console.error('❌ Sign in error:', signInError);
-        
         if (signInError.message.includes('Invalid login credentials')) {
           setError('Invalid email or password. Please check your credentials.');
-        } else if (signInError.message.includes('email not confirmed')) {
-          setError('Please check your email and verify your account before logging in.');
+        } else if (signInError.message.includes('Email not confirmed')) {
+          setError('Please check your email and click the confirmation link before logging in.');
         } else {
-          setError(signInError.message || 'Login failed');
+          setError(`Login failed: ${signInError.message}`);
         }
+        await supabase.auth.signOut(); // Ensure no partial login state
         setLoading(false);
         return;
       }
-
-      // Step 2: Verify the user exists in our users table and is a customer
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id, email, role, full_name')
-        .eq('email', form.email)
-        .eq('role', 'customer')
-        .maybeSingle();
-
-      if (userError) {
-        console.error('❌ Error checking user data:', userError);
-        setError('Login failed. Please try again.');
+      // After sign in, check user role
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const { data: customerCheck } = await supabase.from('users').select('id, role').eq('id', userId).eq('role', 'customer').single();
+      if (!customerCheck) {
+        setError('No customer account found for this email.');
+        await supabase.auth.signOut(); // Ensure no partial login state
         setLoading(false);
         return;
       }
-
-      if (!userData) {
-        console.error('❌ No customer account found for this email');
-        setError('No customer account found for this email. Please register as a customer first.');
-        setLoading(false);
-        return;
-      }
-
-      console.log('✅ Customer login successful, redirecting to dashboard');
       navigate('/customer/dashboard');
-      
-    } catch (err: any) {
-      console.error('❌ Login error:', err);
-      setError(err.message || 'Login failed');
+    } catch (error) {
+      setError('Failed to login. Please check your credentials.');
+      console.error('Login error:', error);
     } finally {
       setLoading(false);
     }
@@ -85,26 +99,16 @@ export default function CustomerLogin() {
     <Layout>
       <div className="min-h-screen flex flex-col items-center justify-center bg-jonquil py-16 px-4">
         <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-licorice mb-2">Customer Login</h1>
-            <p className="text-brown">Access your customer dashboard</p>
-          </div>
-          
-          {message && (
-            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-              {message}
-            </div>
-          )}
-          
+          <h1 className="text-4xl font-extrabold mb-6 text-center text-licorice drop-shadow">Customer Login</h1>
+          <p className="text-brown mb-8 text-center">Login to access your solar dashboard</p>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {error && <div className="text-red-600 font-semibold text-center">{error}</div>}
             <div>
               <Label htmlFor="email" className="text-licorice">Email Address</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                value={form.email}
+                value={formData.email}
                 onChange={handleChange}
                 className="mt-1 border-brown focus:border-licorice"
                 placeholder="Enter your email"
@@ -117,35 +121,41 @@ export default function CustomerLogin() {
                 id="password"
                 name="password"
                 type="password"
-                value={form.password}
+                value={formData.password}
                 onChange={handleChange}
                 className="mt-1 border-brown focus:border-licorice"
                 placeholder="Enter your password"
                 required
               />
             </div>
-            <Button 
-              type="submit" 
-              className="w-full bg-brown hover:bg-licorice text-white font-semibold" 
+            {error && <div className="text-red-600 font-semibold text-center">{error}</div>}
+            <Button
+              type="submit"
+              className="w-full bg-brown text-white py-3 rounded-lg font-bold hover:bg-licorice shadow-md transition"
               disabled={loading}
             >
               {loading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
-          
-          <div className="mt-6 text-center space-y-2">
+          <div className="mt-6 text-center">
+            <p className="text-brown mb-2">
+              Don't have an account?{' '}
+              <Link to="/customer/register" className="text-licorice hover:underline font-semibold">
+                Create Account
+              </Link>
+            </p>
             <Link to="/customer/forgot-password" className="text-brown hover:underline">
               Forgot your password?
             </Link>
-            <p className="text-brown">
-              Don't have an account?{' '}
-              <Link to="/customer/register" className="text-brown hover:underline font-semibold">
-                Register here
-              </Link>
-            </p>
+            <br />
+            <Link to="/" className="text-brown hover:underline">
+              ← Back to Home
+            </Link>
           </div>
         </div>
       </div>
     </Layout>
   );
-}
+};
+
+export default CustomerLogin;

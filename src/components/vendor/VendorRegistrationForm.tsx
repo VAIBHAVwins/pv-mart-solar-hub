@@ -1,19 +1,19 @@
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { validation, sanitize, validationMessages } from '@/lib/validation';
+import { Button } from '@/components/ui/button';
 import VendorRegistrationFormFields from './VendorRegistrationFormFields';
+import { RegistrationMessages } from '@/components/customer/RegistrationMessages';
+import { supabase } from '@/integrations/supabase/client';
 
-interface VendorRegistrationData {
+interface VendorRegistrationFormData {
   companyName: string;
   contactPerson: string;
   email: string;
   phone: string;
   address: string;
-  pmSuryaGharRegistered: 'YES' | 'NO';
+  pmSuryaGharRegistered: string;
   licenseNumber: string;
   serviceAreas: string;
   specializations: string;
@@ -21,20 +21,15 @@ interface VendorRegistrationData {
   confirmPassword: string;
 }
 
-interface VendorRegistrationFormProps {
-  onSuccess: (email: string) => void;
-}
-
-export function VendorRegistrationForm({ onSuccess }: VendorRegistrationFormProps) {
+export function VendorRegistrationForm() {
   const { signUp } = useSupabaseAuth();
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState<VendorRegistrationData>({
+  const [formData, setFormData] = useState<VendorRegistrationFormData>({
     companyName: '',
     contactPerson: '',
     email: '',
     phone: '',
     address: '',
-    pmSuryaGharRegistered: 'NO',
+    pmSuryaGharRegistered: '',
     licenseNumber: '',
     serviceAreas: '',
     specializations: '',
@@ -45,11 +40,29 @@ export function VendorRegistrationForm({ onSuccess }: VendorRegistrationFormProp
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    let sanitizedValue = value;
+    
+    if (name === 'phone') {
+      sanitizedValue = sanitize.phone(value);
+    } else if ([
+      'address', 'serviceAreas', 'specializations',
+      'companyName', 'contactPerson', 'email', 'licenseNumber'
+    ].includes(name)) {
+      // Allow spaces anywhere, do not trim
+      sanitizedValue = value.slice(0, 1000); // Only limit length
+    } else {
+      sanitizedValue = sanitize.text(value);
+    }
+    
+    if (!validation.noScriptTags(sanitizedValue)) {
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: sanitizedValue
     }));
   };
 
@@ -61,40 +74,55 @@ export function VendorRegistrationForm({ onSuccess }: VendorRegistrationFormProp
   };
 
   const validateForm = () => {
-    if (!formData.companyName.trim()) {
-      setError('Company name is required');
+    const requiredFields: string[] = ['companyName', 'contactPerson', 'email', 'phone', 'address', 'pmSuryaGharRegistered', 'licenseNumber', 'serviceAreas', 'specializations'];
+    
+    for (const field of requiredFields) {
+      if (!validation.required((formData as any)[field])) {
+        setError(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} is required`);
+        return false;
+      }
+    }
+
+    if (!validation.maxLength(formData.companyName, 100)) {
+      setError('Company name ' + validationMessages.maxLength(100));
       return false;
     }
-    if (!formData.contactPerson.trim()) {
-      setError('Contact person is required');
+
+    if (!validation.maxLength(formData.contactPerson, 100)) {
+      setError('Contact person name ' + validationMessages.maxLength(100));
       return false;
     }
-    if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
-      setError('Valid email is required');
+
+    if (!validation.email(formData.email)) {
+      setError(validationMessages.email);
       return false;
     }
-    if (!formData.phone.trim() || formData.phone.length < 10) {
-      setError('Valid phone number is required');
+
+    if (!validation.phone(formData.phone)) {
+      setError(validationMessages.phone);
       return false;
     }
-    if (!formData.address.trim()) {
-      setError('Address is required');
+
+    if (!validation.licenseNumber(formData.licenseNumber)) {
+      setError(validationMessages.licenseNumber);
       return false;
     }
-    if (!formData.password || formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+
+    if (!validation.password(formData.password)) {
+      setError(validationMessages.password);
       return false;
     }
+
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(validationMessages.noMatch);
       return false;
     }
+
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     setError('');
     setSuccess('');
     
@@ -103,119 +131,70 @@ export function VendorRegistrationForm({ onSuccess }: VendorRegistrationFormProp
     }
 
     setLoading(true);
-    
     try {
-      console.log('🔄 Starting vendor registration for:', formData.email);
-
-      // Step 1: Check if email already exists in users table
-      const { data: existingUser } = await supabase
+      // Check if email is already used in users
+      const { data: existingUser, error: userError } = await supabase
         .from('users')
-        .select('id, email, role')
+        .select('id')
         .eq('email', formData.email)
-        .maybeSingle();
-
+        .single();
       if (existingUser) {
         setError('This email is already registered. Please use a different email.');
         setLoading(false);
         return;
       }
-
-      // Step 2: Create Supabase Auth user with complete vendor metadata
-      const redirectUrl = `${window.location.origin}/vendor/dashboard`;
-      
-      const { data: authData, error: signUpError } = await signUp(formData.email, formData.password, {
-        data: {
-          role: 'vendor',
-          full_name: formData.contactPerson,
-          contact_person: formData.contactPerson,
-          phone: formData.phone,
-          company_name: formData.companyName,
-          license_number: formData.licenseNumber,
-          address: formData.address,
-          service_areas: formData.serviceAreas,
-          specializations: formData.specializations,
-          pm_surya_ghar_registered: formData.pmSuryaGharRegistered
-        }
-      });
-
-      if (signUpError) {
-        console.error('❌ Supabase Auth signUp failed:', signUpError);
-        if (signUpError.message.includes('already registered') || signUpError.message.includes('already been registered')) {
-          setError('This email is already registered. Please use a different email.');
-        } else if (signUpError.message.includes('email not confirmed')) {
-          setError('Please check your email and verify your account before logging in.');
-        } else {
-          setError(signUpError.message || 'Registration failed. Please try again.');
-        }
-        setLoading(false);
-        return;
-      }
-
-      if (!authData || !authData.user) {
-        console.error('❌ No user data returned from signUp');
+      // Register new vendor in users table
+      const { data, error: insertError } = await supabase
+        .from('users')
+        .insert([
+          {
+            email: formData.email,
+            full_name: null,
+            phone: formData.phone,
+            company_name: formData.companyName,
+            contact_person: formData.contactPerson,
+            license_number: formData.licenseNumber,
+            address: formData.address,
+            role: 'vendor',
+          }
+        ])
+        .select()
+        .single();
+      if (insertError) {
         setError('Registration failed. Please try again.');
         setLoading(false);
         return;
       }
-
-      console.log('✅ Vendor registration successful! User will be created via trigger.');
-      setSuccess('Registration successful! Please check your email for verification.');
-      
-      // Give the trigger some time to process, then call onSuccess
-      setTimeout(() => {
-        if (onSuccess) {
-          onSuccess(formData.email);
-        }
-      }, 1000);
-      
-    } catch (error: any) {
-      console.error('❌ Registration error:', error);
+      setSuccess('Registration successful!');
+    } catch (error) {
       setError('Registration failed. Please try again.');
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle className="text-center text-2xl font-bold text-gray-800">
-          Join as Vendor
-        </CardTitle>
-        <p className="text-center text-gray-600">
-          Register your solar business and start receiving leads
-        </p>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <VendorRegistrationFormFields 
-            formData={formData}
-            loading={loading}
-            onChange={handleChange}
-            onSelectChange={handleSelectChange}
-          />
-          
-          {error && (
-            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
-            </div>
-          )}
-          
-          {success && (
-            <div className="p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-              {success}
-            </div>
-          )}
-          
-          <Button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition"
-            disabled={loading}
-          >
-            {loading ? 'Registering...' : 'Register'}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+    <div className="bg-[#e6d3b3] p-10 rounded-2xl shadow-xl w-full max-w-2xl animate-fade-in">
+      <h1 className="text-4xl font-extrabold mb-6 text-center text-[#797a83] drop-shadow">Join as Vendor</h1>
+      <p className="text-[#4f4f56] mb-8 text-center">Register your solar business and start receiving leads</p>
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <VendorRegistrationFormFields 
+          formData={formData}
+          loading={loading}
+          onChange={handleChange}
+          onSelectChange={handleSelectChange}
+        />
+        
+        <RegistrationMessages error={error} success={success} />
+        
+        <Button
+          type="submit"
+          className="w-full bg-[#797a83] text-white py-3 rounded-lg font-bold hover:bg-[#4f4f56] shadow-md transition"
+          disabled={loading}
+        >
+          {loading ? 'Registering...' : 'Register'}
+        </Button>
+      </form>
+    </div>
   );
 }

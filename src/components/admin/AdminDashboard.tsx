@@ -12,8 +12,6 @@ import RequirementsManagement from './RequirementsManagement';
 import { Users, Image, Database, Settings, Activity, TrendingUp, FileText } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  
   // Simple state objects to avoid TypeScript recursion issues
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -29,9 +27,9 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      // Fetch total users count
-      const { count: usersCount } = await supabase
-        .from('users')
+      // Fetch user profiles count
+      const { count: profilesCount } = await supabase
+        .from('profiles')
         .select('*', { count: 'exact', head: true });
 
       // Fetch customer count
@@ -48,7 +46,7 @@ const AdminDashboard = () => {
 
       // Fetch admin count
       const { count: adminsCount } = await supabase
-        .from('users')
+        .from('user_roles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'admin');
 
@@ -73,7 +71,7 @@ const AdminDashboard = () => {
         .select('*', { count: 'exact', head: true });
 
       setStats({
-        totalUsers: usersCount || 0,
+        totalUsers: profilesCount || 0,
         totalHeroImages: heroImagesCount || 0,
         totalBlogs: blogsCount || 0,
         totalCustomers: customersCount || 0,
@@ -181,7 +179,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Admin Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">
             <Database className="w-4 h-4 mr-2" />

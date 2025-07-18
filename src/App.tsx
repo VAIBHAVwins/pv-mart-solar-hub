@@ -29,8 +29,6 @@ import VendorForgotPassword from "./pages/vendor/ForgotPassword";
 import AdminDashboard from "./pages/admin/Dashboard";
 import BannerDashboard from "./pages/admin/BannerDashboard";
 import NotFound from "./pages/NotFound";
-import MyQuotations from './pages/vendor/MyQuotations';
-import QuotationDetail from './pages/vendor/QuotationDetail';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,8 +73,6 @@ function App() {
               <Route path="/vendor/supabase-quotation" element={<VendorSupabaseQuotationForm />} />
               <Route path="/vendor/reset-password" element={<VendorResetPassword />} />
               <Route path="/vendor/forgot-password" element={<VendorForgotPassword />} />
-              <Route path="/vendor/my-quotations" element={<MyQuotations />} />
-              <Route path="/vendor/my-quotations/:id" element={<QuotationDetail />} />
               
               {/* Admin Routes */}
               <Route path="/admin/dashboard" element={<AdminDashboard />} />

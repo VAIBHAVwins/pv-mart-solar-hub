@@ -2,6 +2,8 @@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useState, useEffect } from 'react';
+import { locationData } from '@/lib/locationData';
 
 interface VendorRegistrationFormData {
   companyName: string;
@@ -25,8 +27,25 @@ interface VendorRegistrationFormFieldsProps {
 }
 
 const VendorRegistrationFormFields = ({ formData, loading, onChange, onSelectChange }: VendorRegistrationFormFieldsProps) => {
+  const [states, setStates] = useState<string[]>([]);
+  const [districts, setDistricts] = useState<string[]>([]);
+  const [selectedState, setSelectedState] = useState<string>('');
+
+  useEffect(() => {
+    setStates(Object.keys(locationData));
+  }, []);
+
+  useEffect(() => {
+    if (selectedState && locationData[selectedState]) {
+      setDistricts(locationData[selectedState]);
+    } else {
+      setDistricts([]);
+    }
+  }, [selectedState]);
+
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    // Create a synthetic input event for the parent handler
     const syntheticEvent = {
       target: { name, value }
     } as React.ChangeEvent<HTMLInputElement>;
@@ -127,8 +146,8 @@ const VendorRegistrationFormFields = ({ formData, loading, onChange, onSelectCha
             <SelectValue placeholder="Select option" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="YES">YES</SelectItem>
-            <SelectItem value="NO">NO</SelectItem>
+            <SelectItem value="yes">YES</SelectItem>
+            <SelectItem value="no">NO</SelectItem>
           </SelectContent>
         </Select>
       </div>

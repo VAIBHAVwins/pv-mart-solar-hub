@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,16 +46,13 @@ const CustomerManagement = () => {
     setEditingCustomer(customer);
     setEditForm({ ...customer });
   };
-  
   const closeEdit = () => {
     setEditingCustomer(null);
     setEditForm({});
   };
-  
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
-  
   const saveEdit = async () => {
     if (!editingCustomer) return;
     setEditLoading(true);
@@ -140,4 +136,4 @@ const CustomerManagement = () => {
   );
 };
 
-export default CustomerManagement;
+export default CustomerManagement; 
