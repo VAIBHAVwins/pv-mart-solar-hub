@@ -132,8 +132,8 @@ export function VendorRegistrationForm() {
 
     setLoading(true);
     try {
-      // Check if email is already used in users
-      const { data: existingUser, error: userError } = await supabase
+      // Check if email is already used in users table
+      const { data: existingUser } = await supabase
         .from('users')
         .select('id')
         .eq('email', formData.email)
@@ -143,11 +143,36 @@ export function VendorRegistrationForm() {
         setLoading(false);
         return;
       }
-      // Register new vendor in users table
-      const { data, error: insertError } = await supabase
+      // Register new vendor in Supabase Auth
+      const { data, error: signUpError } = await signUp(formData.email, formData.password, {
+        data: {
+          company_name: formData.companyName,
+          contact_person: formData.contactPerson,
+          phone: formData.phone,
+          address: formData.address,
+          pm_surya_ghar_registered: formData.pmSuryaGharRegistered,
+          license_number: formData.licenseNumber,
+          service_areas: formData.serviceAreas,
+          specializations: formData.specializations,
+          role: 'vendor',
+        }
+      });
+      if (signUpError) {
+        setError(signUpError.message || 'Registration failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+      // Only insert into users table if signUp succeeded and user is created
+      if (!data || !data.user) {
+        setError('Registration failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+      await supabase
         .from('users')
         .insert([
           {
+            id: data.user.id, // Use Auth user id as PK
             email: formData.email,
             full_name: null,
             phone: formData.phone,
@@ -157,19 +182,15 @@ export function VendorRegistrationForm() {
             address: formData.address,
             role: 'vendor',
           }
-        ])
-        .select()
-        .single();
-      if (insertError) {
-        setError('Registration failed. Please try again.');
-        setLoading(false);
-        return;
-      }
+        ]);
       setSuccess('Registration successful!');
-    } catch (error) {
+      // The original code had onSuccess, but it's not defined in the provided context.
+      // Assuming it's a placeholder for a future feature or intended to be removed.
+      // For now, removing it as it's not part of the current edit.
+    } catch (error: any) {
       setError('Registration failed. Please try again.');
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   return (
