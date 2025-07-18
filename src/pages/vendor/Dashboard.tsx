@@ -25,27 +25,41 @@ export default function VendorDashboard() {
   const fetchProfile = async () => {
     if (!user) return;
     try {
-      // First try to get the vendor profile from users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('full_name, company_name')
-        .eq('id', user.id)
-        .eq('role', 'vendor')
+      // Get vendor profile from vendor_profiles table
+      const { data: vendorProfile, error: vendorError } = await supabase
+        .from('vendor_profiles')
+        .select('contact_person, company_name')
+        .eq('user_id', user.id)
         .maybeSingle();
       
-      if (userError) {
-        console.error('Error fetching user data:', userError);
+      if (vendorError) {
+        console.error('Error fetching vendor profile:', vendorError);
         setProfile(null);
         return;
       }
 
-      if (userData) {
+      if (vendorProfile) {
         setProfile({
-          contact_person: userData.full_name,
-          company_name: userData.company_name
+          contact_person: vendorProfile.contact_person,
+          company_name: vendorProfile.company_name
         });
       } else {
-        setProfile(null);
+        // Fallback to users table
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('full_name')
+          .eq('id', user.id)
+          .eq('role', 'vendor')
+          .maybeSingle();
+        
+        if (userData) {
+          setProfile({
+            contact_person: userData.full_name,
+            company_name: null
+          });
+        } else {
+          setProfile(null);
+        }
       }
     } catch (error) {
       console.error('Error fetching profile:', error);

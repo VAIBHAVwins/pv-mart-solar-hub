@@ -1,10 +1,12 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { validation, sanitize, validationMessages } from '@/lib/validation';
 import { Button } from '@/components/ui/button';
 import { RegistrationFormFields } from './RegistrationFormFields';
 import { RegistrationMessages } from './RegistrationMessages';
+import { SuccessPopup } from '@/components/auth/SuccessPopup';
 
 interface RegistrationFormData {
   name: string;
@@ -15,11 +17,12 @@ interface RegistrationFormData {
 }
 
 interface RegistrationFormProps {
-  onSuccess: (email: string) => void;
+  onSuccess?: (email: string) => void;
 }
 
 export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   const { signUp } = useSupabaseAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState<RegistrationFormData>({ 
     name: '', 
     email: '', 
@@ -30,6 +33,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -99,11 +103,16 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
     setLoading(true);
     try {
+      const redirectUrl = `${window.location.origin}/customer/dashboard`;
+      
       const { data, error: signUpError } = await signUp(form.email, form.password, {
         data: {
           full_name: form.name,
           phone: form.phone,
           role: 'customer'
+        },
+        options: {
+          emailRedirectTo: redirectUrl
         }
       });
 
@@ -114,8 +123,15 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       }
 
       if (data?.user) {
-        setSuccess('Registration successful! Please check your email for verification.');
-        onSuccess(form.email);
+        if (onSuccess) {
+          onSuccess(form.email);
+        } else {
+          setShowSuccessPopup(true);
+          // Auto redirect after 30 seconds
+          setTimeout(() => {
+            navigate('/');
+          }, 30000);
+        }
       }
     } catch (error) {
       setError('Registration failed. Please try again.');
@@ -123,6 +139,16 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       setLoading(false);
     }
   };
+
+  if (showSuccessPopup) {
+    return (
+      <SuccessPopup
+        email={form.email}
+        userType="customer"
+        onClose={() => navigate('/')}
+      />
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
@@ -145,7 +171,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           className="w-full bg-[#fecb00] hover:bg-[#f8b200] text-[#190a02] font-semibold"
           disabled={loading}
         >
-          {loading ? 'Creating Account...' : 'Create Account'}
+          {loading ? 'Registering...' : 'Register'}
         </Button>
       </form>
 

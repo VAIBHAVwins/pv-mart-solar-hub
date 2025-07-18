@@ -8,7 +8,7 @@ interface SupabaseAuthContextType {
   session: Session | null;
   loading: boolean;
   userRole: string | null;
-  signUp: (email: string, password: string, options?: { data?: any }) => Promise<{ data: any; error: any }>;
+  signUp: (email: string, password: string, options?: { data?: any; options?: any }) => Promise<{ data: any; error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
@@ -31,14 +31,14 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user role
+          // Fetch user role with delay to allow trigger to complete
           setTimeout(async () => {
             try {
               const { data: userData } = await supabase
                 .from('users')
                 .select('role')
                 .eq('id', session.user.id)
-                .single();
+                .maybeSingle();
               
               if (userData) {
                 setUserRole(userData.role);
@@ -47,7 +47,7 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
             } catch (error) {
               console.error('Error fetching user role:', error);
             }
-          }, 0);
+          }, 1000); // Give time for the trigger to complete
         } else {
           setUserRole(null);
           localStorage.removeItem('userRole');
@@ -69,6 +69,24 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
         if (cachedRole) {
           setUserRole(cachedRole);
         }
+        
+        // Also fetch from database
+        setTimeout(async () => {
+          try {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('role')
+              .eq('id', session.user.id)
+              .maybeSingle();
+            
+            if (userData) {
+              setUserRole(userData.role);
+              localStorage.setItem('userRole', userData.role);
+            }
+          } catch (error) {
+            console.error('Error fetching user role:', error);
+          }
+        }, 500);
       }
       
       setLoading(false);
@@ -77,8 +95,8 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, options?: { data?: any }) => {
-    const redirectUrl = `${window.location.origin}/`;
+  const signUp = async (email: string, password: string, options?: { data?: any; options?: any }) => {
+    const redirectUrl = options?.options?.emailRedirectTo || `${window.location.origin}/`;
     
     const { data, error } = await supabase.auth.signUp({
       email,

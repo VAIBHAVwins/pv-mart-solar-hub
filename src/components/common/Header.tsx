@@ -41,12 +41,12 @@ const Header = () => {
     navigate('/');
   };
 
-  const handleDashboardClick = () => {
-    if (userRole === 'customer') {
-      navigate('/customer/dashboard');
-    } else if (userRole === 'vendor') {
-      navigate('/vendor/dashboard');
-    }
+  const handleCustomerDashboardClick = () => {
+    navigate('/customer/dashboard');
+  };
+
+  const handleVendorDashboardClick = () => {
+    navigate('/vendor/dashboard');
   };
 
   return (
@@ -61,12 +61,22 @@ const Header = () => {
             <Navigation getLinkClasses={getLinkClasses} />
             
             <div className="flex items-center space-x-4">
-              {user && userRole && (
+              {/* Dashboard buttons - only visible when logged in */}
+              {user && userRole === 'customer' && (
                 <button
-                  onClick={handleDashboardClick}
-                  className="hidden lg:block solar-button-outline px-4 py-2 text-sm"
+                  onClick={handleCustomerDashboardClick}
+                  className="hidden lg:block solar-button-outline px-4 py-2 text-sm font-semibold"
                 >
-                  {userRole === 'customer' ? 'Customer Dashboard' : 'Vendor Dashboard'}
+                  Customer Dashboard
+                </button>
+              )}
+              
+              {user && userRole === 'vendor' && (
+                <button
+                  onClick={handleVendorDashboardClick}
+                  className="hidden lg:block solar-button-outline px-4 py-2 text-sm font-semibold"
+                >
+                  Vendor Dashboard
                 </button>
               )}
               
@@ -91,7 +101,8 @@ const Header = () => {
             user={user}
             userType={userRole}
             handleLogout={handleLogout}
-            handleDashboardClick={handleDashboardClick}
+            handleCustomerDashboardClick={handleCustomerDashboardClick}
+            handleVendorDashboardClick={handleVendorDashboardClick}
           />
         </div>
       </header>

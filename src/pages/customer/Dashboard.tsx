@@ -30,7 +30,7 @@ export default function CustomerDashboard() {
         .select('full_name')
         .eq('id', user.id)
         .eq('role', 'customer')
-        .single();
+        .maybeSingle();
       setProfile(data);
     } catch (error) {
       console.error('Error fetching profile:', error);

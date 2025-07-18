@@ -1,10 +1,12 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { validation, sanitize, validationMessages } from '@/lib/validation';
 import { Button } from '@/components/ui/button';
 import VendorRegistrationFormFields from './VendorRegistrationFormFields';
 import { RegistrationMessages } from '@/components/customer/RegistrationMessages';
+import { SuccessPopup } from '@/components/auth/SuccessPopup';
 
 interface VendorRegistrationFormData {
   companyName: string;
@@ -22,6 +24,7 @@ interface VendorRegistrationFormData {
 
 export function VendorRegistrationForm() {
   const { signUp } = useSupabaseAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<VendorRegistrationFormData>({
     companyName: '',
     contactPerson: '',
@@ -38,6 +41,7 @@ export function VendorRegistrationForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -130,17 +134,23 @@ export function VendorRegistrationForm() {
 
     setLoading(true);
     try {
+      const redirectUrl = `${window.location.origin}/vendor/dashboard`;
+      
       const { data, error: signUpError } = await signUp(formData.email, formData.password, {
         data: {
+          full_name: formData.contactPerson,
+          phone: formData.phone,
+          role: 'vendor',
           company_name: formData.companyName,
           contact_person: formData.contactPerson,
-          phone: formData.phone,
-          address: formData.address,
-          pm_surya_ghar_registered: formData.pmSuryaGharRegistered,
           license_number: formData.licenseNumber,
+          address: formData.address,
           service_areas: formData.serviceAreas,
           specializations: formData.specializations,
-          role: 'vendor'
+          pm_surya_ghar_registered: formData.pmSuryaGharRegistered
+        },
+        options: {
+          emailRedirectTo: redirectUrl
         }
       });
 
@@ -151,7 +161,11 @@ export function VendorRegistrationForm() {
       }
 
       if (data?.user) {
-        setSuccess('Registration successful! Please check your email for verification.');
+        setShowSuccessPopup(true);
+        // Auto redirect after 30 seconds
+        setTimeout(() => {
+          navigate('/');
+        }, 30000);
       }
     } catch (error: any) {
       setError('Registration failed. Please try again.');
@@ -159,6 +173,16 @@ export function VendorRegistrationForm() {
       setLoading(false);
     }
   };
+
+  if (showSuccessPopup) {
+    return (
+      <SuccessPopup
+        email={formData.email}
+        userType="vendor"
+        onClose={() => navigate('/')}
+      />
+    );
+  }
 
   return (
     <div className="bg-[#e6d3b3] p-10 rounded-2xl shadow-xl w-full max-w-2xl animate-fade-in">

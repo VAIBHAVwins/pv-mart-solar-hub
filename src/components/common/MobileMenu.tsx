@@ -6,10 +6,11 @@ interface MobileMenuProps {
   isMenuOpen: boolean;
   setIsMenuOpen: (open: boolean) => void;
   getLinkClasses: () => string;
-  user: { email?: string; id?: string } | null;
-  userType?: string | null;
+  user: any;
+  userType: string | null;
   handleLogout: () => void;
-  handleDashboardClick: () => void;
+  handleCustomerDashboardClick: () => void;
+  handleVendorDashboardClick: () => void;
 }
 
 const MobileMenu = ({ 
@@ -17,99 +18,100 @@ const MobileMenu = ({
   setIsMenuOpen, 
   getLinkClasses, 
   user, 
-  userType,
+  userType, 
   handleLogout,
-  handleDashboardClick
+  handleCustomerDashboardClick,
+  handleVendorDashboardClick
 }: MobileMenuProps) => {
   if (!isMenuOpen) return null;
 
   return (
-    <div className="lg:hidden py-4 border-t border-gray-200 animate-fade-in">
-      <nav className="flex flex-col space-y-4">
-        <Link 
-          to="/" 
-          className={getLinkClasses()}
-          onClick={() => setIsMenuOpen(false)}
-        >
-          Home
-        </Link>
-        <Link 
-          to="/about" 
-          className={getLinkClasses()}
-          onClick={() => setIsMenuOpen(false)}
-        >
-          About
-        </Link>
-        <Link 
-          to="/blogs" 
-          className={getLinkClasses()}
-          onClick={() => setIsMenuOpen(false)}
-        >
-          Blogs
-        </Link>
-        <Link 
-          to="/contact" 
-          className={getLinkClasses()}
-          onClick={() => setIsMenuOpen(false)}
-        >
-          Contact
-        </Link>
-        <Link 
-          to="/game" 
-          className={getLinkClasses()}
-          onClick={() => setIsMenuOpen(false)}
-        >
-          Game
-        </Link>
-        
-        <div className="pt-4 border-t border-gray-200">
-          {!user ? (
-            <div className="flex flex-col space-y-3">
-              <Link to="/customer/login">
-                <Button 
-                  className="w-full solar-button-outline"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Customer Login
+    <div className="lg:hidden absolute top-full left-0 right-0 bg-white shadow-lg border-t z-40">
+      <div className="container-responsive py-4">
+        <nav className="flex flex-col space-y-4">
+          <Link 
+            to="/" 
+            className={getLinkClasses()}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Home
+          </Link>
+          <Link 
+            to="/about" 
+            className={getLinkClasses()}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            About
+          </Link>
+          <Link 
+            to="/blogs" 
+            className={getLinkClasses()}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Blogs
+          </Link>
+          <Link 
+            to="/contact" 
+            className={getLinkClasses()}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Contact
+          </Link>
+          
+          {/* Dashboard buttons for mobile */}
+          {user && userType === 'customer' && (
+            <button
+              onClick={() => {
+                handleCustomerDashboardClick();
+                setIsMenuOpen(false);
+              }}
+              className="text-left solar-button-outline px-4 py-2 text-sm font-semibold"
+            >
+              Customer Dashboard
+            </button>
+          )}
+          
+          {user && userType === 'vendor' && (
+            <button
+              onClick={() => {
+                handleVendorDashboardClick();
+                setIsMenuOpen(false);
+              }}
+              className="text-left solar-button-outline px-4 py-2 text-sm font-semibold"
+            >
+              Vendor Dashboard
+            </button>
+          )}
+          
+          <div className="pt-4 border-t">
+            {!user ? (
+              <div className="space-y-2">
+                <Button asChild variant="outline" className="w-full solar-button-outline">
+                  <Link to="/customer/login" onClick={() => setIsMenuOpen(false)}>
+                    Customer Login
+                  </Link>
                 </Button>
-              </Link>
-              <Link to="/vendor/login">
-                <Button 
-                  className="w-full solar-button"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Vendor Login
+                <Button asChild variant="default" className="w-full solar-button">
+                  <Link to="/vendor/login" onClick={() => setIsMenuOpen(false)}>
+                    Vendor Login
+                  </Link>
                 </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="flex flex-col space-y-3">
-              {/* Dashboard Button for mobile */}
-              {userType && (
-                <Button 
-                  onClick={() => {
-                    handleDashboardClick();
-                    setIsMenuOpen(false);
-                  }}
-                  className="w-full solar-button-outline"
-                >
-                  {userType === 'customer' ? 'Customer Dashboard' : 'Vendor Dashboard'}
-                </Button>
-              )}
-              
-              <Button 
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full solar-button-outline border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
                 onClick={() => {
                   handleLogout();
                   setIsMenuOpen(false);
-                }} 
-                className="w-full solar-button-outline border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                }}
               >
                 Logout
               </Button>
-            </div>
-          )}
-        </div>
-      </nav>
+            )}
+          </div>
+        </nav>
+      </div>
     </div>
   );
 };
