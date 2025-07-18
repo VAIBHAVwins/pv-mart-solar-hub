@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,72 +11,59 @@ import { Trash2, Edit, Plus, Save, X, UserPlus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Database } from '@/integrations/supabase/types';
 
-type UserRole = Database['public']['Enums']['app_role'];
+type UserRole = Database['public']['Enums']['user_role'];
 
 interface UserProfile {
   id: string;
-  user_id: string;
+  email: string;
   full_name: string | null;
   phone: string | null;
-  company_name: string | null;
-  created_at: string;
-  email?: string;
-  roles?: UserRole[];
-  account_type?: 'customer' | 'vendor' | 'unknown';
-}
-
-interface UserRoleData {
-  id: string;
-  user_id: string;
   role: UserRole;
+  is_active: boolean;
+  email_verified: boolean;
   created_at: string;
+  company_name?: string;
+  contact_person?: string;
 }
 
 const UserManagement = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [roles, setRoles] = useState<UserRoleData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const { user } = useSupabaseAuth();
 
-  // Fetch users and their roles
+  // Fetch users and their profiles
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
+      // Fetch users
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (usersError) throw usersError;
 
-      // Fetch roles
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('*');
+      // Fetch vendor profiles for company info
+      const { data: vendorProfiles, error: vendorError } = await supabase
+        .from('vendor_profiles')
+        .select('user_id, company_name, contact_person');
 
-      if (rolesError) throw rolesError;
+      if (vendorError) console.warn('Error fetching vendor profiles:', vendorError);
 
-      // Combine profiles with roles and account type
-      const usersWithRoles = profiles?.map(profile => {
-        const profileRoles = userRoles?.filter(role => role.user_id === profile.user_id).map(role => role.role) || [];
-        
-        // Determine account type
-        let accountType: 'customer' | 'vendor' | 'unknown' = 'unknown';
-        // (Remove all code that fetches from 'customers' and 'vendors' tables)
-
+      // Combine users with vendor profile data
+      const usersWithProfiles = usersData?.map(user => {
+        const vendorProfile = vendorProfiles?.find(vp => vp.user_id === user.id);
         return {
-          ...profile,
-          roles: profileRoles,
-          account_type: accountType
+          ...user,
+          company_name: vendorProfile?.company_name,
+          contact_person: vendorProfile?.contact_person
         };
       }) || [];
 
-      setUsers(usersWithRoles);
-      setRoles(userRoles || []);
+      setUsers(usersWithProfiles);
     } catch (err) {
       console.error('Error fetching users:', err);
       setError('Failed to load users');
@@ -88,18 +76,7 @@ const UserManagement = () => {
     fetchUsers();
   }, []);
 
-  // Temporary bypass for testing - comment out the user check
-  // if (!user) {
-  //   return (
-  //     <Card>
-  //       <CardContent className="p-6">
-  //         <p className="text-center text-gray-600">Please log in to manage users.</p>
-  //       </CardContent>
-  //     </Card>
-  //   );
-  // }
-
-  // Temporary debug info
+  // Temporary bypass for testing
   console.log('UserManagement - user:', user);
   console.log('UserManagement - bypassing user check for testing');
 
@@ -132,10 +109,11 @@ const UserManagement = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Account Type</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Company</TableHead>
-                  <TableHead>Roles</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -143,50 +121,46 @@ const UserManagement = () => {
                 {users.map((userProfile) => (
                   <TableRow key={userProfile.id}>
                     <TableCell className="font-medium">
-                      {editingUserId === userProfile.user_id ? (
+                      {editingUserId === userProfile.id ? (
                         <Input
                           defaultValue={userProfile.full_name || ''}
                           className="w-full"
-                          onBlur={(e) => updateUserProfile(userProfile.user_id, { full_name: e.target.value })}
+                          onBlur={(e) => updateUser(userProfile.id, { full_name: e.target.value })}
                         />
                       ) : (
                         userProfile.full_name || 'N/A'
                       )}
                     </TableCell>
+                    <TableCell>{userProfile.email}</TableCell>
+                    <TableCell>{userProfile.phone || 'N/A'}</TableCell>
                     <TableCell>
-                      <Badge variant={userProfile.account_type === 'vendor' ? 'secondary' : userProfile.account_type === 'customer' ? 'default' : 'outline'}>
-                        {userProfile.account_type || 'unknown'}
+                      <Badge variant={userProfile.role === 'admin' ? 'destructive' : userProfile.role === 'vendor' ? 'secondary' : 'default'}>
+                        {userProfile.role}
                       </Badge>
                     </TableCell>
-                    <TableCell>{userProfile.phone || 'N/A'}</TableCell>
-                    <TableCell>{userProfile.company_name || 'N/A'}</TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {userProfile.roles?.map((role) => (
-                          <Badge key={role} variant="outline" className="text-xs">
-                            {role}
-                            <button
-                              onClick={() => removeRole(userProfile.user_id, role)}
-                              className="ml-1 text-red-500 hover:text-red-700"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
+                      <Badge variant={userProfile.is_active ? 'default' : 'outline'}>
+                        {userProfile.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                      {userProfile.email_verified && (
+                        <Badge variant="outline" className="ml-1 text-xs">
+                          Verified
+                        </Badge>
+                      )}
                     </TableCell>
+                    <TableCell>{userProfile.company_name || 'N/A'}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => setEditingUserId(editingUserId === userProfile.user_id ? null : userProfile.user_id)}
+                          onClick={() => setEditingUserId(editingUserId === userProfile.id ? null : userProfile.id)}
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Select onValueChange={(role) => assignRole(userProfile.user_id, role)}>
+                        <Select onValueChange={(role) => updateUserRole(userProfile.id, role)}>
                           <SelectTrigger className="w-32">
-                            <SelectValue placeholder="Add Role" />
+                            <SelectValue placeholder="Change Role" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="admin">Admin</SelectItem>
@@ -212,76 +186,45 @@ const UserManagement = () => {
     </div>
   );
 
-  // Assign role to user
-  async function assignRole(userId: string, role: string) {
+  // Update user role
+  async function updateUserRole(userId: string, role: string) {
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
       const { error } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: role as UserRole
-        });
-
-      if (error && !error.message.includes('duplicate')) {
-        throw error;
-      }
-
-      setSuccess(`Role ${role} assigned successfully!`);
-      fetchUsers();
-    } catch (err: any) {
-      console.error('Error assigning role:', err);
-      setError(err.message || 'Failed to assign role');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Remove role from user
-  async function removeRole(userId: string, role: UserRole) {
-    if (!confirm(`Are you sure you want to remove the ${role} role from this user?`)) return;
-
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const { error } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId)
-        .eq('role', role);
+        .from('users')
+        .update({ role: role as UserRole })
+        .eq('id', userId);
 
       if (error) throw error;
 
-      setSuccess(`Role ${role} removed successfully!`);
+      setSuccess(`Role updated to ${role} successfully!`);
       fetchUsers();
     } catch (err: any) {
-      console.error('Error removing role:', err);
-      setError(err.message || 'Failed to remove role');
+      console.error('Error updating role:', err);
+      setError(err.message || 'Failed to update role');
     } finally {
       setLoading(false);
     }
   }
 
   // Update user profile
-  async function updateUserProfile(userId: string, updates: Partial<UserProfile>) {
+  async function updateUser(userId: string, updates: Partial<UserProfile>) {
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from('users')
         .update(updates)
-        .eq('user_id', userId);
+        .eq('id', userId);
 
       if (error) throw error;
 
-      setSuccess('User profile updated successfully!');
+      setSuccess('User updated successfully!');
       setEditingUserId(null);
       fetchUsers();
     } catch (err: any) {

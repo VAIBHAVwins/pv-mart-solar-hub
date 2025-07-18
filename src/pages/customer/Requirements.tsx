@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,9 +54,9 @@ const CustomerRequirements = () => {
     if (!user) return;
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('users')
         .select('full_name')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
       
       if (error) {
@@ -246,7 +245,7 @@ const CustomerRequirements = () => {
                 <Input
                   id="rooftopArea"
                   name="rooftopArea"
-                  type="text" // Allow any value for test
+                  type="text"
                   value={formData.rooftopArea}
                   onChange={handleChange}
                   className="mt-2 border-[#8b4a08] focus:border-[#fecb00]"

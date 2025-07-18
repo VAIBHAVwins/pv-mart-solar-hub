@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export const debugCustomerRegistration = async () => {
@@ -12,16 +13,16 @@ export const debugCustomerRegistration = async () => {
     console.error('Error getting session:', err);
   }
   
-  // Test profiles table access
+  // Test users table access
   try {
-    const { data: profiles, error } = await supabase
-      .from('profiles')
+    const { data: users, error } = await supabase
+      .from('users')
       .select('*')
       .limit(5);
-    console.log('Recent profiles:', profiles);
-    console.log('Profiles error:', error);
+    console.log('Recent users:', users);
+    console.log('Users error:', error);
   } catch (err) {
-    console.error('Error accessing profiles:', err);
+    console.error('Error accessing users:', err);
   }
   
   // Test customer_requirements table access
@@ -56,7 +57,7 @@ export const testCustomerRegistration = async (testData: {
         data: {
           full_name: testData.name,
           phone: testData.phone,
-          user_type: 'customer'
+          role: 'customer'
         }
       }
     });
@@ -66,15 +67,15 @@ export const testCustomerRegistration = async (testData: {
     if (data.user) {
       console.log('User created with ID:', data.user.id);
       
-      // Check if profile was created
+      // Check if user was created in users table
       setTimeout(async () => {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
+        const { data: user, error: userError } = await supabase
+          .from('users')
           .select('*')
-          .eq('user_id', data.user.id)
+          .eq('id', data.user.id)
           .single();
         
-        console.log('Profile check result:', { profile, profileError });
+        console.log('User check result:', { user, userError });
       }, 2000);
     }
     
