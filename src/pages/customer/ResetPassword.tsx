@@ -15,10 +15,8 @@ export default function CustomerResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if this is a password reset session
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
-        // User is in password recovery mode
         console.log('Password recovery session detected');
       }
     });
@@ -63,8 +61,10 @@ export default function CustomerResetPassword() {
             <h1 className="text-3xl font-bold text-licorice mb-2">Set New Password</h1>
             <p className="text-brown">Enter your new password below</p>
           </div>
+          
           <form onSubmit={handleSubmit} className="space-y-6">
-            {error && <div className="text-red-600 font-semibold text-center">{error}</div>}
+            {error && <div className="text-red-600 font-semibold text-center p-3 bg-red-50 rounded">{error}</div>}
+            
             <div>
               <Label htmlFor="password" className="text-licorice">New Password</Label>
               <Input
@@ -75,8 +75,10 @@ export default function CustomerResetPassword() {
                 className="mt-1 border-brown focus:border-licorice"
                 placeholder="Enter new password"
                 required
+                disabled={loading}
               />
             </div>
+            
             <div>
               <Label htmlFor="confirmPassword" className="text-licorice">Confirm New Password</Label>
               <Input
@@ -87,9 +89,15 @@ export default function CustomerResetPassword() {
                 className="mt-1 border-brown focus:border-licorice"
                 placeholder="Confirm new password"
                 required
+                disabled={loading}
               />
             </div>
-            <Button type="submit" className="w-full bg-brown hover:bg-licorice text-white font-semibold" disabled={loading}>
+            
+            <Button 
+              type="submit" 
+              className="w-full bg-brown hover:bg-licorice text-white font-semibold" 
+              disabled={loading}
+            >
               {loading ? 'Updating...' : 'Update Password'}
             </Button>
           </form>

@@ -9,7 +9,7 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const CustomerLogin = () => {
-  const { signIn, user } = useSupabaseAuth();
+  const { signIn, user, userRole } = useSupabaseAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -19,23 +19,19 @@ const CustomerLogin = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      // Check if user came from installation flow
+    if (user && userRole === 'customer') {
       const installationType = sessionStorage.getItem('selectedInstallationType');
       const gridType = sessionStorage.getItem('selectedGridType');
       
       if (installationType && gridType) {
-        // Clear the session storage
         sessionStorage.removeItem('selectedInstallationType');
         sessionStorage.removeItem('selectedGridType');
-        // Redirect to requirements form
         navigate('/customer/requirements');
       } else {
-        // Regular login, go to dashboard
         navigate('/customer/dashboard');
       }
     }
-  }, [user, navigate]);
+  }, [user, userRole, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -51,20 +47,34 @@ const CustomerLogin = () => {
     setLoading(true);
 
     try {
-      // Check if email exists in users table and get role
-      const { data: userEntry } = await supabase.from('users').select('email, role').eq('email', formData.email).single();
+      // First verify the user exists and is a customer
+      const { data: userEntry } = await supabase
+        .from('users')
+        .select('email, role, is_active')
+        .eq('email', formData.email)
+        .single();
+
       if (!userEntry) {
-        setError('Failed to login. Please check your credentials or create account.');
+        setError('No account found with this email. Please create an account first.');
         setLoading(false);
         return;
       }
+
       if (userEntry.role !== 'customer') {
-        setError('This email ID is registered as a vendor. Please perform vendor login.');
+        setError('This email is registered as a vendor. Please use the vendor login page.');
         setLoading(false);
         return;
       }
-      // Only proceed if customer exists
+
+      if (!userEntry.is_active) {
+        setError('Your account has been deactivated. Please contact support.');
+        setLoading(false);
+        return;
+      }
+
+      // Proceed with login
       const { error: signInError } = await signIn(formData.email, formData.password);
+      
       if (signInError) {
         if (signInError.message.includes('Invalid login credentials')) {
           setError('Invalid email or password. Please check your credentials.');
@@ -73,20 +83,11 @@ const CustomerLogin = () => {
         } else {
           setError(`Login failed: ${signInError.message}`);
         }
-        await supabase.auth.signOut(); // Ensure no partial login state
         setLoading(false);
         return;
       }
-      // After sign in, check user role
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      const { data: customerCheck } = await supabase.from('users').select('id, role').eq('id', userId).eq('role', 'customer').single();
-      if (!customerCheck) {
-        setError('No customer account found for this email.');
-        await supabase.auth.signOut(); // Ensure no partial login state
-        setLoading(false);
-        return;
-      }
-      navigate('/customer/dashboard');
+
+      // Login successful - navigation will be handled by useEffect
     } catch (error) {
       setError('Failed to login. Please check your credentials.');
       console.error('Login error:', error);
@@ -101,6 +102,7 @@ const CustomerLogin = () => {
         <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
           <h1 className="text-4xl font-extrabold mb-6 text-center text-licorice drop-shadow">Customer Login</h1>
           <p className="text-brown mb-8 text-center">Login to access your solar dashboard</p>
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <Label htmlFor="email" className="text-licorice">Email Address</Label>
@@ -113,8 +115,10 @@ const CustomerLogin = () => {
                 className="mt-1 border-brown focus:border-licorice"
                 placeholder="Enter your email"
                 required
+                disabled={loading}
               />
             </div>
+            
             <div>
               <Label htmlFor="password" className="text-licorice">Password</Label>
               <Input
@@ -126,9 +130,12 @@ const CustomerLogin = () => {
                 className="mt-1 border-brown focus:border-licorice"
                 placeholder="Enter your password"
                 required
+                disabled={loading}
               />
             </div>
-            {error && <div className="text-red-600 font-semibold text-center">{error}</div>}
+            
+            {error && <div className="text-red-600 font-semibold text-center p-3 bg-red-50 rounded">{error}</div>}
+            
             <Button
               type="submit"
               className="w-full bg-brown text-white py-3 rounded-lg font-bold hover:bg-licorice shadow-md transition"
@@ -137,18 +144,18 @@ const CustomerLogin = () => {
               {loading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
-          <div className="mt-6 text-center">
-            <p className="text-brown mb-2">
+          
+          <div className="mt-6 text-center space-y-2">
+            <p className="text-brown">
               Don't have an account?{' '}
               <Link to="/customer/register" className="text-licorice hover:underline font-semibold">
                 Create Account
               </Link>
             </p>
-            <Link to="/customer/forgot-password" className="text-brown hover:underline">
+            <Link to="/customer/forgot-password" className="text-brown hover:underline block">
               Forgot your password?
             </Link>
-            <br />
-            <Link to="/" className="text-brown hover:underline">
+            <Link to="/" className="text-brown hover:underline block">
               ← Back to Home
             </Link>
           </div>

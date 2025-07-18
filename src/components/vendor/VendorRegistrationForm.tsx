@@ -5,7 +5,6 @@ import { validation, sanitize, validationMessages } from '@/lib/validation';
 import { Button } from '@/components/ui/button';
 import VendorRegistrationFormFields from './VendorRegistrationFormFields';
 import { RegistrationMessages } from '@/components/customer/RegistrationMessages';
-import { supabase } from '@/integrations/supabase/client';
 
 interface VendorRegistrationFormData {
   companyName: string;
@@ -50,8 +49,7 @@ export function VendorRegistrationForm() {
       'address', 'serviceAreas', 'specializations',
       'companyName', 'contactPerson', 'email', 'licenseNumber'
     ].includes(name)) {
-      // Allow spaces anywhere, do not trim
-      sanitizedValue = value.slice(0, 1000); // Only limit length
+      sanitizedValue = value.slice(0, 1000);
     } else {
       sanitizedValue = sanitize.text(value);
     }
@@ -132,18 +130,6 @@ export function VendorRegistrationForm() {
 
     setLoading(true);
     try {
-      // Check if email is already used in users table
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', formData.email)
-        .single();
-      if (existingUser) {
-        setError('This email is already registered. Please use a different email.');
-        setLoading(false);
-        return;
-      }
-      // Register new vendor in Supabase Auth
       const { data, error: signUpError } = await signUp(formData.email, formData.password, {
         data: {
           company_name: formData.companyName,
@@ -154,43 +140,24 @@ export function VendorRegistrationForm() {
           license_number: formData.licenseNumber,
           service_areas: formData.serviceAreas,
           specializations: formData.specializations,
-          role: 'vendor',
+          role: 'vendor'
         }
       });
+
       if (signUpError) {
         setError(signUpError.message || 'Registration failed. Please try again.');
         setLoading(false);
         return;
       }
-      // Only insert into users table if signUp succeeded and user is created
-      if (!data || !data.user) {
-        setError('Registration failed. Please try again.');
-        setLoading(false);
-        return;
+
+      if (data?.user) {
+        setSuccess('Registration successful! Please check your email for verification.');
       }
-      await supabase
-        .from('users')
-        .insert([
-          {
-            id: data.user.id, // Use Auth user id as PK
-            email: formData.email,
-            full_name: null,
-            phone: formData.phone,
-            company_name: formData.companyName,
-            contact_person: formData.contactPerson,
-            license_number: formData.licenseNumber,
-            address: formData.address,
-            role: 'vendor',
-          }
-        ]);
-      setSuccess('Registration successful!');
-      // The original code had onSuccess, but it's not defined in the provided context.
-      // Assuming it's a placeholder for a future feature or intended to be removed.
-      // For now, removing it as it's not part of the current edit.
     } catch (error: any) {
       setError('Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

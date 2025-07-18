@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,9 +7,11 @@ interface SupabaseAuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  userRole: string | null;
   signUp: (email: string, password: string, options?: { data?: any }) => Promise<{ data: any; error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
 }
 
 const SupabaseAuthContext = createContext<SupabaseAuthContextType | undefined>(undefined);
@@ -17,14 +20,39 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event, session);
         setSession(session);
         setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Fetch user role
+          setTimeout(async () => {
+            try {
+              const { data: userData } = await supabase
+                .from('users')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+              
+              if (userData) {
+                setUserRole(userData.role);
+                localStorage.setItem('userRole', userData.role);
+              }
+            } catch (error) {
+              console.error('Error fetching user role:', error);
+            }
+          }, 0);
+        } else {
+          setUserRole(null);
+          localStorage.removeItem('userRole');
+        }
+        
         setLoading(false);
       }
     );
@@ -34,6 +62,15 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('Initial session:', session);
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        // Get user role from localStorage for immediate access
+        const cachedRole = localStorage.getItem('userRole');
+        if (cachedRole) {
+          setUserRole(cachedRole);
+        }
+      }
+      
       setLoading(false);
     });
 
@@ -63,7 +100,16 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    setUserRole(null);
+    localStorage.removeItem('userRole');
     await supabase.auth.signOut();
+  };
+
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    });
+    return { error };
   };
 
   return (
@@ -71,9 +117,11 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
       user,
       session,
       loading,
+      userRole,
       signUp,
       signIn,
-      signOut
+      signOut,
+      resetPassword
     }}>
       {children}
     </SupabaseAuthContext.Provider>

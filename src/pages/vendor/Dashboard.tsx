@@ -7,53 +7,48 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function VendorDashboard() {
-  const { user, signOut, loading } = useSupabaseAuth();
+  const { user, signOut, loading, userRole } = useSupabaseAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<{ contact_person?: string; company_name?: string } | null>(null);
-  const [isVendor, setIsVendor] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && (!user || userRole !== 'vendor')) {
       navigate('/vendor/login');
-    } else if (user) {
-      checkVendor();
+      return;
     }
-  }, [user, loading, navigate]);
-
-  const checkVendor = async () => {
-    if (!user) return;
-    const { data: vendor } = await supabase.from('users').select('id, role').eq('id', user.id).eq('role', 'vendor').single();
-    if (!vendor) {
-      await supabase.auth.signOut();
-      navigate('/vendor/login');
-    } else {
-      setIsVendor(true);
-    }
-  };
-
-  useEffect(() => {
-    if (user) {
+    
+    if (user && userRole === 'vendor') {
       fetchProfile();
     }
-  }, [user]);
+  }, [user, loading, userRole, navigate]);
 
   const fetchProfile = async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from('users')
-      .select('contact_person, company_name')
-      .eq('id', user.id)
-      .eq('role', 'vendor')
-      .maybeSingle();
-    if (error) {
-      console.error('Error fetching profile:', error);
-    } else {
+    try {
+      const { data } = await supabase
+        .from('vendor_profiles')
+        .select('contact_person, company_name')
+        .eq('user_id', user.id)
+        .single();
       setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
     }
   };
 
-  if (loading || isVendor === null) return <div className="text-center py-20">Loading...</div>;
-  if (!user || !isVendor) return null;
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">Loading...</div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user || userRole !== 'vendor') {
+    return null;
+  }
 
   const handleQuotationClick = () => {
     window.open('https://docs.google.com/forms/d/e/1FAIpQLSdjkFe1q934yAptp69UlOghFzFwrYrk7IQpOI101axO3M4WXQ/viewform?usp=header', '_blank');
@@ -63,7 +58,6 @@ export default function VendorDashboard() {
     navigate('/vendor/supabase-quotation');
   };
 
-  // Create proper welcome message format
   const getWelcomeMessage = () => {
     if (!profile) return 'Vendor';
     
@@ -112,7 +106,9 @@ export default function VendorDashboard() {
               >
                 Logout
               </Button>
-              <Button variant="outline" className="border-[#797a83] text-[#797a83] hover:bg-[#797a83] hover:text-white" onClick={() => navigate('/')}>Back to Home</Button>
+              <Button variant="outline" className="border-[#797a83] text-[#797a83] hover:bg-[#797a83] hover:text-white" onClick={() => navigate('/')}>
+                Back to Home
+              </Button>
             </div>
           </div>
         </div>

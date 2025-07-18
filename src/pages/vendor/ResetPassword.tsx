@@ -15,10 +15,8 @@ export default function VendorResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if this is a password reset session
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
-        // User is in password recovery mode
         console.log('Password recovery session detected');
       }
     });
@@ -63,8 +61,10 @@ export default function VendorResetPassword() {
             <h1 className="text-3xl font-bold text-[#171a21] mb-2">Set New Password</h1>
             <p className="text-[#4f4f56]">Enter your new password below</p>
           </div>
+          
           <form onSubmit={handleSubmit} className="space-y-6">
-            {error && <div className="text-red-600 font-semibold text-center">{error}</div>}
+            {error && <div className="text-red-600 font-semibold text-center p-3 bg-red-100 rounded">{error}</div>}
+            
             <div>
               <Label htmlFor="password" className="text-[#171a21]">New Password</Label>
               <Input
@@ -75,8 +75,10 @@ export default function VendorResetPassword() {
                 className="mt-1 border-[#b07e66] focus:border-[#797a83]"
                 placeholder="Enter new password"
                 required
+                disabled={loading}
               />
             </div>
+            
             <div>
               <Label htmlFor="confirmPassword" className="text-[#171a21]">Confirm New Password</Label>
               <Input
@@ -87,9 +89,15 @@ export default function VendorResetPassword() {
                 className="mt-1 border-[#b07e66] focus:border-[#797a83]"
                 placeholder="Confirm new password"
                 required
+                disabled={loading}
               />
             </div>
-            <Button type="submit" className="w-full bg-[#797a83] hover:bg-[#4f4f56] text-[#f7f7f6] font-semibold" disabled={loading}>
+            
+            <Button 
+              type="submit" 
+              className="w-full bg-[#797a83] hover:bg-[#4f4f56] text-[#f7f7f6] font-semibold" 
+              disabled={loading}
+            >
               {loading ? 'Updating...' : 'Update Password'}
             </Button>
           </form>

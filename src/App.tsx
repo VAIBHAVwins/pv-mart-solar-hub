@@ -26,14 +26,12 @@ import VendorQuotationSubmission from "./pages/vendor/QuotationSubmission";
 import VendorSupabaseQuotationForm from "./pages/vendor/SupabaseQuotationForm";
 import VendorResetPassword from "./pages/vendor/ResetPassword";
 import VendorForgotPassword from "./pages/vendor/ForgotPassword";
-import AdminDashboard from "./pages/admin/Dashboard";
-import BannerDashboard from "./pages/admin/BannerDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,
       refetchOnWindowFocus: false,
     },
   },
@@ -74,9 +72,8 @@ function App() {
               <Route path="/vendor/reset-password" element={<VendorResetPassword />} />
               <Route path="/vendor/forgot-password" element={<VendorForgotPassword />} />
               
-              {/* Admin Routes */}
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/banners" element={<BannerDashboard />} />
+              {/* Reset Password Routes */}
+              <Route path="/reset-password" element={<CustomerResetPassword />} />
               
               {/* 404 Route */}
               <Route path="*" element={<NotFound />} />

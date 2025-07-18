@@ -5,7 +5,6 @@ import { validation, sanitize, validationMessages } from '@/lib/validation';
 import { Button } from '@/components/ui/button';
 import { RegistrationFormFields } from './RegistrationFormFields';
 import { RegistrationMessages } from './RegistrationMessages';
-import { supabase } from '@/integrations/supabase/client';
 
 interface RegistrationFormData {
   name: string;
@@ -39,8 +38,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
     if (name === 'phone') {
       sanitizedValue = sanitize.phone(value);
     } else if (name === 'name') {
-      // Allow spaces anywhere, do not trim
-      sanitizedValue = value.slice(0, 1000); // Only limit length
+      sanitizedValue = value.slice(0, 1000);
     } else {
       sanitizedValue = sanitize.text(value);
     }
@@ -62,27 +60,27 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       }
     }
 
-    if (!validation.maxLength((form as any).name, 100)) {
+    if (!validation.maxLength(form.name, 100)) {
       setError(validationMessages.maxLength(100));
       return false;
     }
 
-    if (!validation.email((form as any).email)) {
+    if (!validation.email(form.email)) {
       setError(validationMessages.email);
       return false;
     }
 
-    if (!validation.phone((form as any).phone)) {
+    if (!validation.phone(form.phone)) {
       setError(validationMessages.phone);
       return false;
     }
 
-    if (!validation.password((form as any).password)) {
+    if (!validation.password(form.password)) {
       setError(validationMessages.password);
       return false;
     }
 
-    if ((form as any).password !== (form as any).confirmPassword) {
+    if (form.password !== form.confirmPassword) {
       setError(validationMessages.noMatch);
       return false;
     }
@@ -101,43 +99,27 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
     setLoading(true);
     try {
-      // Check if email is already used in users
-      const { data: existingUser, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', form.email)
-        .single();
-      if (existingUser) {
-        setError('This email is already registered. Please use a different email.');
+      const { data, error: signUpError } = await signUp(form.email, form.password, {
+        data: {
+          full_name: form.name,
+          phone: form.phone,
+          role: 'customer'
+        }
+      });
+
+      if (signUpError) {
+        setError(signUpError.message || 'Registration failed. Please try again.');
         setLoading(false);
         return;
       }
-      // Register new customer in users table
-      const { data, error: insertError } = await supabase
-        .from('users')
-        .insert([
-          {
-            email: form.email,
-            full_name: form.name,
-            phone: form.phone,
-            company_name: null,
-            contact_person: null,
-            license_number: null,
-            address: null,
-            role: 'customer',
-          }
-        ])
-        .select()
-        .single();
-      if (insertError) {
-        setError('Registration failed. Please try again.');
-        setLoading(false);
-        return;
+
+      if (data?.user) {
+        setSuccess('Registration successful! Please check your email for verification.');
+        onSuccess(form.email);
       }
-      setSuccess('Registration successful!');
-      onSuccess(form.email);
     } catch (error) {
       setError('Registration failed. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -148,12 +130,6 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         <h1 className="text-3xl font-bold text-[#190a02] mb-2">Customer Registration</h1>
         <p className="text-[#8b4a08]">Create your account to access solar solutions</p>
       </div>
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
 
       <RegistrationMessages error={error} success={success} />
 

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,8 +13,14 @@ const VendorLogin = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signIn } = useSupabaseAuth();
+  const { signIn, user, userRole } = useSupabaseAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && userRole === 'vendor') {
+      navigate('/vendor/dashboard');
+    }
+  }, [user, userRole, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,36 +28,47 @@ const VendorLogin = () => {
     setError('');
 
     try {
-      // Check if email exists in users table and get role
-      const { data: userEntry } = await supabase.from('users').select('email, role').eq('email', email).single();
+      // First verify the user exists and is a vendor
+      const { data: userEntry } = await supabase
+        .from('users')
+        .select('email, role, is_active')
+        .eq('email', email)
+        .single();
+
       if (!userEntry) {
-        setError('Failed to login. Please check your credentials or create account.');
+        setError('No account found with this email. Please create an account first.');
         setLoading(false);
         return;
       }
+
       if (userEntry.role !== 'vendor') {
-        setError('This email ID is registered as a customer. Please perform customer login.');
+        setError('This email is registered as a customer. Please use the customer login page.');
         setLoading(false);
         return;
       }
-      // Only proceed if vendor exists
+
+      if (!userEntry.is_active) {
+        setError('Your account has been deactivated. Please contact support.');
+        setLoading(false);
+        return;
+      }
+
+      // Proceed with login
       const { error: signInError } = await signIn(email, password);
+      
       if (signInError) {
-        setError('Failed to login. Please check your credentials.');
-        await supabase.auth.signOut(); // Ensure no partial login state
+        if (signInError.message.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please check your credentials.');
+        } else if (signInError.message.includes('Email not confirmed')) {
+          setError('Please check your email and click the confirmation link before logging in.');
+        } else {
+          setError(`Login failed: ${signInError.message}`);
+        }
         setLoading(false);
         return;
       }
-      // After sign in, check user role
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      const { data: vendorCheck } = await supabase.from('users').select('id, role').eq('id', userId).eq('role', 'vendor').single();
-      if (!vendorCheck) {
-        setError('No vendor account found for this email.');
-        await supabase.auth.signOut(); // Ensure no partial login state
-        setLoading(false);
-        return;
-      }
-      navigate('/vendor/dashboard');
+
+      // Login successful - navigation will be handled by useEffect
     } catch (error) {
       setError('Failed to login. Please check your credentials.');
       console.error('Login error:', error);
@@ -113,15 +130,18 @@ const VendorLogin = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-[#4f4f56] mb-2">
+          <div className="mt-6 text-center space-y-2">
+            <p className="text-[#4f4f56]">
               Don't have an account?{' '}
               <Link to="/vendor/register" className="text-[#b07e66] hover:underline font-semibold">
                 Create Account
               </Link>
             </p>
-            <Link to="/vendor/forgot-password" className="text-[#4f4f56] hover:underline text-sm">
+            <Link to="/vendor/forgot-password" className="text-[#4f4f56] hover:underline text-sm block">
               Forgot your password?
+            </Link>
+            <Link to="/" className="text-[#4f4f56] hover:underline text-sm block">
+              ← Back to Home
             </Link>
           </div>
         </div>
