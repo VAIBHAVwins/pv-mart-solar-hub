@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import { supabase } from '@/integrations/supabase/client';
 
 const VendorLogin = () => {
   const [email, setEmail] = useState('');
@@ -28,39 +27,7 @@ const VendorLogin = () => {
     setError('');
 
     try {
-      // First verify the user exists and is a vendor
-      const { data: userEntry, error: userError } = await supabase
-        .from('users')
-        .select('email, role, is_active')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (userError) {
-        console.error('Database error:', userError);
-        setError('Failed to verify account. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      if (!userEntry) {
-        setError('No account found with this email. Please create an account first.');
-        setLoading(false);
-        return;
-      }
-
-      if (userEntry.role !== 'vendor') {
-        setError('This email is registered as a customer. Please use the customer login page.');
-        setLoading(false);
-        return;
-      }
-
-      if (!userEntry.is_active) {
-        setError('Your account has been deactivated. Please contact support.');
-        setLoading(false);
-        return;
-      }
-
-      // Proceed with login
+      // Proceed with login first, then check role after authentication
       const { error: signInError } = await signIn(email, password);
       
       if (signInError) {

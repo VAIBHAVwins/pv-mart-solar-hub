@@ -25,17 +25,27 @@ export default function VendorDashboard() {
   const fetchProfile = async () => {
     if (!user) return;
     try {
-      const { data, error } = await supabase
-        .from('vendor_profiles')
-        .select('contact_person, company_name')
-        .eq('user_id', user.id)
+      // First try to get the vendor profile from users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('full_name, company_name')
+        .eq('id', user.id)
+        .eq('role', 'vendor')
         .maybeSingle();
       
-      if (error) {
-        console.error('Error fetching profile:', error);
+      if (userError) {
+        console.error('Error fetching user data:', userError);
         setProfile(null);
+        return;
+      }
+
+      if (userData) {
+        setProfile({
+          contact_person: userData.full_name,
+          company_name: userData.company_name
+        });
       } else {
-        setProfile(data);
+        setProfile(null);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
