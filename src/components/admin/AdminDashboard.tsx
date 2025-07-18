@@ -27,11 +27,6 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      // Fetch user profiles count
-      const { count: profilesCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-
       // Fetch customer count
       const { count: customersCount } = await supabase
         .from('users')
@@ -46,7 +41,7 @@ const AdminDashboard = () => {
 
       // Fetch admin count
       const { count: adminsCount } = await supabase
-        .from('user_roles')
+        .from('users')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'admin');
 
@@ -71,7 +66,7 @@ const AdminDashboard = () => {
         .select('*', { count: 'exact', head: true });
 
       setStats({
-        totalUsers: profilesCount || 0,
+        totalUsers: (customersCount || 0) + (vendorsCount || 0) + (adminsCount || 0),
         totalHeroImages: heroImagesCount || 0,
         totalBlogs: blogsCount || 0,
         totalCustomers: customersCount || 0,
@@ -155,7 +150,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card onClick={() => setActiveTab('quotations')} className="cursor-pointer">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Quotations</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -166,7 +161,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card onClick={() => setActiveTab('requirements')} className="cursor-pointer">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Requirements</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />

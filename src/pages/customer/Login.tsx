@@ -20,16 +20,7 @@ const CustomerLogin = () => {
 
   useEffect(() => {
     if (user && userRole === 'customer') {
-      const installationType = sessionStorage.getItem('selectedInstallationType');
-      const gridType = sessionStorage.getItem('selectedGridType');
-      
-      if (installationType && gridType) {
-        sessionStorage.removeItem('selectedInstallationType');
-        sessionStorage.removeItem('selectedGridType');
-        navigate('/customer/requirements');
-      } else {
-        navigate('/customer/dashboard');
-      }
+      navigate('/customer/dashboard');
     }
   }, [user, userRole, navigate]);
 
@@ -48,13 +39,13 @@ const CustomerLogin = () => {
 
     try {
       // First verify the user exists and is a customer
-      const { data: userEntry } = await supabase
+      const { data: userEntry, error: userError } = await supabase
         .from('users')
         .select('email, role, is_active')
         .eq('email', formData.email)
         .single();
 
-      if (!userEntry) {
+      if (userError || !userEntry) {
         setError('No account found with this email. Please create an account first.');
         setLoading(false);
         return;

@@ -29,13 +29,13 @@ const VendorLogin = () => {
 
     try {
       // First verify the user exists and is a vendor
-      const { data: userEntry } = await supabase
+      const { data: userEntry, error: userError } = await supabase
         .from('users')
         .select('email, role, is_active')
         .eq('email', email)
         .single();
 
-      if (!userEntry) {
+      if (userError || !userEntry) {
         setError('No account found with this email. Please create an account first.');
         setLoading(false);
         return;

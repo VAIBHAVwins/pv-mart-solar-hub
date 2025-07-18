@@ -1,9 +1,11 @@
+
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Quotation {
   id: string;
@@ -18,12 +20,6 @@ interface Quotation {
   warranty_years: number;
   description: string;
   created_at: string;
-  company_name?: string;
-}
-
-interface User {
-  id: string;
-  company_name?: string;
 }
 
 const QuotationsManagement = () => {
@@ -39,16 +35,9 @@ const QuotationsManagement = () => {
       .from('vendor_quotations')
       .select('*')
       .order('created_at', { ascending: false });
-    const { data: usersData } = await supabase
-      .from('users')
-      .select('id, company_name');
+    
     console.log('Fetched quotations:', quotationsData);
-    console.log('Fetched users:', usersData);
-    const userMap: Record<string, string> = {};
-    (usersData || []).forEach((u: User) => {
-      if (u.id) userMap[u.id] = u.company_name || '';
-    });
-    setQuotations((quotationsData || []).map((q: Quotation) => ({ ...q, company_name: userMap[q.vendor_id] || 'Unknown Vendor' })));
+    setQuotations(quotationsData || []);
     setLoading(false);
   };
 
@@ -60,13 +49,16 @@ const QuotationsManagement = () => {
     setEditing(q);
     setEditForm({ ...q });
   };
+  
   const closeEdit = () => {
     setEditing(null);
     setEditForm({});
   };
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  
+  const handleEditChange = (field: string, value: string | number) => {
+    setEditForm({ ...editForm, [field]: value });
   };
+  
   const saveEdit = async () => {
     if (!editing) return;
     setEditLoading(true);
@@ -85,16 +77,18 @@ const QuotationsManagement = () => {
     closeEdit();
     fetchQuotations();
   };
+  
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this quotation?')) return;
     setLoading(true);
     await supabase.from('vendor_quotations').delete().eq('id', id);
     fetchQuotations();
   };
+  
   const handleDownloadCSV = () => {
     const csv = [
-      ['Company Name', 'Vendor Name', 'Email', 'Phone', 'Installation Type', 'System Type', 'Total Price', 'Created At'],
-      ...quotations.map(q => [q.company_name, q.vendor_name, q.vendor_email, q.vendor_phone, q.installation_type, q.system_type, q.total_price, q.created_at])
+      ['Vendor Name', 'Email', 'Phone', 'Installation Type', 'System Type', 'Total Price', 'Created At'],
+      ...quotations.map(q => [q.vendor_name, q.vendor_email, q.vendor_phone, q.installation_type, q.system_type, q.total_price, q.created_at])
     ].map(row => row.map(String).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -104,6 +98,9 @@ const QuotationsManagement = () => {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const installationTypes = ['rooftop', 'ground_mounted', 'carport', 'other'];
+  const systemTypes = ['on_grid', 'off_grid', 'hybrid'];
 
   return (
     <Card>
@@ -115,56 +112,106 @@ const QuotationsManagement = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr>
-              <th>Company Name</th>
-              <th>Vendor Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Installation Type</th>
-              <th>System Type</th>
-              <th>Total Price</th>
-              <th>Created At</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {quotations.map(q => (
-              <tr key={q.id}>
-                <td>{q.company_name}</td>
-                <td>{q.vendor_name}</td>
-                <td>{q.vendor_email}</td>
-                <td>{q.vendor_phone}</td>
-                <td>{q.installation_type}</td>
-                <td>{q.system_type}</td>
-                <td>{q.total_price}</td>
-                <td>{q.created_at}</td>
-                <td>
-                  <Button size="sm" onClick={() => openEdit(q)} className="mr-2">Edit</Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(q.id)}>Delete</Button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left p-2">Vendor Name</th>
+                <th className="text-left p-2">Email</th>
+                <th className="text-left p-2">Phone</th>
+                <th className="text-left p-2">Installation Type</th>
+                <th className="text-left p-2">System Type</th>
+                <th className="text-left p-2">Total Price</th>
+                <th className="text-left p-2">Created At</th>
+                <th className="text-left p-2">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {quotations.map(q => (
+                <tr key={q.id} className="border-b">
+                  <td className="p-2">{q.vendor_name}</td>
+                  <td className="p-2">{q.vendor_email}</td>
+                  <td className="p-2">{q.vendor_phone}</td>
+                  <td className="p-2">{q.installation_type}</td>
+                  <td className="p-2">{q.system_type}</td>
+                  <td className="p-2">{q.total_price}</td>
+                  <td className="p-2">{new Date(q.created_at).toLocaleDateString()}</td>
+                  <td className="p-2">
+                    <Button size="sm" onClick={() => openEdit(q)} className="mr-2">Edit</Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(q.id)}>Delete</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {loading && <div className="text-center py-4">Loading...</div>}
         {!loading && quotations.length === 0 && <div className="text-center py-4">No quotations found.</div>}
+        
         <Dialog open={!!editing} onOpenChange={closeEdit}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit Quotation</DialogTitle>
             </DialogHeader>
-            <div className="space-y-2">
-              <Input name="vendor_name" value={editForm.vendor_name || ''} onChange={handleEditChange} placeholder="Vendor Name" />
-              <Input name="vendor_email" value={editForm.vendor_email || ''} onChange={handleEditChange} placeholder="Email" />
-              <Input name="vendor_phone" value={editForm.vendor_phone || ''} onChange={handleEditChange} placeholder="Phone" />
-              <Input name="installation_type" value={editForm.installation_type || ''} onChange={handleEditChange} placeholder="Installation Type" />
-              <Input name="system_type" value={editForm.system_type || ''} onChange={handleEditChange} placeholder="System Type" />
-              <Input name="total_price" value={editForm.total_price || ''} onChange={handleEditChange} placeholder="Total Price" />
-              <Input name="installation_charge" value={editForm.installation_charge || ''} onChange={handleEditChange} placeholder="Installation Charge" />
-              <Input name="warranty_years" value={editForm.warranty_years || ''} onChange={handleEditChange} placeholder="Warranty Years" />
-              <Input name="description" value={editForm.description || ''} onChange={handleEditChange} placeholder="Description" />
+            <div className="space-y-4">
+              <Input 
+                value={editForm.vendor_name || ''} 
+                onChange={(e) => handleEditChange('vendor_name', e.target.value)} 
+                placeholder="Vendor Name" 
+              />
+              <Input 
+                value={editForm.vendor_email || ''} 
+                onChange={(e) => handleEditChange('vendor_email', e.target.value)} 
+                placeholder="Email" 
+              />
+              <Input 
+                value={editForm.vendor_phone || ''} 
+                onChange={(e) => handleEditChange('vendor_phone', e.target.value)} 
+                placeholder="Phone" 
+              />
+              <Select value={editForm.installation_type || ''} onValueChange={(value) => handleEditChange('installation_type', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Installation Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {installationTypes.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={editForm.system_type || ''} onValueChange={(value) => handleEditChange('system_type', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="System Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {systemTypes.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input 
+                type="number"
+                value={editForm.total_price || ''} 
+                onChange={(e) => handleEditChange('total_price', parseFloat(e.target.value))} 
+                placeholder="Total Price" 
+              />
+              <Input 
+                type="number"
+                value={editForm.installation_charge || ''} 
+                onChange={(e) => handleEditChange('installation_charge', parseFloat(e.target.value))} 
+                placeholder="Installation Charge" 
+              />
+              <Input 
+                type="number"
+                value={editForm.warranty_years || ''} 
+                onChange={(e) => handleEditChange('warranty_years', parseInt(e.target.value))} 
+                placeholder="Warranty Years" 
+              />
+              <Input 
+                value={editForm.description || ''} 
+                onChange={(e) => handleEditChange('description', e.target.value)} 
+                placeholder="Description" 
+              />
             </div>
             <DialogFooter>
               <Button onClick={saveEdit} disabled={editLoading}>Save</Button>
@@ -177,4 +224,4 @@ const QuotationsManagement = () => {
   );
 };
 
-export default QuotationsManagement; 
+export default QuotationsManagement;

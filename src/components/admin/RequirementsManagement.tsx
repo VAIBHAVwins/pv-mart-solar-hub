@@ -1,9 +1,11 @@
+
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Requirement {
   id: string;
@@ -19,11 +21,6 @@ interface Requirement {
   created_at: string;
 }
 
-interface User {
-  id: string;
-  full_name?: string;
-}
-
 const RequirementsManagement = () => {
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [loading, setLoading] = useState(false);
@@ -37,16 +34,9 @@ const RequirementsManagement = () => {
       .from('customer_requirements')
       .select('*')
       .order('created_at', { ascending: false });
-    const { data: usersData } = await supabase
-      .from('users')
-      .select('id, full_name');
+    
     console.log('Fetched requirements:', requirementsData);
-    console.log('Fetched users:', usersData);
-    const userMap: Record<string, string> = {};
-    (usersData || []).forEach((u: User) => {
-      if (u.id) userMap[u.id] = u.full_name || '';
-    });
-    setRequirements((requirementsData || []).map((r: Requirement) => ({ ...r, customer_name: userMap[r.customer_id] || 'Unknown Customer' })));
+    setRequirements(requirementsData || []);
     setLoading(false);
   };
 
@@ -58,13 +48,16 @@ const RequirementsManagement = () => {
     setEditing(r);
     setEditForm({ ...r });
   };
+  
   const closeEdit = () => {
     setEditing(null);
     setEditForm({});
   };
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  
+  const handleEditChange = (field: string, value: string | number) => {
+    setEditForm({ ...editForm, [field]: value });
   };
+  
   const saveEdit = async () => {
     if (!editing) return;
     setEditLoading(true);
@@ -82,12 +75,14 @@ const RequirementsManagement = () => {
     closeEdit();
     fetchRequirements();
   };
+  
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this requirement?')) return;
     setLoading(true);
     await supabase.from('customer_requirements').delete().eq('id', id);
     fetchRequirements();
   };
+  
   const handleDownloadCSV = () => {
     const csv = [
       ['Customer Name', 'Email', 'Phone', 'Address', 'Installation Type', 'System Type', 'Monthly Bill', 'Pincode', 'Created At'],
@@ -102,6 +97,9 @@ const RequirementsManagement = () => {
     URL.revokeObjectURL(url);
   };
 
+  const installationTypes = ['rooftop', 'ground_mounted', 'carport', 'other'];
+  const systemTypes = ['on_grid', 'off_grid', 'hybrid'];
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -112,57 +110,103 @@ const RequirementsManagement = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr>
-              <th>Customer Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Address</th>
-              <th>Installation Type</th>
-              <th>System Type</th>
-              <th>Monthly Bill</th>
-              <th>Pincode</th>
-              <th>Created At</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requirements.map(r => (
-              <tr key={r.id}>
-                <td>{r.customer_name}</td>
-                <td>{r.customer_email}</td>
-                <td>{r.customer_phone}</td>
-                <td>{r.address}</td>
-                <td>{r.installation_type}</td>
-                <td>{r.system_type}</td>
-                <td>{r.monthly_bill}</td>
-                <td>{r.pincode}</td>
-                <td>{r.created_at}</td>
-                <td>
-                  <Button size="sm" onClick={() => openEdit(r)} className="mr-2">Edit</Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(r.id)}>Delete</Button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left p-2">Customer Name</th>
+                <th className="text-left p-2">Email</th>
+                <th className="text-left p-2">Phone</th>
+                <th className="text-left p-2">Address</th>
+                <th className="text-left p-2">Installation Type</th>
+                <th className="text-left p-2">System Type</th>
+                <th className="text-left p-2">Monthly Bill</th>
+                <th className="text-left p-2">Pincode</th>
+                <th className="text-left p-2">Created At</th>
+                <th className="text-left p-2">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {requirements.map(r => (
+                <tr key={r.id} className="border-b">
+                  <td className="p-2">{r.customer_name}</td>
+                  <td className="p-2">{r.customer_email}</td>
+                  <td className="p-2">{r.customer_phone}</td>
+                  <td className="p-2">{r.address}</td>
+                  <td className="p-2">{r.installation_type}</td>
+                  <td className="p-2">{r.system_type}</td>
+                  <td className="p-2">{r.monthly_bill}</td>
+                  <td className="p-2">{r.pincode}</td>
+                  <td className="p-2">{new Date(r.created_at).toLocaleDateString()}</td>
+                  <td className="p-2">
+                    <Button size="sm" onClick={() => openEdit(r)} className="mr-2">Edit</Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(r.id)}>Delete</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {loading && <div className="text-center py-4">Loading...</div>}
         {!loading && requirements.length === 0 && <div className="text-center py-4">No requirements found.</div>}
+        
         <Dialog open={!!editing} onOpenChange={closeEdit}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit Requirement</DialogTitle>
             </DialogHeader>
-            <div className="space-y-2">
-              <Input name="customer_name" value={editForm.customer_name || ''} onChange={handleEditChange} placeholder="Customer Name" />
-              <Input name="customer_email" value={editForm.customer_email || ''} onChange={handleEditChange} placeholder="Email" />
-              <Input name="customer_phone" value={editForm.customer_phone || ''} onChange={handleEditChange} placeholder="Phone" />
-              <Input name="address" value={editForm.address || ''} onChange={handleEditChange} placeholder="Address" />
-              <Input name="installation_type" value={editForm.installation_type || ''} onChange={handleEditChange} placeholder="Installation Type" />
-              <Input name="system_type" value={editForm.system_type || ''} onChange={handleEditChange} placeholder="System Type" />
-              <Input name="monthly_bill" value={editForm.monthly_bill || ''} onChange={handleEditChange} placeholder="Monthly Bill" />
-              <Input name="pincode" value={editForm.pincode || ''} onChange={handleEditChange} placeholder="Pincode" />
+            <div className="space-y-4">
+              <Input 
+                value={editForm.customer_name || ''} 
+                onChange={(e) => handleEditChange('customer_name', e.target.value)} 
+                placeholder="Customer Name" 
+              />
+              <Input 
+                value={editForm.customer_email || ''} 
+                onChange={(e) => handleEditChange('customer_email', e.target.value)} 
+                placeholder="Email" 
+              />
+              <Input 
+                value={editForm.customer_phone || ''} 
+                onChange={(e) => handleEditChange('customer_phone', e.target.value)} 
+                placeholder="Phone" 
+              />
+              <Input 
+                value={editForm.address || ''} 
+                onChange={(e) => handleEditChange('address', e.target.value)} 
+                placeholder="Address" 
+              />
+              <Select value={editForm.installation_type || ''} onValueChange={(value) => handleEditChange('installation_type', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Installation Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {installationTypes.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={editForm.system_type || ''} onValueChange={(value) => handleEditChange('system_type', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="System Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {systemTypes.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input 
+                type="number"
+                value={editForm.monthly_bill || ''} 
+                onChange={(e) => handleEditChange('monthly_bill', parseFloat(e.target.value))} 
+                placeholder="Monthly Bill" 
+              />
+              <Input 
+                value={editForm.pincode || ''} 
+                onChange={(e) => handleEditChange('pincode', e.target.value)} 
+                placeholder="Pincode" 
+              />
             </div>
             <DialogFooter>
               <Button onClick={saveEdit} disabled={editLoading}>Save</Button>
@@ -175,4 +219,4 @@ const RequirementsManagement = () => {
   );
 };
 
-export default RequirementsManagement; 
+export default RequirementsManagement;
