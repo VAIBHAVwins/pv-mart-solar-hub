@@ -1,100 +1,71 @@
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-const CustomerLogin = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+export default function CustomerLogin() {
   const { signIn } = useSupabaseAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [form, setForm] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Get any message from state (e.g., from password reset)
+  const message = location.state?.message;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
-
+    setLoading(true);
+    
     try {
-      console.log('🔄 Attempting customer login for:', email);
-
-      // First check if email exists in users table with customer role
-      const { data: userEntry, error: userError } = await supabase
-        .from('users')
-        .select('email, role')
-        .eq('email', email)
-        .single();
-
-      if (userError && userError.code !== 'PGRST116') {
-        console.error('❌ Database error:', userError);
-        setError('Failed to login. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      if (!userEntry) {
-        console.log('❌ No user found in users table for:', email);
-        setError('No customer account found for this email.');
-        setLoading(false);
-        return;
-      }
-
-      if (userEntry.role !== 'customer') {
-        console.log('❌ User exists but not a customer:', userEntry.role);
-        setError('This email ID is registered as a vendor. Please perform vendor login.');
-        setLoading(false);
-        return;
-      }
-
-      console.log('✅ Customer found in users table, attempting Auth login');
-
-      // Proceed with Supabase Auth login
-      const { error: signInError } = await signIn(email, password);
+      console.log('🔄 Attempting customer login for:', form.email);
+      
+      // Step 1: Try to sign in with Supabase Auth
+      const { error: signInError } = await signIn(form.email, form.password);
       
       if (signInError) {
-        console.error('❌ Supabase Auth login failed:', signInError);
+        console.error('❌ Sign in error:', signInError);
         
-        if (signInError.message?.includes('Email not confirmed')) {
-          setError('Please verify your email address before logging in. Check your inbox for a verification email.');
-        } else if (signInError.message?.includes('Invalid login credentials')) {
+        if (signInError.message.includes('Invalid login credentials')) {
           setError('Invalid email or password. Please check your credentials.');
+        } else if (signInError.message.includes('email not confirmed')) {
+          setError('Please check your email and verify your account before logging in.');
         } else {
-          setError('Failed to login. Please check your credentials.');
+          setError(signInError.message || 'Login failed');
         }
-        
         setLoading(false);
         return;
       }
 
-      console.log('✅ Auth login successful, verifying customer access');
-
-      // Verify the logged-in user is indeed a customer
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error('❌ No authenticated user found after login');
-        setError('Login failed. Please try again.');
-        await supabase.auth.signOut();
-        setLoading(false);
-        return;
-      }
-
-      const { data: customerCheck } = await supabase
+      // Step 2: Verify the user exists in our users table and is a customer
+      const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('id, role')
-        .eq('id', user.id)
+        .select('id, email, role, full_name')
+        .eq('email', form.email)
         .eq('role', 'customer')
-        .single();
+        .maybeSingle();
 
-      if (!customerCheck) {
-        console.error('❌ User authenticated but no customer record found');
-        setError('No customer account found for this email.');
-        await supabase.auth.signOut();
+      if (userError) {
+        console.error('❌ Error checking user data:', userError);
+        setError('Login failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      if (!userData) {
+        console.error('❌ No customer account found for this email');
+        setError('No customer account found for this email. Please register as a customer first.');
         setLoading(false);
         return;
       }
@@ -102,82 +73,79 @@ const CustomerLogin = () => {
       console.log('✅ Customer login successful, redirecting to dashboard');
       navigate('/customer/dashboard');
       
-    } catch (error) {
-      console.error('❌ Login error:', error);
-      setError('Failed to login. Please check your credentials.');
+    } catch (err: any) {
+      console.error('❌ Login error:', err);
+      setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Layout className="bg-gradient-to-br from-[#797a83] to-[#4f4f56] min-h-screen">
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-md mx-auto bg-[#f7f7f6] rounded-lg shadow-lg p-8">
+    <Layout>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-jonquil py-16 px-4">
+        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#171a21] mb-2">Customer Login</h1>
-            <p className="text-[#4f4f56]">Login to access your solar dashboard</p>
+            <h1 className="text-3xl font-bold text-licorice mb-2">Customer Login</h1>
+            <p className="text-brown">Access your customer dashboard</p>
           </div>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
+          
+          {message && (
+            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+              {message}
             </div>
           )}
-
+          
           <form onSubmit={handleSubmit} className="space-y-6">
+            {error && <div className="text-red-600 font-semibold text-center">{error}</div>}
             <div>
-              <Label htmlFor="email" className="text-[#171a21]">Email Address</Label>
+              <Label htmlFor="email" className="text-licorice">Email Address</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 border-[#b07e66] focus:border-[#797a83]"
+                value={form.email}
+                onChange={handleChange}
+                className="mt-1 border-brown focus:border-licorice"
                 placeholder="Enter your email"
                 required
-                disabled={loading}
               />
             </div>
-
             <div>
-              <Label htmlFor="password" className="text-[#171a21]">Password</Label>
+              <Label htmlFor="password" className="text-licorice">Password</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 border-[#b07e66] focus:border-[#797a83]"
+                value={form.password}
+                onChange={handleChange}
+                className="mt-1 border-brown focus:border-licorice"
                 placeholder="Enter your password"
                 required
-                disabled={loading}
               />
             </div>
-
             <Button 
               type="submit" 
-              className="w-full bg-[#797a83] hover:bg-[#4f4f56] text-[#f7f7f6] font-semibold"
+              className="w-full bg-brown hover:bg-licorice text-white font-semibold" 
               disabled={loading}
             >
-              {loading ? 'Logging In...' : 'Login'}
+              {loading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-[#4f4f56] mb-2">
-              Don't have an account?{' '}
-              <Link to="/customer/register" className="text-[#b07e66] hover:underline font-semibold">
-                Create Account
-              </Link>
-            </p>
-            <Link to="/customer/forgot-password" className="text-[#4f4f56] hover:underline text-sm">
+          
+          <div className="mt-6 text-center space-y-2">
+            <Link to="/customer/forgot-password" className="text-brown hover:underline">
               Forgot your password?
             </Link>
+            <p className="text-brown">
+              Don't have an account?{' '}
+              <Link to="/customer/register" className="text-brown hover:underline font-semibold">
+                Register here
+              </Link>
+            </p>
           </div>
         </div>
       </div>
     </Layout>
   );
-};
-
-export default CustomerLogin;
+}

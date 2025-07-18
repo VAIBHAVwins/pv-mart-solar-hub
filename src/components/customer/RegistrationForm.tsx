@@ -139,7 +139,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         .from('users')
         .select('id, email, role')
         .eq('email', formData.email)
-        .single();
+        .maybeSingle();
 
       if (existingUser) {
         setError('This email is already registered. Please use a different email.');
@@ -147,25 +147,27 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         return;
       }
 
-      // Step 2: Create Supabase Auth user
+      // Step 2: Create Supabase Auth user with complete customer metadata
       const redirectUrl = `${window.location.origin}/customer/dashboard`;
       
       const { data: authData, error: signUpError } = await signUp(formData.email, formData.password, {
         data: {
+          role: 'customer',
           full_name: formData.fullName,
           phone: formData.phone,
           address: formData.address,
           city: formData.city,
           state: formData.state,
           pincode: formData.pincode,
-          role: 'customer',
         }
       });
 
       if (signUpError) {
         console.error('❌ Supabase Auth signUp failed:', signUpError);
-        if (signUpError.message.includes('already registered')) {
+        if (signUpError.message.includes('already registered') || signUpError.message.includes('already been registered')) {
           setError('This email is already registered. Please use a different email.');
+        } else if (signUpError.message.includes('email not confirmed')) {
+          setError('Please check your email and verify your account before logging in.');
         } else {
           setError(signUpError.message || 'Registration failed. Please try again.');
         }
@@ -183,9 +185,12 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       console.log('✅ Customer registration successful! User will be created via trigger.');
       setSuccess('Registration successful! Please check your email for verification.');
       
-      if (onSuccess) {
-        onSuccess(formData.email);
-      }
+      // Give the trigger some time to process, then call onSuccess
+      setTimeout(() => {
+        if (onSuccess) {
+          onSuccess(formData.email);
+        }
+      }, 1000);
       
     } catch (error: any) {
       console.error('❌ Registration error:', error);
