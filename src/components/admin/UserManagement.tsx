@@ -38,10 +38,10 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch users
+      // Fetch users with all required fields
       const { data: usersData, error: usersError } = await supabase
         .from('users')
-        .select('*')
+        .select('id, email, full_name, phone, role, is_active, email_verified, created_at')
         .order('created_at', { ascending: false });
 
       if (usersError) throw usersError;
@@ -54,14 +54,11 @@ const UserManagement = () => {
       if (vendorError) console.warn('Error fetching vendor profiles:', vendorError);
 
       // Combine users with vendor profile data
-      const usersWithProfiles = usersData?.map(user => {
-        const vendorProfile = vendorProfiles?.find(vp => vp.user_id === user.id);
-        return {
-          ...user,
-          company_name: vendorProfile?.company_name,
-          contact_person: vendorProfile?.contact_person
-        };
-      }) || [];
+      const usersWithProfiles = usersData?.map(user => ({
+        ...user,
+        company_name: vendorProfiles?.find(vp => vp.user_id === user.id)?.company_name,
+        contact_person: vendorProfiles?.find(vp => vp.user_id === user.id)?.contact_person
+      })) || [];
 
       setUsers(usersWithProfiles);
     } catch (err) {
@@ -75,6 +72,55 @@ const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  // Update user role
+  async function updateUserRole(userId: string, role: string) {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ role: role as UserRole })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      setSuccess(`Role updated to ${role} successfully!`);
+      fetchUsers();
+    } catch (err: any) {
+      console.error('Error updating role:', err);
+      setError(err.message || 'Failed to update role');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Update user profile
+  async function updateUser(userId: string, updates: Partial<UserProfile>) {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      setSuccess('User updated successfully!');
+      setEditingUserId(null);
+      fetchUsers();
+    } catch (err: any) {
+      console.error('Error updating user:', err);
+      setError(err.message || 'Failed to update user');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // Temporary bypass for testing
   console.log('UserManagement - user:', user);
@@ -185,55 +231,6 @@ const UserManagement = () => {
       </Card>
     </div>
   );
-
-  // Update user role
-  async function updateUserRole(userId: string, role: string) {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update({ role: role as UserRole })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      setSuccess(`Role updated to ${role} successfully!`);
-      fetchUsers();
-    } catch (err: any) {
-      console.error('Error updating role:', err);
-      setError(err.message || 'Failed to update role');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Update user profile
-  async function updateUser(userId: string, updates: Partial<UserProfile>) {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      setSuccess('User updated successfully!');
-      setEditingUserId(null);
-      fetchUsers();
-    } catch (err: any) {
-      console.error('Error updating user:', err);
-      setError(err.message || 'Failed to update user');
-    } finally {
-      setLoading(false);
-    }
-  }
 };
 
 export default UserManagement;
