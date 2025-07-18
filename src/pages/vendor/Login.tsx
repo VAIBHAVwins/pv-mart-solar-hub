@@ -33,9 +33,16 @@ const VendorLogin = () => {
         .from('users')
         .select('email, role, is_active')
         .eq('email', email)
-        .single();
+        .maybeSingle();
 
-      if (userError || !userEntry) {
+      if (userError) {
+        console.error('Database error:', userError);
+        setError('Failed to verify account. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      if (!userEntry) {
         setError('No account found with this email. Please create an account first.');
         setLoading(false);
         return;

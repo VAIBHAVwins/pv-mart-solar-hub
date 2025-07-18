@@ -66,8 +66,8 @@ const RequirementsManagement = () => {
       customer_email: editForm.customer_email,
       customer_phone: editForm.customer_phone,
       address: editForm.address,
-      installation_type: editForm.installation_type,
-      system_type: editForm.system_type,
+      installation_type: editForm.installation_type as any,
+      system_type: editForm.system_type as any,
       monthly_bill: editForm.monthly_bill,
       pincode: editForm.pincode,
     }).eq('id', editing.id);

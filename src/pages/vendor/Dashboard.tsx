@@ -29,7 +29,7 @@ export default function VendorDashboard() {
         .from('vendor_profiles')
         .select('contact_person, company_name')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching profile:', error);
