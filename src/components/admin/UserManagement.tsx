@@ -18,9 +18,7 @@ interface UserProfile {
   email: string;
   full_name: string | null;
   phone: string | null;
-  role: UserRole;
-  is_active: boolean;
-  email_verified: boolean;
+  role: string;
   created_at: string;
   company_name?: string;
   contact_person?: string;
@@ -38,10 +36,10 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch users with all required fields
+      // Fetch users with available fields
       const { data: usersData, error: usersError } = await supabase
         .from('users')
-        .select('id, email, full_name, phone, role, is_active, email_verified, created_at')
+        .select('id, email, full_name, phone, role, created_at')
         .order('created_at', { ascending: false });
 
       if (usersError) throw usersError;
@@ -158,7 +156,6 @@ const UserManagement = () => {
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -183,16 +180,6 @@ const UserManagement = () => {
                       <Badge variant={userProfile.role === 'admin' ? 'destructive' : userProfile.role === 'vendor' ? 'secondary' : 'default'}>
                         {userProfile.role}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={userProfile.is_active ? 'default' : 'outline'}>
-                        {userProfile.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                      {userProfile.email_verified && (
-                        <Badge variant="outline" className="ml-1 text-xs">
-                          Verified
-                        </Badge>
-                      )}
                     </TableCell>
                     <TableCell>{userProfile.company_name || 'N/A'}</TableCell>
                     <TableCell>
