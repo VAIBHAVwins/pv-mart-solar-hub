@@ -1,9 +1,11 @@
+
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ArrowRight, CheckCircle, Users, Award, MapPin, Phone, Mail } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight, CheckCircle, Users, Award, MapPin, Phone, Mail, Play } from 'lucide-react';
 import Footer from '@/components/common/Footer';
+import SessionGameWidget from '@/components/game/SessionGameWidget';
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from 'react-responsive-carousel';
 
@@ -17,13 +19,27 @@ interface Banner {
   cta_link: string;
 }
 
+interface Blog {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  featured_image_url?: string;
+  category?: string;
+  author: string;
+  published_at: string;
+}
+
 export default function Home() {
   const [currentBanner, setCurrentBanner] = useState(0);
   const [banners, setBanners] = useState<Banner[]>([]);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [blogsError, setBlogsError] = useState('');
+  const [showGame, setShowGame] = useState(false);
   
-  // Static fallback banners (existing ones)
+  // Static fallback banners
   const staticBanners: Banner[] = [
     {
       title: "PM-KUSUM Yojana 2024",
@@ -39,7 +55,7 @@ export default function Home() {
       description: "No upfront costs required. Choose from flexible payment plans and start saving on your electricity bills immediately.",
       image_url: "https://images.unsplash.com/photo-1497440001374-f26997328c1b?w=1200&h=600&fit=crop",
       cta_text: "Get Quote",
-      cta_link: "/installation-type"
+      cta_link: "/customer/requirement-form"
     },
     {
       title: "Free Site Assessment",
@@ -69,17 +85,19 @@ export default function Home() {
     }
   ];
 
-  // Fetch banners from Supabase
+  // Fetch banners and blogs from Supabase
   useEffect(() => {
-    const fetchBanners = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError('');
+      setBlogsError('');
+      
       try {
-        // Use direct API call to fetch hero images
-        const SUPABASE_URL = "https://lkalcafckgyilasikfml.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrYWxjYWZja2d5aWxhc2lrZm1sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyMjUzOTMsImV4cCI6MjA2NjgwMTM5M30.geEBJ1gkwIFr-o-pzQS9X2zu2IfQ656E5TDlNfp-piE";
+        const SUPABASE_URL = "https://nchxapviawfjtcsvjvfl.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jaHhhcHZpYXdmanRjc3ZqdmZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3OTUzMTQsImV4cCI6MjA3MDM3MTMxNH0.2SLLe10Dw4fBVdy-DzKzG4zgidGy_4LLA8d_7GVi_B8";
         
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/hero_images?is_active=eq.true&order=order_index.asc`, {
+        // Fetch hero images
+        const heroResponse = await fetch(`${SUPABASE_URL}/rest/v1/hero_images?is_active=eq.true&order=order_index.asc`, {
           headers: {
             'apikey': SUPABASE_KEY,
             'Authorization': `Bearer ${SUPABASE_KEY}`,
@@ -87,37 +105,54 @@ export default function Home() {
           }
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch hero images');
-        }
-
-        const data = await response.json();
-        
-        if (data && data.length > 0) {
-          // Map Supabase data to Banner interface
-          const dynamicBanners: Banner[] = data.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            image_url: item.image_url,
-            cta_text: item.cta_text || 'Learn More',
-            cta_link: item.cta_link || '#'
-          }));
-          setBanners(dynamicBanners);
+        if (heroResponse.ok) {
+          const heroData = await heroResponse.json();
+          if (heroData && heroData.length > 0) {
+            const dynamicBanners: Banner[] = heroData.map((item: any) => ({
+              id: item.id,
+              title: item.title,
+              description: item.description,
+              image_url: item.image_url,
+              cta_text: item.cta_text || 'Learn More',
+              cta_link: item.cta_link || '#'
+            }));
+            setBanners(dynamicBanners);
+          } else {
+            setBanners(staticBanners);
+          }
         } else {
-          // Use static banners as fallback
           setBanners(staticBanners);
         }
+
+        // Fetch blogs
+        const blogsResponse = await fetch(`${SUPABASE_URL}/rest/v1/blogs?status=eq.published&order=published_at.desc&limit=3`, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (blogsResponse.ok) {
+          const blogsData = await blogsResponse.json();
+          if (blogsData && blogsData.length > 0) {
+            setBlogs(blogsData);
+          }
+        } else {
+          setBlogsError('Failed to load blogs');
+        }
+        
       } catch (err) {
-        console.error('Error fetching banners:', err);
-        setError('Failed to load banners. Showing demo banners.');
+        console.error('Error fetching data:', err);
+        setError('Failed to load banners. Using demo banners.');
         setBanners(staticBanners);
+        setBlogsError('Failed to load blogs');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBanners();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -129,36 +164,15 @@ export default function Home() {
     }
   }, [banners.length]);
 
-  const nextBanner = () => {
-    setCurrentBanner(prev => {
-      const next = (prev + 1) % banners.length;
-      console.log('Next Banner:', next);
-      return next;
-    });
-  };
-
-  const prevBanner = () => {
-    setCurrentBanner(prev => {
-      const prevIndex = (prev - 1 + banners.length) % banners.length;
-      console.log('Prev Banner:', prevIndex);
-      return prevIndex;
-    });
-  };
-
   // Handle CTA link click
   const handleCTAClick = (ctaLink: string) => {
     if (ctaLink.startsWith('http')) {
-      // External link - open in new tab
       window.open(ctaLink, '_blank', 'noopener,noreferrer');
     } else if (ctaLink.startsWith('#')) {
-      // Internal anchor link
       const element = document.querySelector(ctaLink);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
       }
-    } else {
-      // Internal route - handled by Link component
-      return;
     }
   };
 
@@ -168,7 +182,7 @@ export default function Home() {
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-solar-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading banners...</p>
+            <p className="mt-4 text-gray-600">Loading...</p>
           </div>
         </div>
       </Layout>
@@ -177,7 +191,7 @@ export default function Home() {
 
   return (
     <Layout>
-      {/* Hero Section with Carousel - Fixed mobile responsive issues */}
+      {/* Hero Section with Carousel */}
       <section className="relative h-screen overflow-hidden">
         <Carousel
           showThumbs={false}
@@ -195,7 +209,6 @@ export default function Home() {
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  console.log('Previous arrow clicked')
                   onClickHandler()
                 }}
                 className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 hover:bg-white/40 p-3 rounded-full text-white transition-all duration-300"
@@ -212,7 +225,6 @@ export default function Home() {
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  console.log('Next arrow clicked')
                   onClickHandler()
                 }}
                 className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 hover:bg-white/40 p-3 rounded-full text-white transition-all duration-300"
@@ -251,13 +263,10 @@ export default function Home() {
                   console.error('Image failed to load:', banner.image_url);
                   e.currentTarget.src = 'https://via.placeholder.com/1200x600?text=Image+Not+Available';
                 }}
-                onLoad={() => console.log('Image loaded successfully:', banner.image_url)}
               />
               
-              {/* Enhanced text overlay with full width and glass effect */}
               <div className="absolute inset-0 z-10 flex items-center justify-center">
                 <div className="w-full h-full flex items-center justify-center">
-                  {/* Full width text box with glass effect - highly transparent */}
                   <div className="w-full bg-black/15 backdrop-blur-sm border-t border-b border-white/10 flex items-center justify-center min-h-[200px] py-8 px-4">
                     <div className="text-center text-white max-w-7xl mx-auto">
                       <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6 leading-tight drop-shadow-lg">
@@ -272,7 +281,6 @@ export default function Home() {
                         {banner.description}
                       </p>
                       <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        {/* Show CTA button if provided */}
                         {banner.cta_text && banner.cta_link && (
                           <>
                             {banner.cta_link.startsWith('http') || banner.cta_link.startsWith('#') ? (
@@ -293,16 +301,6 @@ export default function Home() {
                             )}
                           </>
                         )}
-                        
-                        {/* Fallback "Join as Vendor" button if no CTA is provided */}
-                        {(!banner.cta_text || !banner.cta_link) && (
-                          <Link to="/vendor/register">
-                            <Button className="solar-button text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto">
-                              Join as Vendor
-                              <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
-                            </Button>
-                          </Link>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -313,11 +311,96 @@ export default function Home() {
         </Carousel>
       </section>
 
-      {/* Error message if any */}
-      {error && (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4">
-          <span className="block sm:inline">{error}</span>
+      {/* Solar Game Section */}
+      <section className="solar-section bg-gradient-to-br from-blue-50 to-green-50">
+        <div className="solar-container">
+          <div className="text-center mb-8">
+            <h2 className="solar-heading">Try Our Solar Game!</h2>
+            <p className="solar-subheading max-w-3xl mx-auto mb-8">
+              Learn about solar energy while having fun! Place solar panels strategically and see how much energy you can generate.
+            </p>
+            
+            {!showGame ? (
+              <Button 
+                onClick={() => setShowGame(true)} 
+                className="solar-button text-lg px-8 py-4"
+              >
+                <Play className="mr-2 w-5 h-5" />
+                Play Solar Game
+              </Button>
+            ) : (
+              <Button 
+                onClick={() => setShowGame(false)} 
+                variant="outline"
+                className="mb-8"
+              >
+                Hide Game
+              </Button>
+            )}
+          </div>
+          
+          {showGame && (
+            <div className="mb-8">
+              <SessionGameWidget />
+            </div>
+          )}
         </div>
+      </section>
+
+      {/* Blog Section */}
+      {blogs.length > 0 && (
+        <section className="solar-section">
+          <div className="solar-container">
+            <div className="text-center mb-16">
+              <h2 className="solar-heading">Latest Blog Posts</h2>
+              <p className="solar-subheading max-w-3xl mx-auto">
+                Stay updated with the latest news, tips, and insights about solar energy.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-8">
+              {blogs.map((blog) => (
+                <div key={blog.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                  {blog.featured_image_url && (
+                    <img 
+                      src={blog.featured_image_url} 
+                      alt={blog.title}
+                      className="w-full h-48 object-cover"
+                    />
+                  )}
+                  <div className="p-6">
+                    {blog.category && (
+                      <span className="inline-block bg-solar-primary text-white text-xs px-2 py-1 rounded-full mb-2">
+                        {blog.category}
+                      </span>
+                    )}
+                    <h3 className="text-xl font-bold text-solar-dark mb-2 line-clamp-2">{blog.title}</h3>
+                    <p className="text-gray-600 mb-4 line-clamp-3">{blog.excerpt}</p>
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span>{blog.author}</span>
+                      <span>{new Date(blog.published_at).toLocaleDateString()}</span>
+                    </div>
+                    <Link to={`/blog/${blog.slug}`} className="block mt-4">
+                      <Button variant="outline" size="sm" className="w-full">
+                        Read More
+                        <ArrowRight className="ml-2 w-4 h-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="text-center">
+              <Link to="/blogs">
+                <Button className="solar-button">
+                  View All Blogs
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
       )}
 
       {/* Features Section */}
@@ -344,7 +427,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section - Fixed Contact Us button visibility */}
+      {/* CTA Section */}
       <section className="solar-section solar-gradient">
         <div className="solar-container text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
@@ -355,7 +438,7 @@ export default function Home() {
             Get your free consultation today!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/installation-type">
+            <Link to="/customer/requirement-form">
               <Button className="bg-white text-solar-primary hover:bg-gray-100 text-lg px-8 py-4">
                 Get Free Quote
                 <ArrowRight className="ml-2 w-5 h-5" />
@@ -370,24 +453,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Contact Info Section (centered) */}
+      {/* Contact Info Section */}
       <section className="solar-section bg-gray-50">
         <div className="solar-container">
           <div className="flex flex-col md:flex-row justify-center items-center gap-8">
             <div className="solar-card text-center w-full md:w-1/3">
               <MapPin className="w-8 h-8 text-solar-primary mx-auto mb-4" />
               <h3 className="text-xl font-bold text-solar-dark mb-2">Visit Us</h3>
-              <p className="text-gray-600">(Hidden for privacy)</p>
+              <p className="text-gray-600">Contact us for address details</p>
             </div>
             <div className="solar-card text-center w-full md:w-1/3">
               <Phone className="w-8 h-8 text-solar-primary mx-auto mb-4" />
               <h3 className="text-xl font-bold text-solar-dark mb-2">Call Us</h3>
-              <p className="text-gray-600">(Hidden for privacy)</p>
+              <p className="text-gray-600">Contact us for phone details</p>
             </div>
             <div className="solar-card text-center w-full md:w-1/3">
               <Mail className="w-8 h-8 text-solar-primary mx-auto mb-4" />
               <h3 className="text-xl font-bold text-solar-dark mb-2">Email Us</h3>
-              <p className="text-gray-600">(Hidden for privacy)</p>
+              <p className="text-gray-600">Contact us for email details</p>
             </div>
           </div>
         </div>

@@ -97,6 +97,53 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_profiles: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          pincode: string | null
+          state: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          pincode?: string | null
+          state?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          pincode?: string | null
+          state?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_requirements: {
         Row: {
           address: string
@@ -257,36 +304,45 @@ export type Database = {
       quotation_components: {
         Row: {
           brand: string | null
-          component_name: string
+          component_type: string
           created_at: string | null
           id: string
+          included_length_meters: number | null
           model: string | null
           quantity: number
           quotation_id: string | null
+          specifications: string | null
           total_price: number
           unit_price: number
+          warranty_years: number | null
         }
         Insert: {
           brand?: string | null
-          component_name: string
+          component_type: string
           created_at?: string | null
           id?: string
+          included_length_meters?: number | null
           model?: string | null
           quantity: number
           quotation_id?: string | null
+          specifications?: string | null
           total_price: number
           unit_price: number
+          warranty_years?: number | null
         }
         Update: {
           brand?: string | null
-          component_name?: string
+          component_type?: string
           created_at?: string | null
           id?: string
+          included_length_meters?: number | null
           model?: string | null
           quantity?: number
           quotation_id?: string | null
+          specifications?: string | null
           total_price?: number
           unit_price?: number
+          warranty_years?: number | null
         }
         Relationships: [
           {
@@ -298,6 +354,36 @@ export type Database = {
           },
         ]
       }
+      temp_game_scores: {
+        Row: {
+          created_at: string | null
+          energy_generated: number
+          game_duration: number
+          id: string
+          panels_placed: number
+          score: number
+          session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          energy_generated: number
+          game_duration: number
+          id?: string
+          panels_placed: number
+          score: number
+          session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          energy_generated?: number
+          game_duration?: number
+          id?: string
+          panels_placed?: number
+          score?: number
+          session_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string | null
@@ -305,6 +391,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_verified: boolean | null
+          password_hash: string | null
           phone: string
           role: Database["public"]["Enums"]["user_role"]
         }
@@ -314,6 +401,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_verified?: boolean | null
+          password_hash?: string | null
           phone: string
           role?: Database["public"]["Enums"]["user_role"]
         }
@@ -323,6 +411,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_verified?: boolean | null
+          password_hash?: string | null
           phone?: string
           role?: Database["public"]["Enums"]["user_role"]
         }

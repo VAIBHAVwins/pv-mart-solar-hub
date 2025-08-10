@@ -1,153 +1,165 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import CustomerRegister from '@/pages/customer/Register'
-import { SupabaseAuthProvider } from '@/contexts/SupabaseAuthContext'
-import { supabase } from '@/integrations/supabase/client'
-import type { User, Session, AuthError } from '@supabase/supabase-js'
+import * as SupabaseAuthContext from '@/contexts/SupabaseAuthContext'
 
-// Mock the Layout component
-vi.mock('@/components/layout/Layout', () => ({
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+// Mock the SupabaseAuthContext
+const mockSignUp = vi.fn()
+const mockContextValue = {
+  user: null,
+  session: null,
+  loading: false,
+  userRole: null,
+  signUp: mockSignUp,
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+  resetPassword: vi.fn()
+}
+
+vi.mock('@/contexts/SupabaseAuthContext', () => ({
+  useSupabaseAuth: () => mockContextValue,
+  SupabaseAuthProvider: ({ children }: { children: React.ReactNode }) => children
 }))
 
-// Mock the OTPVerification component
-
-// Mock helper functions
-const createMockUser = (overrides = {}): User => ({
-  id: 'test-user-id',
-  email: 'test@example.com',
-  app_metadata: {},
-  user_metadata: {},
-  aud: 'authenticated',
-  created_at: '2024-01-01T00:00:00Z',
-  confirmed_at: '2024-01-01T00:00:00Z',
-  email_confirmed_at: '2024-01-01T00:00:00Z',
-  phone_confirmed_at: '2024-01-01T00:00:00Z',
-  last_sign_in_at: '2024-01-01T00:00:00Z',
-  role: 'authenticated',
-  updated_at: '2024-01-01T00:00:00Z',
-  identities: [],
-  factors: [],
-  ...overrides
+// Mock react-router-dom
+const mockNavigate = vi.fn()
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom')
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    Link: ({ children, to }: { children: React.ReactNode; to: string }) => 
+      <a href={to}>{children}</a>
+  }
 })
-
-const createMockSession = (user?: User): Session => ({
-  user: user || createMockUser(),
-  access_token: 'mock-access-token',
-  refresh_token: 'mock-refresh-token',
-  expires_in: 3600,
-  token_type: 'bearer',
-  expires_at: Date.now() / 1000 + 3600
-})
-
-const createMockAuthError = (message = 'Test error') => ({
-  message,
-  status: 400,
-  code: 'test_error'
-})
-
-const renderWithAuth = (component: React.ReactElement) => {
-  return render(
-    <SupabaseAuthProvider>
-      {component}
-    </SupabaseAuthProvider>
-  )
-}
 
 describe('CustomerRegister', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Mock user session with proper User type
-    vi.mocked(supabase.auth.getSession).mockResolvedValue({
-      data: { 
-        session: createMockSession() 
-      },
-      error: null,
-    })
+    mockSignUp.mockResolvedValue({ data: null, error: null })
   })
 
-  it('renders registration form with all fields', () => {
-    renderWithAuth(<CustomerRegister />)
+  const renderComponent = () => {
+    return render(
+      <MemoryRouter>
+        <CustomerRegister />
+      </MemoryRouter>
+    )
+  }
+
+  it('renders registration form', () => {
+    renderComponent()
     
-    expect(screen.getByText('Customer Registration')).toBeInTheDocument()
-    expect(screen.getByLabelText('Full Name')).toBeInTheDocument()
-    expect(screen.getByLabelText('Email Address')).toBeInTheDocument()
-    expect(screen.getByLabelText('Phone Number')).toBeInTheDocument()
-    expect(screen.getByLabelText('Password')).toBeInTheDocument()
-    expect(screen.getByLabelText('Confirm Password')).toBeInTheDocument()
+    expect(screen.getByText('Join PV Mart')).toBeInTheDocument()
+    expect(screen.getByText('Register as a Customer')).toBeInTheDocument()
+    expect(screen.getByLabelText(/first name/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/last name/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/phone/i)).toBeInTheDocument()
   })
 
-  it('handles successful registration', async () => {
-    const user = userEvent.setup()
-    const mockUser = createMockUser({ email: 'john@example.com' })
-    const mockSignUp = vi.mocked(supabase.auth.signUp).mockResolvedValue({
-      data: { user: mockUser, session: null },
-      error: null,
-    })
+  it('shows validation errors for empty required fields', async () => {
+    renderComponent()
     
-    renderWithAuth(<CustomerRegister />)
-    
-    // Fill form
-    await user.type(screen.getByLabelText('Full Name'), 'John Doe')
-    await user.type(screen.getByLabelText('Email Address'), 'john@example.com')
-    await user.type(screen.getByLabelText('Phone Number'), '1234567890')
-    await user.type(screen.getByLabelText('Password'), 'password123')
-    await user.type(screen.getByLabelText('Confirm Password'), 'password123')
-    
-    const submitButton = screen.getByRole('button', { name: 'Create Account' })
-    await user.click(submitButton)
-    
+    const submitButton = screen.getByRole('button', { name: /register/i })
+    fireEvent.click(submitButton)
+
     await waitFor(() => {
-      expect(mockSignUp).toHaveBeenCalled()
+      expect(screen.getByText(/first name is required/i)).toBeInTheDocument()
     })
   })
 
-  it('handles registration error', async () => {
-    const user = userEvent.setup()
-    const mockError = createMockAuthError('Email already exists') as any
-    vi.mocked(supabase.auth.signUp).mockResolvedValue({
-      data: { user: null, session: null },
-      error: mockError,
-    })
+  it('validates email format', async () => {
+    renderComponent()
     
-    renderWithAuth(<CustomerRegister />)
+    const emailInput = screen.getByLabelText(/email/i)
+    fireEvent.change(emailInput, { target: { value: 'invalid-email' } })
     
-    // Fill form
-    await user.type(screen.getByLabelText('Full Name'), 'John Doe')
-    await user.type(screen.getByLabelText('Email Address'), 'john@example.com')
-    await user.type(screen.getByLabelText('Phone Number'), '1234567890')
-    await user.type(screen.getByLabelText('Password'), 'password123')
-    await user.type(screen.getByLabelText('Confirm Password'), 'password123')
-    
-    const submitButton = screen.getByRole('button', { name: 'Create Account' })
-    await user.click(submitButton)
-    
+    const submitButton = screen.getByRole('button', { name: /register/i })
+    fireEvent.click(submitButton)
+
     await waitFor(() => {
-      expect(screen.queryAllByText((content) => content.includes('Registration failed: Email already exists')).length).toBeGreaterThan(0)
+      expect(screen.getByText(/please enter a valid email address/i)).toBeInTheDocument()
     })
   })
 
-  it('shows OTP verification after successful registration', async () => {
-    const user = userEvent.setup()
-    const mockUser = createMockUser({ email: 'john@example.com' })
-    vi.mocked(supabase.auth.signUp).mockResolvedValue({
-      data: { user: mockUser, session: null },
-      error: null,
-    })
+  it('validates phone number format', async () => {
+    renderComponent()
     
-    renderWithAuth(<CustomerRegister />)
+    const phoneInput = screen.getByLabelText(/phone/i)
+    fireEvent.change(phoneInput, { target: { value: '123' } })
     
-    // Fill form
-    await user.type(screen.getByLabelText('Full Name'), 'John Doe')
-    await user.type(screen.getByLabelText('Email Address'), 'john@example.com')
-    await user.type(screen.getByLabelText('Phone Number'), '1234567890')
-    await user.type(screen.getByLabelText('Password'), 'password123')
-    await user.type(screen.getByLabelText('Confirm Password'), 'password123')
-    const submitButton = screen.getByRole('button', { name: /create account/i })
-    await user.click(submitButton)
+    const submitButton = screen.getByRole('button', { name: /register/i })
+    fireEvent.click(submitButton)
+
     await waitFor(() => {
-      expect(screen.getByTestId('otp-verification')).toBeInTheDocument()
+      expect(screen.getByText(/phone number must be 10 digits/i)).toBeInTheDocument()
+    })
+  })
+
+  it('validates password requirements', async () => {
+    renderComponent()
+    
+    const passwordInput = screen.getByLabelText(/^password$/i)
+    fireEvent.change(passwordInput, { target: { value: '123' } })
+    
+    const submitButton = screen.getByRole('button', { name: /register/i })
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(screen.getByText(/password must be at least 8 characters/i)).toBeInTheDocument()
+    })
+  })
+
+  it('validates password confirmation match', async () => {
+    renderComponent()
+    
+    const passwordInput = screen.getByLabelText(/^password$/i)
+    const confirmPasswordInput = screen.getByLabelText(/confirm password/i)
+    
+    fireEvent.change(passwordInput, { target: { value: 'password123' } })
+    fireEvent.change(confirmPasswordInput, { target: { value: 'different123' } })
+    
+    const submitButton = screen.getByRole('button', { name: /register/i })
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument()
+    })
+  })
+
+  it('submits form with valid data', async () => {
+    renderComponent()
+    
+    // Fill in all required fields
+    fireEvent.change(screen.getByLabelText(/first name/i), { target: { value: 'John' } })
+    fireEvent.change(screen.getByLabelText(/last name/i), { target: { value: 'Doe' } })
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'john@example.com' } })
+    fireEvent.change(screen.getByLabelText(/phone/i), { target: { value: '9876543210' } })
+    fireEvent.change(screen.getByLabelText(/address/i), { target: { value: '123 Main St' } })
+    fireEvent.change(screen.getByLabelText(/city/i), { target: { value: 'Delhi' } })
+    fireEvent.change(screen.getByLabelText(/state/i), { target: { value: 'Delhi' } })
+    fireEvent.change(screen.getByLabelText(/pincode/i), { target: { value: '110001' } })
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: 'password123' } })
+    fireEvent.change(screen.getByLabelText(/confirm password/i), { target: { value: 'password123' } })
+    
+    const submitButton = screen.getByRole('button', { name: /register/i })
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockSignUp).toHaveBeenCalledWith(
+        'john@example.com',
+        'password123',
+        expect.objectContaining({
+          data: expect.objectContaining({
+            full_name: 'John Doe',
+            phone: '9876543210',
+            role: 'customer'
+          })
+        })
+      )
     }, { timeout: 15000 })
   }, 15000)
 })

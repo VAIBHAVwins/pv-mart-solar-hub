@@ -1,10 +1,12 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Shield, AlertCircle, CheckCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Mail, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 
 const AdminLogin = () => {
@@ -12,23 +14,24 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleMagicLink = async (e: React.FormEvent) => {
+  const handleMagicLinkLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setMessage('');
 
     try {
-      // First check if email exists in admin_users table
-      const { data: adminUser, error: checkError } = await supabase
+      // First check if the email is authorized
+      const { data: adminUser, error: adminError } = await supabase
         .from('admin_users')
-        .select('email, is_active')
-        .eq('email', email)
+        .select('*')
+        .eq('email', email.toLowerCase())
         .eq('is_active', true)
         .single();
 
-      if (checkError || !adminUser) {
+      if (adminError || !adminUser) {
         setError('Access denied. This email is not authorized for admin access.');
         setLoading(false);
         return;
@@ -36,18 +39,19 @@ const AdminLogin = () => {
 
       // Send magic link
       const { error: authError } = await supabase.auth.signInWithOtp({
-        email,
+        email: email.toLowerCase(),
         options: {
           emailRedirectTo: `${window.location.origin}/admin/dashboard`
         }
       });
 
-      if (authError) throw authError;
-
-      setMessage('Magic link sent! Check your email to access the admin dashboard.');
+      if (authError) {
+        setError(authError.message);
+      } else {
+        setMessage('Magic link sent! Please check your email and click the link to access the admin dashboard.');
+      }
     } catch (err: any) {
-      console.error('Magic link error:', err);
-      setError(err.message || 'Failed to send magic link');
+      setError('Failed to send magic link. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -55,52 +59,51 @@ const AdminLogin = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-xl">
+      <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
-              <Shield className="w-8 h-8 text-white" />
+            <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+              <Shield className="w-8 h-8 text-blue-600" />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">Admin Access</CardTitle>
+            <CardTitle className="text-2xl font-bold">Admin Access</CardTitle>
             <CardDescription>
               PV Mart Administration Portal
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleMagicLink} className="space-y-4">
+            <form onSubmit={handleMagicLinkLogin} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="admin-email" className="block text-sm font-medium text-gray-700 mb-2">
                   Admin Email
                 </label>
                 <Input
-                  id="email"
+                  id="admin-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your admin email"
+                  placeholder="admin@pvmart.com"
                   required
-                  className="w-full"
                 />
               </div>
 
               {error && (
-                <div className="flex items-center space-x-2 text-red-600 bg-red-50 p-3 rounded-lg">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span className="text-sm">{error}</span>
-                </div>
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
 
               {message && (
-                <div className="flex items-center space-x-2 text-green-600 bg-green-50 p-3 rounded-lg">
-                  <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                  <span className="text-sm">{message}</span>
-                </div>
+                <Alert>
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>{message}</AlertDescription>
+                </Alert>
               )}
 
               <Button
                 type="submit"
-                disabled={loading || !email}
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={loading}
+                className="w-full"
               >
                 {loading ? (
                   <div className="flex items-center space-x-2">
@@ -118,7 +121,8 @@ const AdminLogin = () => {
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-500">
-                Only authorized administrators can access this portal.
+                Only authorized administrators can access this portal. 
+                You will receive a magic link via email for secure authentication.
               </p>
             </div>
           </CardContent>

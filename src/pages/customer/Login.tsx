@@ -1,128 +1,80 @@
 
-import Layout from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import Layout from '@/components/layout/Layout';
+import AuthMethodSelector from '@/components/auth/AuthMethodSelector';
+import { SupabaseAuthForm } from '@/components/auth/SupabaseAuthForm';
+import MobileOTPAuth from '@/components/auth/MobileOTPAuth';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const CustomerLogin = () => {
-  const { signIn, user, userRole } = useSupabaseAuth();
+  const [authMethod, setAuthMethod] = useState<'select' | 'email' | 'mobile'>('select');
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (user && userRole === 'customer') {
-      navigate('/customer/dashboard');
-    }
-  }, [user, userRole, navigate]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleAuthSuccess = () => {
+    navigate('/customer/dashboard');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      // Proceed with login first, then check role after authentication
-      const { error: signInError } = await signIn(formData.email, formData.password);
-      
-      if (signInError) {
-        if (signInError.message.includes('Invalid login credentials')) {
-          setError('Invalid email or password. Please check your credentials.');
-        } else if (signInError.message.includes('Email not confirmed')) {
-          setError('Please check your email and click the confirmation link before logging in.');
-        } else {
-          setError(`Login failed: ${signInError.message}`);
-        }
-        setLoading(false);
-        return;
-      }
-
-      // Login successful - navigation will be handled by useEffect
-    } catch (error) {
-      setError('Failed to login. Please check your credentials.');
-      console.error('Login error:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleBackToSelection = () => {
+    setAuthMethod('select');
   };
 
   return (
     <Layout>
-      <div className="min-h-screen flex flex-col items-center justify-center bg-jonquil py-16 px-4">
-        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
-          <h1 className="text-4xl font-extrabold mb-6 text-center text-licorice drop-shadow">Customer Login</h1>
-          <p className="text-brown mb-8 text-center">Login to access your solar dashboard</p>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <Label htmlFor="email" className="text-licorice">Email Address</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="mt-1 border-brown focus:border-licorice"
-                placeholder="Enter your email"
-                required
-                disabled={loading}
-              />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Customer Login
+            </h1>
+            <p className="text-gray-600">
+              Access your customer dashboard
+            </p>
+          </div>
+
+          {authMethod === 'select' && (
+            <AuthMethodSelector 
+              onMethodSelect={setAuthMethod}
+              userType="customer"
+            />
+          )}
+
+          {authMethod === 'email' && (
+            <div className="space-y-4">
+              <Button
+                onClick={handleBackToSelection}
+                variant="ghost"
+                className="mb-4"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to method selection
+              </Button>
+              <SupabaseAuthForm onClose={handleAuthSuccess} />
             </div>
-            
-            <div>
-              <Label htmlFor="password" className="text-licorice">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="mt-1 border-brown focus:border-licorice"
-                placeholder="Enter your password"
-                required
-                disabled={loading}
-              />
+          )}
+
+          {authMethod === 'mobile' && (
+            <div className="space-y-4">
+              <Button
+                onClick={handleBackToSelection}
+                variant="ghost"
+                className="mb-4"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to method selection
+              </Button>
+              <MobileOTPAuth onSuccess={handleAuthSuccess} />
             </div>
-            
-            {error && <div className="text-red-600 font-semibold text-center p-3 bg-red-50 rounded">{error}</div>}
-            
-            <Button
-              type="submit"
-              className="w-full bg-brown text-white py-3 rounded-lg font-bold hover:bg-licorice shadow-md transition"
-              disabled={loading}
-            >
-              {loading ? 'Logging in...' : 'Login'}
-            </Button>
-          </form>
-          
-          <div className="mt-6 text-center space-y-2">
-            <p className="text-brown">
+          )}
+
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
               Don't have an account?{' '}
-              <Link to="/customer/register" className="text-licorice hover:underline font-semibold">
-                Create Account
+              <Link to="/customer/register" className="text-blue-600 hover:underline">
+                Register here
               </Link>
             </p>
-            <Link to="/customer/forgot-password" className="text-brown hover:underline block">
-              Forgot your password?
-            </Link>
-            <Link to="/" className="text-brown hover:underline block">
-              ← Back to Home
-            </Link>
           </div>
         </div>
       </div>

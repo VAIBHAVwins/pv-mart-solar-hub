@@ -13,7 +13,7 @@ export const useVendorQuotationForm = () => {
     installation_type: '',
     system_type: '',
     installation_charge: '',
-    warranty_years: '1',
+    warranty_years: '',
     description: '',
   });
 
@@ -63,37 +63,31 @@ export const useVendorQuotationForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
-      console.error('User not authenticated');
-      return;
-    }
+    if (!user) return;
 
     setLoading(true);
-
     try {
-      // First, insert the main quotation
-      const quotationData = {
-        vendor_id: user.id,
-        vendor_name: formData.vendor_name,
-        vendor_email: user.email || '',
-        vendor_phone: formData.vendor_phone,
-        installation_type: formData.installation_type as any,
-        system_type: formData.system_type as any,
-        total_price: calculateTotalPrice(),
-        installation_charge: parseFloat(formData.installation_charge) || 0,
-        warranty_years: parseInt(formData.warranty_years) || 1,
-        description: formData.description,
-      };
+      const totalPrice = calculateTotalPrice();
 
       const { data: quotation, error: quotationError } = await supabase
         .from('vendor_quotations')
-        .insert(quotationData)
+        .insert({
+          vendor_id: user.id,
+          vendor_name: formData.vendor_name,
+          vendor_email: user.email || '',
+          vendor_phone: formData.vendor_phone,
+          installation_type: formData.installation_type as any,
+          system_type: formData.system_type as any,
+          total_price: totalPrice,
+          installation_charge: parseFloat(formData.installation_charge) || 0,
+          warranty_years: parseInt(formData.warranty_years) || 1,
+          description: formData.description,
+        })
         .select()
         .single();
 
       if (quotationError) throw quotationError;
 
-      // Then insert all components
       if (quotation && components.length > 0) {
         const componentData = components.map(comp => ({
           quotation_id: quotation.id,
@@ -103,6 +97,7 @@ export const useVendorQuotationForm = () => {
           specifications: comp.specifications,
           quantity: comp.quantity,
           unit_price: comp.unit_price,
+          total_price: comp.quantity * comp.unit_price,
           included_length_meters: comp.included_length_meters,
           warranty_years: comp.warranty_years,
         }));
@@ -121,7 +116,7 @@ export const useVendorQuotationForm = () => {
         installation_type: '',
         system_type: '',
         installation_charge: '',
-        warranty_years: '1',
+        warranty_years: '',
         description: '',
       });
       setComponents([{
@@ -136,10 +131,9 @@ export const useVendorQuotationForm = () => {
       }]);
 
       alert('Quotation submitted successfully!');
-
-    } catch (err: any) {
-      console.error('Error submitting quotation:', err);
-      alert('Failed to submit quotation: ' + err.message);
+    } catch (error: any) {
+      console.error('Error submitting quotation:', error);
+      alert('Failed to submit quotation. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -154,6 +148,6 @@ export const useVendorQuotationForm = () => {
     updateComponent,
     calculateTotalPrice,
     handleSubmit,
-    loading,
+    loading
   };
 };
