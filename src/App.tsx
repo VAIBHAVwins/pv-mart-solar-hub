@@ -12,7 +12,6 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import GridConnectivity from "./pages/GridConnectivity";
 import InstallationType from "./pages/InstallationType";
-import Game from "./pages/Game";
 import EnhancedGame from "./pages/EnhancedGame";
 import MobileAuth from "./pages/MobileAuth";
 
@@ -71,7 +70,6 @@ function App() {
               <Route path="/mobile-auth" element={<MobileAuth />} />
               <Route path="/grid-connectivity" element={<GridConnectivity />} />
               <Route path="/installation-type" element={<InstallationType />} />
-              <Route path="/game" element={<Game />} />
               <Route path="/enhanced-game" element={<EnhancedGame />} />
               
               {/* Blog routes */}

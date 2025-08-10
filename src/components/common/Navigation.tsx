@@ -10,18 +10,17 @@ const Navigation = ({ getLinkClasses }: { getLinkClasses: () => string }) => {
     { path: '/installation-type', label: 'Installation Types' },
     { path: '/grid-connectivity', label: 'Grid Connectivity' },
     { path: '/blogs', label: 'Blog' },
-    { path: '/enhanced-game', label: 'Solar Game' },
     { path: '/contact', label: 'Contact' }
   ];
 
   return (
-    <nav className="hidden lg:flex items-center space-x-8">
+    <nav className="hidden lg:flex items-center space-x-2">
       {navItems.map((item) => (
         <Link
           key={item.path}
           to={item.path}
           className={`${getLinkClasses()} ${
-            location.pathname === item.path ? 'border-b-2 border-current' : ''
+            location.pathname === item.path ? 'bg-blue-600/20 text-blue-600' : ''
           }`}
         >
           {item.label}

@@ -1,6 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { User, LogOut } from 'lucide-react';
 
 interface MobileMenuProps {
   isMenuOpen: boolean;
@@ -25,91 +26,95 @@ const MobileMenu = ({
 }: MobileMenuProps) => {
   if (!isMenuOpen) return null;
 
+  const navItems = [
+    { path: '/', label: 'Home' },
+    { path: '/about', label: 'About' },
+    { path: '/installation-type', label: 'Installation Types' },
+    { path: '/grid-connectivity', label: 'Grid Connectivity' },
+    { path: '/blogs', label: 'Blog' },
+    { path: '/contact', label: 'Contact' }
+  ];
+
   return (
-    <div className="lg:hidden absolute top-full left-0 right-0 bg-white shadow-lg border-t z-40">
-      <div className="container-responsive py-4">
-        <nav className="flex flex-col space-y-4">
-          <Link 
-            to="/" 
-            className={getLinkClasses()}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Home
-          </Link>
-          <Link 
-            to="/about" 
-            className={getLinkClasses()}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            About
-          </Link>
-          <Link 
-            to="/blogs" 
-            className={getLinkClasses()}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Blogs
-          </Link>
-          <Link 
-            to="/contact" 
-            className={getLinkClasses()}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Contact
-          </Link>
-          
-          {/* Dashboard buttons for mobile */}
-          {user && userType === 'customer' && (
-            <button
-              onClick={() => {
-                handleCustomerDashboardClick();
-                setIsMenuOpen(false);
-              }}
-              className="text-left solar-button-outline px-4 py-2 text-sm font-semibold"
+    <div className="lg:hidden absolute top-full left-0 right-0 bg-white shadow-2xl border-t z-40 backdrop-blur-md">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <nav className="flex flex-col space-y-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium py-3 px-4 rounded-lg"
+              onClick={() => setIsMenuOpen(false)}
             >
-              Customer Dashboard
-            </button>
-          )}
+              {item.label}
+            </Link>
+          ))}
           
-          {user && userType === 'vendor' && (
-            <button
-              onClick={() => {
-                handleVendorDashboardClick();
-                setIsMenuOpen(false);
-              }}
-              className="text-left solar-button-outline px-4 py-2 text-sm font-semibold"
-            >
-              Vendor Dashboard
-            </button>
-          )}
-          
-          <div className="pt-4 border-t">
-            {!user ? (
-              <div className="space-y-2">
-                <Button asChild variant="outline" className="w-full solar-button-outline">
-                  <Link to="/customer/login" onClick={() => setIsMenuOpen(false)}>
-                    Customer Login
-                  </Link>
-                </Button>
-                <Button asChild variant="default" className="w-full solar-button">
-                  <Link to="/vendor/login" onClick={() => setIsMenuOpen(false)}>
-                    Vendor Login
-                  </Link>
-                </Button>
+          {/* User Section */}
+          {user && (
+            <div className="pt-4 border-t border-gray-200 mt-4">
+              <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 rounded-lg mb-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{userType?.charAt(0).toUpperCase() + userType?.slice(1)}</p>
+                  <p className="text-xs text-gray-500">{user.email}</p>
+                </div>
               </div>
-            ) : (
-              <Button
-                variant="outline"
-                className="w-full solar-button-outline border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+              
+              {userType === 'customer' && (
+                <button
+                  onClick={() => {
+                    handleCustomerDashboardClick();
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium rounded-lg mb-2"
+                >
+                  Customer Dashboard
+                </button>
+              )}
+              
+              {userType === 'vendor' && (
+                <button
+                  onClick={() => {
+                    handleVendorDashboardClick();
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium rounded-lg mb-2"
+                >
+                  Vendor Dashboard
+                </button>
+              )}
+              
+              <button
                 onClick={() => {
                   handleLogout();
                   setIsMenuOpen(false);
                 }}
+                className="w-full flex items-center px-4 py-3 text-red-600 hover:bg-red-50 transition-colors font-medium rounded-lg"
               >
-                Logout
+                <LogOut className="w-4 h-4 mr-2" />
+                Log out
+              </button>
+            </div>
+          )}
+          
+          {/* Auth Buttons */}
+          {!user && (
+            <div className="pt-4 border-t border-gray-200 mt-4 space-y-3">
+              <Button asChild variant="outline" className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white">
+                <Link to="/customer/login" onClick={() => setIsMenuOpen(false)}>
+                  Customer Login
+                </Link>
               </Button>
-            )}
-          </div>
+              <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                <Link to="/vendor/login" onClick={() => setIsMenuOpen(false)}>
+                  Vendor Login
+                </Link>
+              </Button>
+            </div>
+          )}
         </nav>
       </div>
     </div>

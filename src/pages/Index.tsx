@@ -1,481 +1,409 @@
 
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import Layout from '@/components/layout/Layout';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ArrowRight, CheckCircle, Users, Award, MapPin, Phone, Mail, Play } from 'lucide-react';
-import Footer from '@/components/common/Footer';
-import SessionGameWidget from '@/components/game/SessionGameWidget';
-import "react-responsive-carousel/lib/styles/carousel.min.css";
-import { Carousel } from 'react-responsive-carousel';
+import { motion } from 'framer-motion';
+import Layout from '@/components/layout/Layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Zap, 
+  Shield, 
+  TrendingUp, 
+  Users, 
+  Award, 
+  CheckCircle,
+  ArrowRight,
+  Sun,
+  Leaf,
+  DollarSign,
+  Clock
+} from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
-interface Banner {
-  id?: string;
+interface HeroBanner {
+  id: string;
   title: string;
-  subtitle?: string;
-  description: string;
+  subtitle: string;
   image_url: string;
   cta_text: string;
   cta_link: string;
+  is_active: boolean;
+  order_index: number;
 }
 
-interface Blog {
+interface BlogPost {
   id: string;
   title: string;
-  slug: string;
   excerpt: string;
-  featured_image_url?: string;
-  category?: string;
-  author: string;
-  published_at: string;
+  featured_image_url: string;
+  slug: string;
+  created_at: string;
+  tags: string[];
 }
 
-export default function Home() {
-  const [currentBanner, setCurrentBanner] = useState(0);
-  const [banners, setBanners] = useState<Banner[]>([]);
-  const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [blogsError, setBlogsError] = useState('');
-  const [showGame, setShowGame] = useState(false);
-  
-  // Static fallback banners
-  const staticBanners: Banner[] = [
-    {
-      title: "PM-KUSUM Yojana 2024",
-      subtitle: "Get up to 60% subsidy on solar installations",
-      description: "Transform your energy future with government-backed solar solutions. Save money while contributing to a sustainable tomorrow.",
-      image_url: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=1200&h=600&fit=crop",
-      cta_text: "Learn More",
-      cta_link: "/about"
-    },
-    {
-      title: "Zero Down Payment",
-      subtitle: "Start your solar journey with easy EMI options",
-      description: "No upfront costs required. Choose from flexible payment plans and start saving on your electricity bills immediately.",
-      image_url: "https://images.unsplash.com/photo-1497440001374-f26997328c1b?w=1200&h=600&fit=crop",
-      cta_text: "Get Quote",
-      cta_link: "/customer/requirement-form"
-    },
-    {
-      title: "Free Site Assessment",
-      subtitle: "Get professional evaluation of your solar potential",
-      description: "Our experts analyze your location, energy consumption, and roof structure to design the perfect solar solution for your needs.",
-      image_url: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?auto=format&fit=crop&w=1200&q=80",
-      cta_text: "Book Assessment",
-      cta_link: "/contact"
-    }
-  ];
+const Index = () => {
+  const [heroBanners, setHeroBanners] = useState<HeroBanner[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
-  const features = [
-    {
-      icon: <CheckCircle className="w-8 h-8" />,
-      title: "Quality Assurance",
-      description: "All our solar panels come with 25-year warranty and meet international quality standards."
-    },
-    {
-      icon: <Users className="w-8 h-8" />,
-      title: "Expert Team",
-      description: "Certified professionals with years of experience in solar installation and maintenance."
-    },
-    {
-      icon: <Award className="w-8 h-8" />,
-      title: "Vendor Compliance",
-      description: "Our vendors comply with all government regulations and quality standards."
-    }
-  ];
-
-  // Fetch banners and blogs from Supabase
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError('');
-      setBlogsError('');
-      
+    const fetchHeroBanners = async () => {
       try {
-        const SUPABASE_URL = "https://nchxapviawfjtcsvjvfl.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jaHhhcHZpYXdmanRjc3ZqdmZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3OTUzMTQsImV4cCI6MjA3MDM3MTMxNH0.2SLLe10Dw4fBVdy-DzKzG4zgidGy_4LLA8d_7GVi_B8";
-        
-        // Fetch hero images
-        const heroResponse = await fetch(`${SUPABASE_URL}/rest/v1/hero_images?is_active=eq.true&order=order_index.asc`, {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-          }
-        });
+        const { data, error } = await supabase
+          .from('hero_banners')
+          .select('*')
+          .eq('is_active', true)
+          .order('order_index', { ascending: true });
 
-        if (heroResponse.ok) {
-          const heroData = await heroResponse.json();
-          if (heroData && heroData.length > 0) {
-            const dynamicBanners: Banner[] = heroData.map((item: any) => ({
-              id: item.id,
-              title: item.title,
-              description: item.description,
-              image_url: item.image_url,
-              cta_text: item.cta_text || 'Learn More',
-              cta_link: item.cta_link || '#'
-            }));
-            setBanners(dynamicBanners);
-          } else {
-            setBanners(staticBanners);
-          }
-        } else {
-          setBanners(staticBanners);
+        if (error) {
+          console.error('Error fetching hero banners:', error);
+          return;
         }
 
-        // Fetch blogs
-        const blogsResponse = await fetch(`${SUPABASE_URL}/rest/v1/blogs?status=eq.published&order=published_at.desc&limit=3`, {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-          }
-        });
-
-        if (blogsResponse.ok) {
-          const blogsData = await blogsResponse.json();
-          if (blogsData && blogsData.length > 0) {
-            setBlogs(blogsData);
-          }
-        } else {
-          setBlogsError('Failed to load blogs');
+        if (data && data.length > 0) {
+          setHeroBanners(data);
         }
-        
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to load banners. Using demo banners.');
-        setBanners(staticBanners);
-        setBlogsError('Failed to load blogs');
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching hero banners:', error);
       }
     };
 
-    fetchData();
+    const fetchBlogPosts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select('id, title, excerpt, featured_image_url, slug, created_at, tags')
+          .eq('is_published', true)
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (error) {
+          console.error('Error fetching blog posts:', error);
+          return;
+        }
+
+        if (data) {
+          setBlogPosts(data);
+        }
+      } catch (error) {
+        console.error('Error fetching blog posts:', error);
+      }
+    };
+
+    fetchHeroBanners();
+    fetchBlogPosts();
   }, []);
 
+  // Auto-rotate banners
   useEffect(() => {
-    if (banners.length > 0) {
-      const timer = setInterval(() => {
-        setCurrentBanner((prev) => (prev + 1) % banners.length);
+    if (heroBanners.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentBannerIndex((prev) => (prev + 1) % heroBanners.length);
       }, 5000);
-      return () => clearInterval(timer);
+      return () => clearInterval(interval);
     }
-  }, [banners.length]);
+  }, [heroBanners.length]);
 
-  // Handle CTA link click
-  const handleCTAClick = (ctaLink: string) => {
-    if (ctaLink.startsWith('http')) {
-      window.open(ctaLink, '_blank', 'noopener,noreferrer');
-    } else if (ctaLink.startsWith('#')) {
-      const element = document.querySelector(ctaLink);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
+  const currentBanner = heroBanners[currentBannerIndex];
+
+  const features = [
+    {
+      icon: Zap,
+      title: "High Efficiency Panels",
+      description: "Latest technology solar panels with maximum energy conversion rates"
+    },
+    {
+      icon: Shield,
+      title: "25 Year Warranty",
+      description: "Comprehensive warranty coverage for long-term peace of mind"
+    },
+    {
+      icon: TrendingUp,
+      title: "Smart Monitoring",
+      description: "Real-time performance tracking and optimization systems"
+    },
+    {
+      icon: Users,
+      title: "Expert Installation",
+      description: "Certified professionals ensuring perfect setup and maintenance"
     }
-  };
+  ];
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-solar-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading...</p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+  const benefits = [
+    {
+      icon: DollarSign,
+      title: "Save Money",
+      description: "Reduce electricity bills by up to 90% with solar energy",
+      stat: "90%"
+    },
+    {
+      icon: Leaf,
+      title: "Go Green",
+      description: "Reduce your carbon footprint and contribute to a cleaner environment",
+      stat: "100%"
+    },
+    {
+      icon: Clock,
+      title: "Quick Installation",
+      description: "Professional installation completed within 1-3 days",
+      stat: "1-3 Days"
+    }
+  ];
 
   return (
     <Layout>
-      {/* Hero Section with Carousel */}
-      <section className="relative h-screen overflow-hidden">
-        <Carousel
-          showThumbs={false}
-          showStatus={false}
-          infiniteLoop
-          autoPlay
-          interval={5000}
-          className="h-full"
-          swipeable={false}
-          emulateTouch={false}
-          renderArrowPrev={(onClickHandler, hasPrev, label) =>
-            hasPrev && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  onClickHandler()
-                }}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 hover:bg-white/40 p-3 rounded-full text-white transition-all duration-300"
-                aria-label={label}
-              >
-                <ChevronLeft size={24} />
-              </button>
-            )
-          }
-          renderArrowNext={(onClickHandler, hasNext, label) =>
-            hasNext && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  onClickHandler()
-                }}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 hover:bg-white/40 p-3 rounded-full text-white transition-all duration-300"
-                aria-label={label}
-              >
-                <ChevronRight size={24} />
-              </button>
-            )
-          }
-          renderIndicator={(onClickHandler, isSelected, index, label) => (
-            <li
-              style={{ zIndex: 30, display: 'inline-block', margin: '0 4px' }}
-              className={`w-3 h-3 rounded-full transition-all duration-300 cursor-pointer ${isSelected ? 'bg-solar-primary' : 'bg-white/50'}`}
-              onClick={onClickHandler}
-              onKeyDown={onClickHandler}
-              value={index}
-              key={index}
-              role="button"
-              tabIndex={0}
-              aria-label={`${label} ${index + 1}`}
+      {/* Hero Section */}
+      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-50">
+        {currentBanner ? (
+          <div className="absolute inset-0 z-0">
+            <img 
+              src={currentBanner.image_url} 
+              alt={currentBanner.title}
+              className="w-full h-full object-cover"
             />
-          )}
-        >
-          {banners.map((banner, idx) => (
-            <div key={banner.id || idx} className="relative h-screen">
-              <img 
-                src={banner.image_url} 
-                alt={banner.title}
-                className="w-full h-full object-cover object-center"
-                style={{ 
-                  maxHeight: '100vh',
-                  minHeight: '100vh',
-                  objectPosition: 'center center'
-                }}
-                onError={(e) => {
-                  console.error('Image failed to load:', banner.image_url);
-                  e.currentTarget.src = 'https://via.placeholder.com/1200x600?text=Image+Not+Available';
-                }}
-              />
-              
-              <div className="absolute inset-0 z-10 flex items-center justify-center">
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="w-full bg-black/15 backdrop-blur-sm border-t border-b border-white/10 flex items-center justify-center min-h-[200px] py-8 px-4">
-                    <div className="text-center text-white max-w-7xl mx-auto">
-                      <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6 leading-tight drop-shadow-lg">
-                        {banner.title}
-                      </h1>
-                      {banner.subtitle && (
-                        <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-3 sm:mb-4 text-solar-primary drop-shadow-lg">
-                          {banner.subtitle}
-                        </p>
-                      )}
-                      <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 opacity-90 max-w-3xl mx-auto leading-relaxed drop-shadow-lg">
-                        {banner.description}
-                      </p>
-                      <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        {banner.cta_text && banner.cta_link && (
-                          <>
-                            {banner.cta_link.startsWith('http') || banner.cta_link.startsWith('#') ? (
-                              <Button 
-                                onClick={() => handleCTAClick(banner.cta_link)}
-                                className="solar-button text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4"
-                              >
-                                {banner.cta_text}
-                                <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
-                              </Button>
-                            ) : (
-                              <Link to={banner.cta_link}>
-                                <Button className="solar-button text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto">
-                                  {banner.cta_text}
-                                  <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
-                                </Button>
-                              </Link>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </Carousel>
-      </section>
-
-      {/* Solar Game Section */}
-      <section className="solar-section bg-gradient-to-br from-blue-50 to-green-50">
-        <div className="solar-container">
-          <div className="text-center mb-8">
-            <h2 className="solar-heading">Try Our Solar Game!</h2>
-            <p className="solar-subheading max-w-3xl mx-auto mb-8">
-              Learn about solar energy while having fun! Place solar panels strategically and see how much energy you can generate.
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30"></div>
+          </div>
+        ) : (
+          <div className="absolute inset-0 z-0 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800"></div>
+        )}
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-4xl mx-auto"
+          >
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+              {currentBanner ? currentBanner.title : "Power Your Future with Solar Energy"}
+            </h1>
+            <p className="text-xl md:text-2xl text-blue-100 mb-8 leading-relaxed">
+              {currentBanner ? currentBanner.subtitle : "Connect with trusted solar vendors for affordable, high-quality installations across India"}
             </p>
-            
-            {!showGame ? (
-              <Button 
-                onClick={() => setShowGame(true)} 
-                className="solar-button text-lg px-8 py-4"
-              >
-                <Play className="mr-2 w-5 h-5" />
-                Play Solar Game
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300">
+                <Sun className="mr-2 h-5 w-5" />
+                Get Solar Quote
               </Button>
-            ) : (
               <Button 
-                onClick={() => setShowGame(false)} 
-                variant="outline"
-                className="mb-8"
+                variant="outline" 
+                size="lg" 
+                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300"
               >
-                Hide Game
+                Learn More
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-            )}
-          </div>
-          
-          {showGame && (
-            <div className="mb-8">
-              <SessionGameWidget />
             </div>
-          )}
+          </motion.div>
         </div>
-      </section>
 
-      {/* Blog Section */}
-      {blogs.length > 0 && (
-        <section className="solar-section">
-          <div className="solar-container">
-            <div className="text-center mb-16">
-              <h2 className="solar-heading">Latest Blog Posts</h2>
-              <p className="solar-subheading max-w-3xl mx-auto">
-                Stay updated with the latest news, tips, and insights about solar energy.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-8">
-              {blogs.map((blog) => (
-                <div key={blog.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                  {blog.featured_image_url && (
-                    <img 
-                      src={blog.featured_image_url} 
-                      alt={blog.title}
-                      className="w-full h-48 object-cover"
-                    />
-                  )}
-                  <div className="p-6">
-                    {blog.category && (
-                      <span className="inline-block bg-solar-primary text-white text-xs px-2 py-1 rounded-full mb-2">
-                        {blog.category}
-                      </span>
-                    )}
-                    <h3 className="text-xl font-bold text-solar-dark mb-2 line-clamp-2">{blog.title}</h3>
-                    <p className="text-gray-600 mb-4 line-clamp-3">{blog.excerpt}</p>
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <span>{blog.author}</span>
-                      <span>{new Date(blog.published_at).toLocaleDateString()}</span>
-                    </div>
-                    <Link to={`/blog/${blog.slug}`} className="block mt-4">
-                      <Button variant="outline" size="sm" className="w-full">
-                        Read More
-                        <ArrowRight className="ml-2 w-4 h-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="text-center">
-              <Link to="/blogs">
-                <Button className="solar-button">
-                  View All Blogs
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
-            </div>
+        {/* Banner indicators */}
+        {heroBanners.length > 1 && (
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
+            {heroBanners.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentBannerIndex(index)}
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  index === currentBannerIndex ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/75'
+                }`}
+              />
+            ))}
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
       {/* Features Section */}
-      <section className="solar-section">
-        <div className="solar-container">
-          <div className="text-center mb-16">
-            <h2 className="solar-heading">Why Choose PV Mart?</h2>
-            <p className="solar-subheading max-w-3xl mx-auto">
-              We provide comprehensive solar solutions with unmatched quality, expertise, and customer support.
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Why Choose Solar?</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Discover the benefits of switching to clean, renewable solar energy for your home or business
             </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="feature-card group text-center">
-                <div className="feature-icon mx-auto mb-6">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-bold text-solar-dark mb-4">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-              </div>
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+              >
+                <Card className="text-center h-full hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-2">
+                  <CardHeader>
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <feature.icon className="w-8 h-8 text-white" />
+                    </div>
+                    <CardTitle className="text-xl font-semibold text-gray-900">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600">{feature.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="solar-section solar-gradient">
-        <div className="solar-container text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to Go Solar?
-          </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Join thousands of satisfied customers who have already switched to solar energy. 
-            Get your free consultation today!
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/customer/requirement-form">
-              <Button className="bg-white text-solar-primary hover:bg-gray-100 text-lg px-8 py-4">
-                Get Free Quote
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
-            <Link to="/contact">
-              <Button className="border-2 border-white text-white bg-transparent hover:bg-white hover:text-solar-primary text-lg px-8 py-4 transition-all duration-300">
-                Contact Us
-              </Button>
-            </Link>
+      {/* Benefits Section */}
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Solar Benefits</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Transform your energy consumption with measurable benefits
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {benefits.map((benefit, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.2 }}
+                viewport={{ once: true }}
+              >
+                <Card className="text-center h-full bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-0 shadow-md">
+                  <CardHeader>
+                    <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <benefit.icon className="w-10 h-10 text-white" />
+                    </div>
+                    <div className="text-3xl font-bold text-green-600 mb-2">{benefit.stat}</div>
+                    <CardTitle className="text-xl font-semibold text-gray-900">{benefit.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600">{benefit.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Contact Info Section */}
-      <section className="solar-section bg-gray-50">
-        <div className="solar-container">
-          <div className="flex flex-col md:flex-row justify-center items-center gap-8">
-            <div className="solar-card text-center w-full md:w-1/3">
-              <MapPin className="w-8 h-8 text-solar-primary mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-solar-dark mb-2">Visit Us</h3>
-              <p className="text-gray-600">Contact us for address details</p>
+      {/* Blog Section */}
+      {blogPosts.length > 0 && (
+        <section className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="text-center mb-16"
+            >
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">Latest Insights</h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Stay updated with the latest trends and insights in solar energy
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {blogPosts.map((post, index) => (
+                <motion.div
+                  key={post.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                >
+                  <Card className="h-full hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-2 overflow-hidden">
+                    {post.featured_image_url && (
+                      <div className="aspect-video overflow-hidden">
+                        <img 
+                          src={post.featured_image_url} 
+                          alt={post.title}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    )}
+                    <CardHeader>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {post.tags?.slice(0, 2).map((tag, tagIndex) => (
+                          <Badge key={tagIndex} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                      <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-2">
+                        {post.title}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-600 text-sm line-clamp-3 mb-4">{post.excerpt}</p>
+                      <Button variant="ghost" className="p-0 h-auto text-blue-600 hover:text-blue-700 font-medium">
+                        Read More
+                        <ArrowRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
             </div>
-            <div className="solar-card text-center w-full md:w-1/3">
-              <Phone className="w-8 h-8 text-solar-primary mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-solar-dark mb-2">Call Us</h3>
-              <p className="text-gray-600">Contact us for phone details</p>
-            </div>
-            <div className="solar-card text-center w-full md:w-1/3">
-              <Mail className="w-8 h-8 text-solar-primary mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-solar-dark mb-2">Email Us</h3>
-              <p className="text-gray-600">Contact us for email details</p>
+
+            <div className="text-center mt-12">
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold px-8 py-3"
+              >
+                View All Articles
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
             </div>
           </div>
+        </section>
+      )}
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl font-bold text-white mb-6">Ready to Go Solar?</h2>
+            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+              Join thousands of satisfied customers who have made the switch to clean, renewable energy
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300">
+                <Sun className="mr-2 h-5 w-5" />
+                Get Free Quote
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300"
+              >
+                <Users className="mr-2 h-5 w-5" />
+                Find Vendors
+              </Button>
+            </div>
+          </motion.div>
         </div>
       </section>
-      <Footer />
     </Layout>
   );
-}
+};
+
+export default Index;
