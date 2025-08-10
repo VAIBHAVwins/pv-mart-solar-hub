@@ -1,61 +1,19 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface SupabaseAuthFormProps {
   onClose?: () => void;
+  userType?: 'customer' | 'vendor' | 'admin';
 }
 
-export const SupabaseAuthForm = ({ onClose }: SupabaseAuthFormProps) => {
-  const { signIn, signUp } = useSupabaseAuth();
-  const { toast } = useToast();
+export const SupabaseAuthForm = ({ onClose, userType = 'customer' }: SupabaseAuthFormProps) => {
   const [isLogin, setIsLogin] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { error } = isLogin 
-        ? await signIn(formData.email, formData.password)
-        : await signUp(formData.email, formData.password);
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Success!",
-          description: isLogin ? "Logged in successfully" : "Account created successfully",
-        });
-        if (onClose) onClose();
-      }
-    } catch (error: unknown) {
-      let message = 'Authentication failed';
-      if (error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string') {
-        message = (error as { message: string }).message;
-      }
-      toast({
-        title: "Error",
-        description: message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -63,40 +21,109 @@ export const SupabaseAuthForm = ({ onClose }: SupabaseAuthFormProps) => {
         <CardTitle>{isLogin ? 'Login' : 'Sign Up'}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-              required
-            />
+        {isLogin ? (
+          <form id="loginForm" className="space-y-4">
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-400" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <Button type="submit" className="w-full">
+              Login
+            </Button>
+          </form>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="signup-email">Email</Label>
+              <Input
+                id="signup-email"
+                type="email"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="signup-password">Password</Label>
+              <Input
+                id="signup-password"
+                type="password"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+            <Button className="w-full" onClick={() => alert('Signup functionality not implemented in this form')}>
+              Sign Up
+            </Button>
           </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
-              required
-            />
-          </div>
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? 'Processing...' : (isLogin ? 'Login' : 'Sign Up')}
-          </Button>
-          <Button 
-            type="button" 
-            variant="ghost" 
-            onClick={() => setIsLogin(!isLogin)}
-            className="w-full"
-          >
-            {isLogin ? 'Need an account? Sign up' : 'Already have an account? Login'}
-          </Button>
-        </form>
+        )}
+        
+        <Button 
+          type="button" 
+          variant="ghost" 
+          onClick={() => setIsLogin(!isLogin)}
+          className="w-full mt-4"
+        >
+          {isLogin ? 'Need an account? Sign up' : 'Already have an account? Login'}
+        </Button>
       </CardContent>
+
+      {isLogin && (
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            const role = "${userType}";
+
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+              e.preventDefault();
+
+              const email = document.getElementById('email').value;
+              const password = document.getElementById('password').value;
+
+              const res = await fetch("https://nchxapviawfjtcsvjvfl.supabase.co/functions/v1/loginCheck", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password, expectedRole: role })
+              });
+
+              const data = await res.json();
+
+              if (data.error) {
+                alert(\`\${data.error} Redirecting...\`);
+                if (data.redirectTo) window.location.href = data.redirectTo;
+              } else {
+                window.location.href = \`/\${role}/dashboard\`;
+              }
+            });
+          `
+        }} />
+      )}
     </Card>
   );
 };

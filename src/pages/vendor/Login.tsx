@@ -1,24 +1,15 @@
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
-import AuthMethodSelector from '@/components/auth/AuthMethodSelector';
-import { SupabaseAuthForm } from '@/components/auth/SupabaseAuthForm';
-import PhonePasswordAuth from '@/components/auth/PhonePasswordAuth';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Eye, EyeOff } from 'lucide-react';
 
 const VendorLogin = () => {
-  const [authMethod, setAuthMethod] = useState<'select' | 'email' | 'phone'>('select');
-  const navigate = useNavigate();
-
-  const handleAuthSuccess = () => {
-    navigate('/vendor/dashboard');
-  };
-
-  const handleBackToSelection = () => {
-    setAuthMethod('select');
-  };
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <Layout>
@@ -33,45 +24,57 @@ const VendorLogin = () => {
             </p>
           </div>
 
-          {authMethod === 'select' && (
-            <AuthMethodSelector 
-              mode="login"
-              userType="vendor"
-              onSuccess={handleAuthSuccess}
-            />
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle>Sign In</CardTitle>
+              <CardDescription>Enter your email and password to access your account</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form id="loginForm" className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
 
-          {authMethod === 'email' && (
-            <div className="space-y-6">
-              <Button
-                onClick={handleBackToSelection}
-                variant="ghost"
-                className="mb-4 text-orange-600 hover:text-orange-800 hover:bg-orange-50 font-medium"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to method selection
-              </Button>
-              <SupabaseAuthForm onClose={handleAuthSuccess} />
-            </div>
-          )}
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      className="pr-10"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
 
-          {authMethod === 'phone' && (
-            <div className="space-y-6">
-              <Button
-                onClick={handleBackToSelection}
-                variant="ghost"
-                className="mb-4 text-red-600 hover:text-red-800 hover:bg-red-50 font-medium"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to method selection
-              </Button>
-              <PhonePasswordAuth 
-                mode="login"
-                userType="vendor"
-                onSuccess={handleAuthSuccess} 
-              />
-            </div>
-          )}
+                <Button type="submit" className="w-full">
+                  Sign In
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
           <div className="mt-8 text-center">
             <p className="text-gray-600">
@@ -83,6 +86,34 @@ const VendorLogin = () => {
           </div>
         </div>
       </div>
+
+      <script dangerouslySetInnerHTML={{
+        __html: `
+          const role = "vendor";
+
+          document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const res = await fetch("https://nchxapviawfjtcsvjvfl.supabase.co/functions/v1/loginCheck", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, password, expectedRole: role })
+            });
+
+            const data = await res.json();
+
+            if (data.error) {
+              alert(\`\${data.error} Redirecting...\`);
+              if (data.redirectTo) window.location.href = data.redirectTo;
+            } else {
+              window.location.href = \`/\${role}/dashboard\`;
+            }
+          });
+        `
+      }} />
     </Layout>
   );
 };

@@ -1,70 +1,13 @@
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Shield, Eye, EyeOff } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      // Check if the email is authorized as admin first
-      const { data: adminUser, error: adminError } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('email', email.toLowerCase())
-        .eq('is_active', true)
-        .single();
-
-      if (adminError || !adminUser) {
-        setError('Access denied. This email is not authorized for admin access.');
-        setLoading(false);
-        return;
-      }
-
-      // Sign in with email and password
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase(),
-        password: password
-      });
-
-      if (authError) {
-        if (authError.message.includes('Invalid login credentials')) {
-          setError('Invalid email or password. Please check your credentials and try again.');
-        } else if (authError.message.includes('Email not confirmed')) {
-          setError('Please confirm your email address before signing in.');
-        } else {
-          setError('Login failed. Please try again or contact support if the issue persists.');
-        }
-        setLoading(false);
-        return;
-      }
-
-      // Success - redirect to admin dashboard
-      navigate('/admin/dashboard');
-    } catch (err: any) {
-      console.error('Login error:', err);
-      setError('An unexpected error occurred. Please try again.');
-      setLoading(false);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <Layout>
@@ -80,16 +23,14 @@ const AdminLogin = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form id="loginForm" className="space-y-4">
               <div>
-                <label htmlFor="admin-email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address
                 </label>
                 <Input
-                  id="admin-email"
+                  id="email"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   className="h-12"
                   required
@@ -97,15 +38,13 @@ const AdminLogin = () => {
               </div>
 
               <div>
-                <label htmlFor="admin-password" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                   Password
                 </label>
                 <div className="relative">
                   <Input
-                    id="admin-password"
+                    id="password"
                     type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     className="pr-12 h-12"
                     required
@@ -124,26 +63,11 @@ const AdminLogin = () => {
                 </div>
               </div>
 
-              {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
               <Button
                 type="submit"
-                disabled={loading}
                 className="w-full h-12 text-base font-medium bg-gray-900 hover:bg-gray-800 text-white"
               >
-                {loading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Signing In...</span>
-                  </div>
-                ) : (
-                  'Access Dashboard'
-                )}
+                Access Dashboard
               </Button>
             </form>
 
@@ -158,6 +82,34 @@ const AdminLogin = () => {
           </CardContent>
         </Card>
       </div>
+
+      <script dangerouslySetInnerHTML={{
+        __html: `
+          const role = "admin";
+
+          document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const res = await fetch("https://nchxapviawfjtcsvjvfl.supabase.co/functions/v1/loginCheck", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, password, expectedRole: role })
+            });
+
+            const data = await res.json();
+
+            if (data.error) {
+              alert(\`\${data.error} Redirecting...\`);
+              if (data.redirectTo) window.location.href = data.redirectTo;
+            } else {
+              window.location.href = \`/\${role}/dashboard\`;
+            }
+          });
+        `
+      }} />
     </Layout>
   );
 };
