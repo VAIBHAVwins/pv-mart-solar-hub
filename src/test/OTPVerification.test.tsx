@@ -1,25 +1,26 @@
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { screen } from '@testing-library/dom';
 import { OTPVerification } from '../components/auth/OTPVerification';
 
 describe('OTPVerification', () => {
   const mockProps = {
-    phoneNumber: '+1234567890',
-    onVerifySuccess: vi.fn(),
+    email: 'test@example.com',
+    onVerificationComplete: vi.fn(),
     onBack: vi.fn(),
   };
 
   it('renders OTP verification form', () => {
     render(<OTPVerification {...mockProps} />);
     
-    expect(screen.getByText('Enter Verification Code')).toBeInTheDocument();
-    expect(screen.getByText(/sent to \+1234567890/)).toBeInTheDocument();
+    expect(screen.getByText('Verify Your Email')).toBeInTheDocument();
+    expect(screen.getByText(/sent a verification email to/)).toBeInTheDocument();
   });
 
-  it('shows phone number in masked format', () => {
+  it('shows email in the verification message', () => {
     render(<OTPVerification {...mockProps} />);
     
-    expect(screen.getByText(/\+1234567890/)).toBeInTheDocument();
+    expect(screen.getByText(/test@example.com/)).toBeInTheDocument();
   });
 });
