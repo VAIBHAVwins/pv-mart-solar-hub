@@ -19,6 +19,7 @@ const Logo = ({ className = '', textColor = 'adaptive', size = 'md' }: LogoProps
   const getTextColorClass = () => {
     const isCustomerRoute = location.pathname.includes('/customer');
     const isVendorRoute = location.pathname.includes('/vendor');
+    const isAdminRoute = location.pathname.includes('/admin');
     
     if (textColor === 'white') {
       return 'text-white';
@@ -29,7 +30,7 @@ const Logo = ({ className = '', textColor = 'adaptive', size = 'md' }: LogoProps
     }
     
     // Adaptive mode - check route-based background
-    if (isCustomerRoute || isVendorRoute) {
+    if (isCustomerRoute || isVendorRoute || isAdminRoute) {
       return 'text-white';
     }
     

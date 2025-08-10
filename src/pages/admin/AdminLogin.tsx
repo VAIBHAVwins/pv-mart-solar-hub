@@ -69,9 +69,9 @@ const AdminLogin = () => {
             <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <Shield className="w-8 h-8 text-gray-600" />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">Admin Login</CardTitle>
+            <CardTitle className="text-2xl font-bold text-gray-900">Admin Access</CardTitle>
             <CardDescription className="text-gray-600">
-              Access PV Mart Administration Portal
+              Enter your credentials to access the admin dashboard
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -85,7 +85,8 @@ const AdminLogin = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@pvmart.com"
+                  placeholder="Enter your email"
+                  className="h-12"
                   required
                 />
               </div>
@@ -101,6 +102,7 @@ const AdminLogin = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
+                    className="pr-12 h-12"
                     required
                   />
                   <button
@@ -127,7 +129,7 @@ const AdminLogin = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full"
+                className="w-full h-12 text-base font-medium bg-gray-900 hover:bg-gray-800 text-white"
               >
                 {loading ? (
                   <div className="flex items-center space-x-2">
@@ -135,14 +137,14 @@ const AdminLogin = () => {
                     <span>Signing In...</span>
                   </div>
                 ) : (
-                  'Sign In'
+                  'Access Dashboard'
                 )}
               </Button>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-500">
-                Only authorized administrators can access this portal.
+                Secure admin portal for authorized personnel only
               </p>
             </div>
           </CardContent>

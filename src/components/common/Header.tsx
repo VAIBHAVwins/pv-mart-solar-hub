@@ -26,12 +26,15 @@ const Header = () => {
 
   const isCustomerRoute = location.pathname.includes('/customer');
   const isVendorRoute = location.pathname.includes('/vendor');
+  const isAdminRoute = location.pathname.includes('/admin');
   
   const getThemeClasses = () => {
     if (isCustomerRoute) {
       return 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-xl border-b border-blue-800';
     } else if (isVendorRoute) {
       return 'bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-xl border-b border-gray-700';
+    } else if (isAdminRoute) {
+      return 'bg-gradient-to-r from-gray-900 to-black text-white shadow-xl border-b border-gray-800';
     }
     return 'bg-white/95 backdrop-blur-md text-gray-900 shadow-lg border-b border-gray-200';
   };
@@ -41,6 +44,8 @@ const Header = () => {
       return 'text-blue-100 hover:text-white font-medium transition-colors duration-200 hover:bg-blue-600/20 px-3 py-2 rounded-md';
     } else if (isVendorRoute) {
       return 'text-gray-300 hover:text-white font-medium transition-colors duration-200 hover:bg-gray-700/50 px-3 py-2 rounded-md';
+    } else if (isAdminRoute) {
+      return 'text-gray-300 hover:text-white font-medium transition-colors duration-200 hover:bg-gray-800/50 px-3 py-2 rounded-md';
     }
     return 'text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 px-3 py-2 rounded-md';
   };
@@ -51,6 +56,10 @@ const Header = () => {
 
   const handleVendorDashboardClick = () => {
     navigate('/vendor/dashboard');
+  };
+
+  const handleAdminDashboardClick = () => {
+    navigate('/admin/dashboard');
   };
 
   const getUserInitials = () => {
@@ -94,6 +103,17 @@ const Header = () => {
                   Dashboard
                 </Button>
               )}
+
+              {user && userRole === 'admin' && (
+                <Button
+                  onClick={handleAdminDashboardClick}
+                  variant="outline"
+                  size="sm"
+                  className="hidden lg:flex bg-white/10 border-white/20 text-white hover:bg-white hover:text-gray-900 font-medium"
+                >
+                  Dashboard
+                </Button>
+              )}
               
               {/* User Menu */}
               {user ? (
@@ -115,7 +135,11 @@ const Header = () => {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={userRole === 'customer' ? handleCustomerDashboardClick : handleVendorDashboardClick}>
+                    <DropdownMenuItem onClick={
+                      userRole === 'customer' ? handleCustomerDashboardClick : 
+                      userRole === 'vendor' ? handleVendorDashboardClick : 
+                      handleAdminDashboardClick
+                    }>
                       <User className="mr-2 h-4 w-4" />
                       <span>Dashboard</span>
                     </DropdownMenuItem>
