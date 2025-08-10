@@ -1,157 +1,146 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
-interface NavItem {
-  name: string;
-  path: string;
-}
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Menu, X, Sun } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Navigation = () => {
-  const location = useLocation();
-  const { signOut, user } = useSupabaseAuth();
+  const [isOpen, setIsOpen] = useState(false);
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
+  const getLinkClasses = () => {
+    return "nav-link text-brown hover:text-licorice";
   };
 
-  const navItems = [
-    { name: 'Home', path: '/' },
-    { name: 'About', path: '/about' },
-    { name: 'Blogs', path: '/blogs' },
-    { name: 'Solar Game', path: '/enhanced-game' },
-    { name: 'Contact', path: '/contact' }
-  ];
-
   return (
-    <nav className="bg-white shadow">
+    <nav className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
           <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Link to="/" className="text-xl font-bold text-gray-900">
-                PV MART
+            <Link to="/" className="flex items-center space-x-2">
+              <Sun className="h-8 w-8 text-solar-primary" />
+              <span className="text-xl font-bold text-gray-900">PV Mart</span>
+            </Link>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:block">
+            <div className="ml-10 flex items-baseline space-x-8">
+              <Link to="/" className={getLinkClasses()}>
+                Home
+              </Link>
+              <Link to="/about" className={getLinkClasses()}>
+                About
+              </Link>
+              <Link to="/enhanced-game" className={getLinkClasses()}>
+                Solar Game
+              </Link>
+              <Link to="/blogs" className={getLinkClasses()}>
+                Blogs
+              </Link>
+              <Link to="/contact" className={getLinkClasses()}>
+                Contact
               </Link>
             </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.path}
-                    className={`hover:bg-gray-100 text-gray-600 px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive(item.path) ? 'bg-gray-200 text-gray-900' : ''
-                    }`}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+          </div>
+
+          {/* Desktop Auth Buttons */}
+          <div className="hidden md:flex items-center space-x-4">
+            <Link to="/customer/login">
+              <Button variant="outline" size="sm">
+                Customer Login
+              </Button>
+            </Link>
+            <Link to="/vendor/login">
+              <Button variant="outline" size="sm">
+                Vendor Login
+              </Button>
+            </Link>
+            <Link to="/mobile-auth">
+              <Button size="sm" className="bg-solar-primary hover:bg-solar-dark">
+                Quick Login
+              </Button>
+            </Link>
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsOpen(!isOpen)}
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+            >
+              {isOpen ? (
+                <X className="block h-6 w-6" />
+              ) : (
+                <Menu className="block h-6 w-6" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation Menu */}
+        {isOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
+              <Link
+                to="/"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                onClick={() => setIsOpen(false)}
+              >
+                Home
+              </Link>
+              <Link
+                to="/about"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                onClick={() => setIsOpen(false)}
+              >
+                About
+              </Link>
+              <Link
+                to="/enhanced-game"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                onClick={() => setIsOpen(false)}
+              >
+                Solar Game
+              </Link>
+              <Link
+                to="/blogs"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                onClick={() => setIsOpen(false)}
+              >
+                Blogs
+              </Link>
+              <Link
+                to="/contact"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                onClick={() => setIsOpen(false)}
+              >
+                Contact
+              </Link>
+              
+              {/* Mobile Auth Buttons */}
+              <div className="pt-4 border-t border-gray-200 space-y-2">
+                <Link to="/customer/login" className="block">
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => setIsOpen(false)}>
+                    Customer Login
+                  </Button>
+                </Link>
+                <Link to="/vendor/login" className="block">
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => setIsOpen(false)}>
+                    Vendor Login
+                  </Button>
+                </Link>
+                <Link to="/mobile-auth" className="block">
+                  <Button size="sm" className="w-full bg-solar-primary hover:bg-solar-dark" onClick={() => setIsOpen(false)}>
+                    Quick Login
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
-          <div className="hidden md:block">
-            <div className="ml-4 flex items-center md:ml-6">
-              {user ? (
-                <>
-                  <Button variant="outline" size="sm" onClick={() => signOut()}>
-                    Sign Out
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    to="/customer/register"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Register
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="-mr-2 flex md:hidden">
-            <button
-              type="button"
-              className="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
-              aria-controls="mobile-menu"
-              aria-expanded="false"
-            >
-              <span className="sr-only">Open main menu</span>
-              {/* Icon when menu is closed */}
-              <svg
-                className="block h-6 w-6"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-              {/* Icon when menu is open */}
-              <svg
-                className="hidden h-6 w-6"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile menu, show/hide based on menu state. */}
-      <div className="md:hidden" id="mobile-menu">
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          {navItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={`bg-gray-900 text-white block px-3 py-2 rounded-md text-base font-medium ${
-                isActive(item.path) ? 'bg-gray-300 text-gray-900' : ''
-              }`}
-            >
-              {item.name}
-            </Link>
-          ))}
-        </div>
-        <div className="pt-4 pb-3 border-t border-gray-700">
-          <div className="mt-3 space-y-1">
-            <Link
-              to="/login"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700"
-            >
-              Login
-            </Link>
-            <Link
-              to="/customer/register"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700"
-            >
-              Register
-            </Link>
-          </div>
-        </div>
+        )}
       </div>
     </nav>
   );

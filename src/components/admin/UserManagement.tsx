@@ -1,222 +1,210 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import { Trash2, Edit, Plus, Save, X, UserPlus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Database } from '@/integrations/supabase/types';
-
-type UserRole = Database['public']['Enums']['user_role'];
 
 interface UserProfile {
   id: string;
   email: string;
-  full_name: string | null;
-  phone: string | null;
-  role: string;
+  full_name: string;
+  phone: string;
+  role: 'admin' | 'customer' | 'vendor';
+  is_verified: boolean;
   created_at: string;
-  company_name?: string;
-  contact_person?: string;
 }
 
 const UserManagement = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const { user } = useSupabaseAuth();
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [editForm, setEditForm] = useState<Partial<UserProfile>>({});
+  const [editLoading, setEditLoading] = useState(false);
 
-  // Fetch users and their profiles
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch users with available fields
-      const { data: usersData, error: usersError } = await supabase
+      const { data, error } = await supabase
         .from('users')
-        .select('id, email, full_name, phone, role, created_at')
+        .select('id, email, full_name, phone, role, is_verified, created_at')
         .order('created_at', { ascending: false });
-
-      if (usersError) throw usersError;
-
-      // Fetch vendor profiles for company info
-      const { data: vendorProfiles, error: vendorError } = await supabase
-        .from('vendor_profiles')
-        .select('user_id, company_name, contact_person');
-
-      if (vendorError) console.warn('Error fetching vendor profiles:', vendorError);
-
-      // Combine users with vendor profile data
-      const usersWithProfiles = usersData?.map(user => ({
-        ...user,
-        company_name: vendorProfiles?.find(vp => vp.user_id === user.id)?.company_name,
-        contact_person: vendorProfiles?.find(vp => vp.user_id === user.id)?.contact_person
-      })) || [];
-
-      setUsers(usersWithProfiles);
-    } catch (err) {
-      console.error('Error fetching users:', err);
-      setError('Failed to load users');
-    } finally {
-      setLoading(false);
+      
+      if (!error && data) {
+        setUsers(data);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  // Update user role
-  async function updateUserRole(userId: string, role: string) {
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Delete this user and all related data?')) return;
     setLoading(true);
-    setError('');
-    setSuccess('');
+    await supabase.from('users').delete().eq('id', id);
+    fetchUsers();
+  };
 
+  const openEdit = (user: UserProfile) => {
+    setEditingUser(user);
+    setEditForm({ ...user });
+  };
+
+  const closeEdit = () => {
+    setEditingUser(null);
+    setEditForm({});
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
+  const handleRoleChange = (role: 'admin' | 'customer' | 'vendor') => {
+    setEditForm({ ...editForm, role });
+  };
+
+  const saveEdit = async () => {
+    if (!editingUser) return;
+    setEditLoading(true);
+    
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ role: role as UserRole })
-        .eq('id', userId);
+      const updateData: any = {
+        email: editForm.email,
+        full_name: editForm.full_name,
+        phone: editForm.phone,
+        role: editForm.role,
+        is_verified: editForm.is_verified
+      };
 
-      if (error) throw error;
-
-      setSuccess(`Role updated to ${role} successfully!`);
-      fetchUsers();
-    } catch (err: any) {
-      console.error('Error updating role:', err);
-      setError(err.message || 'Failed to update role');
-    } finally {
-      setLoading(false);
+      await supabase.from('users').update(updateData).eq('id', editingUser.id);
+    } catch (error) {
+      console.error('Error updating user:', error);
     }
-  }
+    
+    setEditLoading(false);
+    closeEdit();
+    fetchUsers();
+  };
 
-  // Update user profile
-  async function updateUser(userId: string, updates: Partial<UserProfile>) {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      setSuccess('User updated successfully!');
-      setEditingUserId(null);
-      fetchUsers();
-    } catch (err: any) {
-      console.error('Error updating user:', err);
-      setError(err.message || 'Failed to update user');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Temporary bypass for testing
-  console.log('UserManagement - user:', user);
-  console.log('UserManagement - bypassing user check for testing');
+  const handleDownloadCSV = () => {
+    const csv = [
+      ['Email', 'Full Name', 'Phone', 'Role', 'Verified', 'Created At'],
+      ...users.map(u => [u.email, u.full_name || '', u.phone, u.role, u.is_verified ? 'Yes' : 'No', u.created_at])
+    ].map(row => row.map(String).join(',')).join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'users.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>User Management</CardTitle>
-          <CardDescription>
-            Manage system users, their profiles, and role assignments
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Messages */}
-          {success && (
-            <div className="p-3 bg-green-100 border border-green-400 text-green-700 rounded mb-4">
-              {success}
-            </div>
-          )}
-
-          {error && (
-            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded mb-4">
-              {error}
-            </div>
-          )}
-
-          {/* Users Table */}
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((userProfile) => (
-                  <TableRow key={userProfile.id}>
-                    <TableCell className="font-medium">
-                      {editingUserId === userProfile.id ? (
-                        <Input
-                          defaultValue={userProfile.full_name || ''}
-                          className="w-full"
-                          onBlur={(e) => updateUser(userProfile.id, { full_name: e.target.value })}
-                        />
-                      ) : (
-                        userProfile.full_name || 'N/A'
-                      )}
-                    </TableCell>
-                    <TableCell>{userProfile.email}</TableCell>
-                    <TableCell>{userProfile.phone || 'N/A'}</TableCell>
-                    <TableCell>
-                      <Badge variant={userProfile.role === 'admin' ? 'destructive' : userProfile.role === 'vendor' ? 'secondary' : 'default'}>
-                        {userProfile.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{userProfile.company_name || 'N/A'}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setEditingUserId(editingUserId === userProfile.id ? null : userProfile.id)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Select onValueChange={(role) => updateUserRole(userProfile.id, role)}>
-                          <SelectTrigger className="w-32">
-                            <SelectValue placeholder="Change Role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="customer">Customer</SelectItem>
-                            <SelectItem value="vendor">Vendor</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>User Management</CardTitle>
+        <div className="flex gap-2">
+          <Button onClick={fetchUsers} disabled={loading}>Refresh</Button>
+          <Button onClick={handleDownloadCSV} disabled={loading}>Download CSV</Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left p-2">Email</th>
+                <th className="text-left p-2">Full Name</th>
+                <th className="text-left p-2">Phone</th>
+                <th className="text-left p-2">Role</th>
+                <th className="text-left p-2">Verified</th>
+                <th className="text-left p-2">Created</th>
+                <th className="text-left p-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map(user => (
+                <tr key={user.id} className="border-b">
+                  <td className="p-2">{user.email}</td>
+                  <td className="p-2">{user.full_name}</td>
+                  <td className="p-2">{user.phone}</td>
+                  <td className="p-2">
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                      user.role === 'vendor' ? 'bg-blue-100 text-blue-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="p-2">{user.is_verified ? '✅' : '❌'}</td>
+                  <td className="p-2">{new Date(user.created_at).toLocaleDateString()}</td>
+                  <td className="p-2">
+                    <Button size="sm" onClick={() => openEdit(user)} className="mr-2">Edit</Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(user.id)}>Delete</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {loading && <div className="text-center py-4">Loading...</div>}
+        {!loading && users.length === 0 && <div className="text-center py-4">No users found.</div>}
+      </CardContent>
+      
+      <Dialog open={!!editingUser} onOpenChange={closeEdit}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input 
+              name="email" 
+              value={editForm.email || ''} 
+              onChange={handleEditChange} 
+              placeholder="Email" 
+            />
+            <Input 
+              name="full_name" 
+              value={editForm.full_name || ''} 
+              onChange={handleEditChange} 
+              placeholder="Full Name" 
+            />
+            <Input 
+              name="phone" 
+              value={editForm.phone || ''} 
+              onChange={handleEditChange} 
+              placeholder="Phone" 
+            />
+            <Select value={editForm.role} onValueChange={handleRoleChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="customer">Customer</SelectItem>
+                <SelectItem value="vendor">Vendor</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-
-          {users.length === 0 && !loading && (
-            <div className="text-center py-8 text-gray-500">
-              No users found.
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          <DialogFooter>
+            <Button onClick={saveEdit} disabled={editLoading}>
+              {editLoading ? 'Saving...' : 'Save'}
+            </Button>
+            <Button variant="secondary" onClick={closeEdit}>Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 };
 

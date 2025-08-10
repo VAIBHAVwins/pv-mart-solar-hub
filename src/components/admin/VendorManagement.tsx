@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,29 +9,55 @@ import { Input } from '@/components/ui/input';
 interface Vendor {
   id: string;
   email: string;
-  company_name: string;
-  contact_person: string;
+  full_name: string;
   phone: string;
-  license_number: string;
-  address: string;
+  role: string;
+  is_verified: boolean;
   created_at: string;
+  vendor_profiles?: {
+    company_name: string;
+    contact_person: string;
+    license_number: string;
+    address: string;
+  };
 }
 
 const VendorManagement = () => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Vendor>>({});
+  const [editForm, setEditForm] = useState<any>({});
   const [editLoading, setEditLoading] = useState(false);
 
   const fetchVendors = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('users')
-      .select('id, email, company_name, contact_person, phone, license_number, address, created_at')
-      .eq('role', 'vendor')
-      .order('created_at', { ascending: true });
-    if (!error) setVendors(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select(`
+          id, 
+          email, 
+          full_name, 
+          phone, 
+          role, 
+          is_verified, 
+          created_at,
+          vendor_profiles (
+            company_name,
+            contact_person,
+            license_number,
+            address
+          )
+        `)
+        .eq('role', 'vendor')
+        .order('created_at', { ascending: true });
+      
+      if (!error && data) {
+        setVendors(data);
+      }
+    } catch (error) {
+      console.error('Error fetching vendors:', error);
+    }
     setLoading(false);
   };
 
@@ -47,26 +74,65 @@ const VendorManagement = () => {
 
   const openEdit = (vendor: Vendor) => {
     setEditingVendor(vendor);
-    setEditForm({ ...vendor });
+    setEditForm({
+      email: vendor.email,
+      full_name: vendor.full_name,
+      phone: vendor.phone,
+      company_name: vendor.vendor_profiles?.company_name || '',
+      contact_person: vendor.vendor_profiles?.contact_person || '',
+      license_number: vendor.vendor_profiles?.license_number || '',
+      address: vendor.vendor_profiles?.address || ''
+    });
   };
+
   const closeEdit = () => {
     setEditingVendor(null);
     setEditForm({});
   };
+
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
+
   const saveEdit = async () => {
     if (!editingVendor) return;
     setEditLoading(true);
-    await supabase.from('users').update({
-      email: editForm.email,
-      company_name: editForm.company_name,
-      contact_person: editForm.contact_person,
-      phone: editForm.phone,
-      license_number: editForm.license_number,
-      address: editForm.address,
-    }).eq('id', editingVendor.id);
+    
+    try {
+      // Update user info
+      await supabase.from('users').update({
+        email: editForm.email,
+        full_name: editForm.full_name,
+        phone: editForm.phone,
+      }).eq('id', editingVendor.id);
+
+      // Update or insert vendor profile
+      const { data: existingProfile } = await supabase
+        .from('vendor_profiles')
+        .select('id')
+        .eq('user_id', editingVendor.id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        await supabase.from('vendor_profiles').update({
+          company_name: editForm.company_name,
+          contact_person: editForm.contact_person,
+          license_number: editForm.license_number,
+          address: editForm.address,
+        }).eq('user_id', editingVendor.id);
+      } else {
+        await supabase.from('vendor_profiles').insert({
+          user_id: editingVendor.id,
+          company_name: editForm.company_name,
+          contact_person: editForm.contact_person,
+          license_number: editForm.license_number,
+          address: editForm.address,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating vendor:', error);
+    }
+    
     setEditLoading(false);
     closeEdit();
     fetchVendors();
@@ -74,9 +140,18 @@ const VendorManagement = () => {
 
   const handleDownloadCSV = () => {
     const csv = [
-      ['Email', 'Company Name', 'Contact Person', 'Phone', 'License Number', 'Address'],
-      ...vendors.map(v => [v.email, v.company_name, v.contact_person, v.phone, v.license_number, v.address])
+      ['Email', 'Full Name', 'Phone', 'Company Name', 'Contact Person', 'License Number', 'Address'],
+      ...vendors.map(v => [
+        v.email, 
+        v.full_name || '', 
+        v.phone, 
+        v.vendor_profiles?.company_name || '', 
+        v.vendor_profiles?.contact_person || '', 
+        v.vendor_profiles?.license_number || '', 
+        v.vendor_profiles?.address || ''
+      ])
     ].map(row => row.map(String).join(',')).join('\n');
+    
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -96,53 +171,59 @@ const VendorManagement = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr>
-              <th>Email</th>
-              <th>Company Name</th>
-              <th>Contact Person</th>
-              <th>Phone</th>
-              <th>License Number</th>
-              <th>Address</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {vendors.map(vendor => (
-              <tr key={vendor.id}>
-                <td>{vendor.email}</td>
-                <td>{vendor.company_name}</td>
-                <td>{vendor.contact_person}</td>
-                <td>{vendor.phone}</td>
-                <td>{vendor.license_number}</td>
-                <td>{vendor.address}</td>
-                <td>
-                  <Button size="sm" onClick={() => openEdit(vendor)} className="mr-2">Edit</Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(vendor.id)}>Delete</Button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left p-2">Email</th>
+                <th className="text-left p-2">Full Name</th>
+                <th className="text-left p-2">Phone</th>
+                <th className="text-left p-2">Company</th>
+                <th className="text-left p-2">Contact Person</th>
+                <th className="text-left p-2">License</th>
+                <th className="text-left p-2">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {vendors.map(vendor => (
+                <tr key={vendor.id} className="border-b">
+                  <td className="p-2">{vendor.email}</td>
+                  <td className="p-2">{vendor.full_name}</td>
+                  <td className="p-2">{vendor.phone}</td>
+                  <td className="p-2">{vendor.vendor_profiles?.company_name || 'N/A'}</td>
+                  <td className="p-2">{vendor.vendor_profiles?.contact_person || 'N/A'}</td>
+                  <td className="p-2">{vendor.vendor_profiles?.license_number || 'N/A'}</td>
+                  <td className="p-2">
+                    <Button size="sm" onClick={() => openEdit(vendor)} className="mr-2">Edit</Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(vendor.id)}>Delete</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {loading && <div className="text-center py-4">Loading...</div>}
         {!loading && vendors.length === 0 && <div className="text-center py-4">No vendors found.</div>}
       </CardContent>
+      
       <Dialog open={!!editingVendor} onOpenChange={closeEdit}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Vendor</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2">
+          <div className="space-y-4">
             <Input name="email" value={editForm.email || ''} onChange={handleEditChange} placeholder="Email" />
+            <Input name="full_name" value={editForm.full_name || ''} onChange={handleEditChange} placeholder="Full Name" />
+            <Input name="phone" value={editForm.phone || ''} onChange={handleEditChange} placeholder="Phone" />
             <Input name="company_name" value={editForm.company_name || ''} onChange={handleEditChange} placeholder="Company Name" />
             <Input name="contact_person" value={editForm.contact_person || ''} onChange={handleEditChange} placeholder="Contact Person" />
-            <Input name="phone" value={editForm.phone || ''} onChange={handleEditChange} placeholder="Phone" />
             <Input name="license_number" value={editForm.license_number || ''} onChange={handleEditChange} placeholder="License Number" />
             <Input name="address" value={editForm.address || ''} onChange={handleEditChange} placeholder="Address" />
           </div>
           <DialogFooter>
-            <Button onClick={saveEdit} disabled={editLoading}>Save</Button>
+            <Button onClick={saveEdit} disabled={editLoading}>
+              {editLoading ? 'Saving...' : 'Save'}
+            </Button>
             <Button variant="secondary" onClick={closeEdit}>Cancel</Button>
           </DialogFooter>
         </DialogContent>
@@ -151,4 +232,4 @@ const VendorManagement = () => {
   );
 };
 
-export default VendorManagement; 
+export default VendorManagement;
