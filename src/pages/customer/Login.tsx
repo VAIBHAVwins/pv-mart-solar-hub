@@ -35,8 +35,9 @@ const CustomerLogin = () => {
 
           {authMethod === 'select' && (
             <AuthMethodSelector 
-              onMethodSelect={setAuthMethod}
+              mode="login"
               userType="customer"
+              onSuccess={handleAuthSuccess}
             />
           )}
 
@@ -64,7 +65,11 @@ const CustomerLogin = () => {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to method selection
               </Button>
-              <PhonePasswordAuth onSuccess={handleAuthSuccess} />
+              <PhonePasswordAuth 
+                mode="login"
+                userType="customer"
+                onSuccess={handleAuthSuccess} 
+              />
             </div>
           )}
 

@@ -35,8 +35,9 @@ const VendorLogin = () => {
 
           {authMethod === 'select' && (
             <AuthMethodSelector 
-              onMethodSelect={setAuthMethod}
+              mode="login"
               userType="vendor"
+              onSuccess={handleAuthSuccess}
             />
           )}
 
@@ -64,7 +65,11 @@ const VendorLogin = () => {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to method selection
               </Button>
-              <PhonePasswordAuth onSuccess={handleAuthSuccess} />
+              <PhonePasswordAuth 
+                mode="login"
+                userType="vendor"
+                onSuccess={handleAuthSuccess} 
+              />
             </div>
           )}
 

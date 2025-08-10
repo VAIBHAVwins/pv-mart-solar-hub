@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Phone } from 'lucide-react';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import Logo from './Logo';
 import Navigation from './Navigation';
 import MobileMenu from './MobileMenu';
@@ -12,6 +13,7 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, signOut } = useSupabaseAuth();
 
   const handleCallNow = () => {
     window.open('tel:+918800000000', '_self');
@@ -19,6 +21,25 @@ const Header = () => {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  const getLinkClasses = () => {
+    return "text-gray-600 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors";
+  };
+
+  const handleCustomerDashboardClick = () => {
+    navigate('/customer/dashboard');
+    closeMobileMenu();
+  };
+
+  const handleVendorDashboardClick = () => {
+    navigate('/vendor/dashboard');
+    closeMobileMenu();
   };
 
   return (
@@ -35,7 +56,7 @@ const Header = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden md:block">
-              <Navigation />
+              <Navigation getLinkClasses={getLinkClasses} />
             </div>
 
             {/* Desktop Auth & Call Button */}
@@ -47,7 +68,7 @@ const Header = () => {
                 <Phone className="w-4 h-4" />
                 <span>Call Now</span>
               </Button>
-              <AuthButtons />
+              <AuthButtons user={user} handleLogout={handleLogout} />
             </div>
 
             {/* Mobile menu button */}
@@ -79,8 +100,13 @@ const Header = () => {
 
       {/* Mobile Menu */}
       <MobileMenu 
-        isOpen={isMobileMenuOpen} 
-        onClose={closeMobileMenu}
+        isMenuOpen={isMobileMenuOpen}
+        setIsMenuOpen={setIsMobileMenuOpen}
+        getLinkClasses={getLinkClasses}
+        user={user}
+        userType={user?.user_metadata?.user_type || null}
+        handleCustomerDashboardClick={handleCustomerDashboardClick}
+        handleVendorDashboardClick={handleVendorDashboardClick}
       />
     </>
   );
