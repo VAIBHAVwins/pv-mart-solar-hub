@@ -9,37 +9,60 @@ interface AuthMethodSelectorProps {
 }
 
 const AuthMethodSelector = ({ onMethodSelect, userType }: AuthMethodSelectorProps) => {
-  const typeColors = {
-    customer: {
-      primary: 'blue',
-      secondary: 'green'
-    },
-    vendor: {
-      primary: 'orange',
-      secondary: 'red'
+  const getThemeColors = () => {
+    if (userType === 'customer') {
+      return {
+        emailBg: 'bg-blue-50',
+        emailBorder: 'border-blue-200',
+        emailHoverBg: 'hover:bg-blue-100',
+        emailHoverBorder: 'hover:border-blue-300',
+        emailIconBg: 'bg-blue-100',
+        emailIconColor: 'text-blue-600',
+        phoneBg: 'bg-green-50',
+        phoneBorder: 'border-green-200',
+        phoneHoverBg: 'hover:bg-green-100',
+        phoneHoverBorder: 'hover:border-green-300',
+        phoneIconBg: 'bg-green-100',
+        phoneIconColor: 'text-green-600'
+      };
+    } else {
+      return {
+        emailBg: 'bg-orange-50',
+        emailBorder: 'border-orange-200',
+        emailHoverBg: 'hover:bg-orange-100',
+        emailHoverBorder: 'hover:border-orange-300',
+        emailIconBg: 'bg-orange-100',
+        emailIconColor: 'text-orange-600',
+        phoneBg: 'bg-red-50',
+        phoneBorder: 'border-red-200',
+        phoneHoverBg: 'hover:bg-red-100',
+        phoneHoverBorder: 'hover:border-red-300',
+        phoneIconBg: 'bg-red-100',
+        phoneIconColor: 'text-red-600'
+      };
     }
   };
 
-  const colors = typeColors[userType];
+  const colors = getThemeColors();
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-lg">
+    <Card className="w-full max-w-md mx-auto shadow-xl border-2">
       <CardHeader className="text-center pb-6">
         <CardTitle className="text-2xl font-bold text-gray-900">
           Choose Login Method
         </CardTitle>
         <CardDescription className="text-gray-600">
-          How would you like to {userType === 'customer' ? 'access your customer' : 'access your vendor'} account?
+          How would you like to access your {userType} account?
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 px-6 pb-6">
         <Button
           onClick={() => onMethodSelect('email')}
-          className={`w-full h-20 text-left flex items-center space-x-4 bg-white hover:bg-${colors.primary}-50 border-2 border-gray-200 hover:border-${colors.primary}-300 transition-all duration-200 shadow-sm hover:shadow-md group`}
+          className={`w-full h-20 text-left flex items-center space-x-4 ${colors.emailBg} ${colors.emailHoverBg} border-2 ${colors.emailBorder} ${colors.emailHoverBorder} transition-all duration-200 shadow-sm hover:shadow-md group text-gray-900`}
           variant="outline"
         >
-          <div className={`w-14 h-14 bg-${colors.primary}-100 rounded-full flex items-center justify-center group-hover:bg-${colors.primary}-200 transition-colors duration-200`}>
-            <Mail className={`w-7 h-7 text-${colors.primary}-600`} />
+          <div className={`w-14 h-14 ${colors.emailIconBg} rounded-full flex items-center justify-center transition-colors duration-200`}>
+            <Mail className={`w-7 h-7 ${colors.emailIconColor}`} />
           </div>
           <div className="flex-1">
             <div className="font-semibold text-gray-900 text-lg">Email & Password</div>
@@ -49,11 +72,11 @@ const AuthMethodSelector = ({ onMethodSelect, userType }: AuthMethodSelectorProp
 
         <Button
           onClick={() => onMethodSelect('phone')}
-          className={`w-full h-20 text-left flex items-center space-x-4 bg-white hover:bg-${colors.secondary}-50 border-2 border-gray-200 hover:border-${colors.secondary}-300 transition-all duration-200 shadow-sm hover:shadow-md group`}
+          className={`w-full h-20 text-left flex items-center space-x-4 ${colors.phoneBg} ${colors.phoneHoverBg} border-2 ${colors.phoneBorder} ${colors.phoneHoverBorder} transition-all duration-200 shadow-sm hover:shadow-md group text-gray-900`}
           variant="outline"
         >
-          <div className={`w-14 h-14 bg-${colors.secondary}-100 rounded-full flex items-center justify-center group-hover:bg-${colors.secondary}-200 transition-colors duration-200`}>
-            <Smartphone className={`w-7 h-7 text-${colors.secondary}-600`} />
+          <div className={`w-14 h-14 ${colors.phoneIconBg} rounded-full flex items-center justify-center transition-colors duration-200`}>
+            <Smartphone className={`w-7 h-7 ${colors.phoneIconColor}`} />
           </div>
           <div className="flex-1">
             <div className="font-semibold text-gray-900 text-lg">Phone & Password</div>

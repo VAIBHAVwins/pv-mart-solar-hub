@@ -23,28 +23,47 @@ const PhonePasswordAuth = ({ onSuccess }: PhonePasswordAuthProps) => {
     setError('');
 
     try {
-      const fullPhoneNumber = phoneNumber.startsWith('+91') ? phoneNumber : `+91${phoneNumber}`;
-      
-      // First try to find a user with this phone number in the users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('email, id')
-        .eq('phone', fullPhoneNumber)
-        .single();
+      // Try multiple phone number formats
+      const phoneFormats = [
+        phoneNumber.startsWith('+91') ? phoneNumber : `+91${phoneNumber}`,
+        phoneNumber,
+        phoneNumber.replace(/^\+91/, ''),
+        phoneNumber.replace(/^91/, ''),
+      ];
 
-      if (userError || !userData?.email) {
-        setError('No account found with this phone number');
+      let userData = null;
+      
+      // Try to find user with any of the phone formats
+      for (const format of phoneFormats) {
+        const { data, error: userError } = await supabase
+          .from('users')
+          .select('email, id')
+          .eq('phone', format)
+          .maybeSingle();
+
+        if (data && !userError) {
+          userData = data;
+          break;
+        }
+      }
+
+      if (!userData?.email) {
+        setError('No account found with this phone number. Please check your number or register first.');
         return;
       }
 
-      // Now try to sign in with the found email and provided password
+      // Try to sign in with the found email and provided password
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: userData.email,
         password: password
       });
 
       if (signInError) {
-        setError('Invalid phone number or password');
+        if (signInError.message.includes('Invalid login credentials')) {
+          setError('Invalid phone number or password. Please check your credentials.');
+        } else {
+          setError(`Login failed: ${signInError.message}`);
+        }
         return;
       }
 
@@ -61,25 +80,24 @@ const PhonePasswordAuth = ({ onSuccess }: PhonePasswordAuthProps) => {
     // Remove all non-digits
     const numericValue = value.replace(/\D/g, '');
     
-    // Format as needed (basic formatting)
-    let formattedValue = numericValue;
+    // Limit to 10 digits
     if (numericValue.length <= 10) {
-      setPhoneNumber(formattedValue);
+      setPhoneNumber(numericValue);
     }
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto shadow-xl border-2">
       <CardHeader className="text-center">
         <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
           <Smartphone className="w-8 h-8 text-green-600" />
         </div>
-        <CardTitle>Phone & Password Login</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-2xl font-bold">Phone & Password Login</CardTitle>
+        <CardDescription className="text-gray-600">
           Enter your phone number and password to sign in
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-6 pb-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
@@ -95,7 +113,7 @@ const PhonePasswordAuth = ({ onSuccess }: PhonePasswordAuthProps) => {
                 value={phoneNumber}
                 onChange={(e) => handlePhoneChange(e.target.value)}
                 placeholder="9876543210"
-                className="pl-12"
+                className="pl-12 h-12"
                 maxLength={10}
                 required
               />
@@ -113,7 +131,7 @@ const PhonePasswordAuth = ({ onSuccess }: PhonePasswordAuthProps) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="pr-12"
+                className="pr-12 h-12"
                 required
               />
               <button
@@ -139,7 +157,7 @@ const PhonePasswordAuth = ({ onSuccess }: PhonePasswordAuthProps) => {
           <Button
             type="submit"
             disabled={loading || phoneNumber.length < 10 || !password}
-            className="w-full"
+            className="w-full h-12 text-base font-medium"
           >
             {loading ? (
               <div className="flex items-center space-x-2">

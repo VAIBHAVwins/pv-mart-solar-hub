@@ -45,7 +45,7 @@ const CustomerLogin = () => {
               <Button
                 onClick={handleBackToSelection}
                 variant="ghost"
-                className="mb-4 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                className="mb-4 text-blue-600 hover:text-blue-800 hover:bg-blue-50 font-medium"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to method selection
@@ -59,7 +59,7 @@ const CustomerLogin = () => {
               <Button
                 onClick={handleBackToSelection}
                 variant="ghost"
-                className="mb-4 text-green-600 hover:text-green-800 hover:bg-green-50"
+                className="mb-4 text-green-600 hover:text-green-800 hover:bg-green-50 font-medium"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to method selection
