@@ -2,14 +2,64 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
-import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const CustomerLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    try {
+      // Step 1: Validate with Edge Function
+      const res = await fetch("https://nchxapviawfjtcsvjvfl.supabase.co/functions/v1/loginCheck", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, expectedRole: "customer" })
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        setError(data.error);
+        if (data.redirectTo) {
+          window.location.href = data.redirectTo;
+        }
+        return;
+      }
+
+      // Step 2: Create Supabase client session
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (signInError) {
+        setError('Failed to create session. Please try again.');
+        return;
+      }
+
+      // Success - redirect to dashboard
+      window.location.href = '/customer/dashboard';
+
+    } catch (err) {
+      setError('Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Layout>
@@ -30,16 +80,18 @@ const CustomerLogin = () => {
               <CardDescription>Enter your email and password to access your account</CardDescription>
             </CardHeader>
             <CardContent>
-              <form id="loginForm" className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                     Email Address
                   </label>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
                     placeholder="Enter your email"
                     required
+                    disabled={loading}
                   />
                 </div>
 
@@ -50,10 +102,12 @@ const CustomerLogin = () => {
                   <div className="relative">
                     <Input
                       id="password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       className="pr-10"
                       required
+                      disabled={loading}
                     />
                     <button
                       type="button"
@@ -69,8 +123,14 @@ const CustomerLogin = () => {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full">
-                  Sign In
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-600 text-sm">{error}</p>
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Signing In...' : 'Sign In'}
                 </Button>
               </form>
             </CardContent>
@@ -86,34 +146,6 @@ const CustomerLogin = () => {
           </div>
         </div>
       </div>
-
-      <script dangerouslySetInnerHTML={{
-        __html: `
-          const role = "customer";
-
-          document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            const res = await fetch("https://nchxapviawfjtcsvjvfl.supabase.co/functions/v1/loginCheck", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, password, expectedRole: role })
-            });
-
-            const data = await res.json();
-
-            if (data.error) {
-              alert(\`\${data.error} Redirecting...\`);
-              if (data.redirectTo) window.location.href = data.redirectTo;
-            } else {
-              window.location.href = \`/\${role}/dashboard\`;
-            }
-          });
-        `
-      }} />
     </Layout>
   );
 };

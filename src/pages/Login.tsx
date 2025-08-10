@@ -4,9 +4,60 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    try {
+      // Step 1: Validate with Edge Function (default to customer)
+      const res = await fetch("https://nchxapviawfjtcsvjvfl.supabase.co/functions/v1/loginCheck", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, expectedRole: "customer" })
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        setError(data.error);
+        if (data.redirectTo) {
+          window.location.href = data.redirectTo;
+        }
+        return;
+      }
+
+      // Step 2: Create Supabase client session
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (signInError) {
+        setError('Failed to create session. Please try again.');
+        return;
+      }
+
+      // Success - redirect to dashboard
+      window.location.href = '/customer/dashboard';
+
+    } catch (err) {
+      setError('Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-8 px-4">
@@ -16,16 +67,18 @@ export default function Login() {
           <CardDescription>Enter your credentials to access your account</CardDescription>
         </CardHeader>
         <CardContent>
-          <form id="loginForm" className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email
               </label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 placeholder="Enter your email"
                 required
+                disabled={loading}
               />
             </div>
             
@@ -36,10 +89,12 @@ export default function Login() {
               <div className="relative">
                 <Input
                   id="password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   className="pr-10"
                   required
+                  disabled={loading}
                 />
                 <button
                   type="button"
@@ -54,44 +109,23 @@ export default function Login() {
                 </button>
               </div>
             </div>
+
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
             
             <Button
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={loading}
             >
-              Login
+              {loading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
         </CardContent>
       </Card>
-
-      <script dangerouslySetInnerHTML={{
-        __html: `
-          const role = "customer"; // Default to customer for general login
-
-          document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            const res = await fetch("https://nchxapviawfjtcsvjvfl.supabase.co/functions/v1/loginCheck", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, password, expectedRole: role })
-            });
-
-            const data = await res.json();
-
-            if (data.error) {
-              alert(\`\${data.error} Redirecting...\`);
-              if (data.redirectTo) window.location.href = data.redirectTo;
-            } else {
-              window.location.href = \`/\${role}/dashboard\`;
-            }
-          });
-        `
-      }} />
     </div>
   );
 }
