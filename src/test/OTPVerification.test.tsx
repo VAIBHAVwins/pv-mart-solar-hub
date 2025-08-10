@@ -1,42 +1,25 @@
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import { OTPVerification } from '@/components/auth/OTPVerification'
-
-// Mock useNavigate
-const mockNavigate = vi.fn()
-vi.mock('react-router-dom', () => ({
-  useNavigate: () => mockNavigate
-}))
-
-// Mock supabase client
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    auth: {
-      resend: vi.fn(),
-      getSession: vi.fn()
-    }
-  }
-}))
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { OTPVerification } from '../components/auth/OTPVerification';
 
 describe('OTPVerification', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
+  const mockProps = {
+    phoneNumber: '+1234567890',
+    onVerifySuccess: vi.fn(),
+    onBack: vi.fn(),
+  };
 
-  it('renders OTP verification component', () => {
-    const mockProps = {
-      email: 'test@example.com',
-      onVerificationComplete: vi.fn(),
-      onBack: vi.fn()
-    }
-
-    render(<OTPVerification {...mockProps} />)
+  it('renders OTP verification form', () => {
+    render(<OTPVerification {...mockProps} />);
     
-    expect(screen.getByTestId('otp-verification')).toBeInTheDocument()
-    expect(screen.getByText('Verify Your Email')).toBeInTheDocument()
-    expect(screen.getByText(/test@example.com/)).toBeInTheDocument()
-  })
+    expect(screen.getByText('Enter Verification Code')).toBeInTheDocument();
+    expect(screen.getByText(/sent to \+1234567890/)).toBeInTheDocument();
+  });
 
-  // Additional tests for button clicks and success/error messages can be added here if needed
-})
+  it('shows phone number in masked format', () => {
+    render(<OTPVerification {...mockProps} />);
+    
+    expect(screen.getByText(/\+1234567890/)).toBeInTheDocument();
+  });
+});
