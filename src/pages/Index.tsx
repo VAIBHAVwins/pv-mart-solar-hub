@@ -20,10 +20,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
-interface HeroBanner {
+interface HeroImage {
   id: string;
   title: string;
-  subtitle: string;
+  description: string;
   image_url: string;
   cta_text: string;
   cta_link: string;
@@ -42,38 +42,38 @@ interface BlogPost {
 }
 
 const Index = () => {
-  const [heroBanners, setHeroBanners] = useState<HeroBanner[]>([]);
+  const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    const fetchHeroBanners = async () => {
+    const fetchHeroImages = async () => {
       try {
         const { data, error } = await supabase
-          .from('hero_banners')
+          .from('hero_images')
           .select('*')
           .eq('is_active', true)
           .order('order_index', { ascending: true });
 
         if (error) {
-          console.error('Error fetching hero banners:', error);
+          console.error('Error fetching hero images:', error);
           return;
         }
 
         if (data && data.length > 0) {
-          setHeroBanners(data);
+          setHeroImages(data);
         }
       } catch (error) {
-        console.error('Error fetching hero banners:', error);
+        console.error('Error fetching hero images:', error);
       }
     };
 
     const fetchBlogPosts = async () => {
       try {
         const { data, error } = await supabase
-          .from('blog_posts')
+          .from('blogs')
           .select('id, title, excerpt, featured_image_url, slug, created_at, tags')
-          .eq('is_published', true)
+          .eq('status', 'published')
           .order('created_at', { ascending: false })
           .limit(3);
 
@@ -90,21 +90,21 @@ const Index = () => {
       }
     };
 
-    fetchHeroBanners();
+    fetchHeroImages();
     fetchBlogPosts();
   }, []);
 
-  // Auto-rotate banners
+  // Auto-rotate hero images
   useEffect(() => {
-    if (heroBanners.length > 1) {
+    if (heroImages.length > 1) {
       const interval = setInterval(() => {
-        setCurrentBannerIndex((prev) => (prev + 1) % heroBanners.length);
+        setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
       }, 5000);
       return () => clearInterval(interval);
     }
-  }, [heroBanners.length]);
+  }, [heroImages.length]);
 
-  const currentBanner = heroBanners[currentBannerIndex];
+  const currentImage = heroImages[currentImageIndex];
 
   const features = [
     {
@@ -154,11 +154,11 @@ const Index = () => {
     <Layout>
       {/* Hero Section */}
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-50">
-        {currentBanner ? (
+        {currentImage ? (
           <div className="absolute inset-0 z-0">
             <img 
-              src={currentBanner.image_url} 
-              alt={currentBanner.title}
+              src={currentImage.image_url} 
+              alt={currentImage.title}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30"></div>
@@ -175,10 +175,10 @@ const Index = () => {
             className="max-w-4xl mx-auto"
           >
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              {currentBanner ? currentBanner.title : "Power Your Future with Solar Energy"}
+              {currentImage ? currentImage.title : "Power Your Future with Solar Energy"}
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 mb-8 leading-relaxed">
-              {currentBanner ? currentBanner.subtitle : "Connect with trusted solar vendors for affordable, high-quality installations across India"}
+              {currentImage ? currentImage.description : "Connect with trusted solar vendors for affordable, high-quality installations across India"}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300">
@@ -197,15 +197,15 @@ const Index = () => {
           </motion.div>
         </div>
 
-        {/* Banner indicators */}
-        {heroBanners.length > 1 && (
+        {/* Image indicators */}
+        {heroImages.length > 1 && (
           <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
-            {heroBanners.map((_, index) => (
+            {heroImages.map((_, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentBannerIndex(index)}
+                onClick={() => setCurrentImageIndex(index)}
                 className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  index === currentBannerIndex ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/75'
+                  index === currentImageIndex ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/75'
                 }`}
               />
             ))}
