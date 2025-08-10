@@ -1,90 +1,194 @@
 
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Smartphone } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Mail, Phone, Eye, EyeOff } from 'lucide-react';
+import PhonePasswordAuth from './PhonePasswordAuth';
+import { Input } from '@/components/ui/input';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AuthMethodSelectorProps {
-  onMethodSelect: (method: 'email' | 'phone') => void;
+  mode: 'login' | 'register';
   userType: 'customer' | 'vendor';
+  onSuccess?: () => void;
 }
 
-const AuthMethodSelector = ({ onMethodSelect, userType }: AuthMethodSelectorProps) => {
-  const getThemeColors = () => {
-    if (userType === 'customer') {
-      return {
-        emailBg: 'bg-blue-50',
-        emailBorder: 'border-blue-200',
-        emailHoverBg: 'hover:bg-blue-100',
-        emailHoverBorder: 'hover:border-blue-300',
-        emailIconBg: 'bg-blue-100',
-        emailIconColor: 'text-blue-600',
-        phoneBg: 'bg-green-50',
-        phoneBorder: 'border-green-200',
-        phoneHoverBg: 'hover:bg-green-100',
-        phoneHoverBorder: 'hover:border-green-300',
-        phoneIconBg: 'bg-green-100',
-        phoneIconColor: 'text-green-600'
-      };
-    } else {
-      return {
-        emailBg: 'bg-orange-50',
-        emailBorder: 'border-orange-200',
-        emailHoverBg: 'hover:bg-orange-100',
-        emailHoverBorder: 'hover:border-orange-300',
-        emailIconBg: 'bg-orange-100',
-        emailIconColor: 'text-orange-600',
-        phoneBg: 'bg-red-50',
-        phoneBorder: 'border-red-200',
-        phoneHoverBg: 'hover:bg-red-100',
-        phoneHoverBorder: 'hover:border-red-300',
-        phoneIconBg: 'bg-red-100',
-        phoneIconColor: 'text-red-600'
-      };
+const AuthMethodSelector = ({ mode, userType, onSuccess }: AuthMethodSelectorProps) => {
+  const [selectedMethod, setSelectedMethod] = useState<'email' | 'phone' | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  const { signIn, signUp } = useSupabaseAuth();
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      if (mode === 'login') {
+        const { error } = await signIn(email, password);
+        if (error) {
+          setError(error.message);
+        } else if (onSuccess) {
+          onSuccess();
+        }
+      } else {
+        const { error } = await signUp(email, password, {
+          data: { user_type: userType },
+          options: { emailRedirectTo: `${window.location.origin}/` }
+        });
+        if (error) {
+          setError(error.message);
+        } else if (onSuccess) {
+          onSuccess();
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const colors = getThemeColors();
+  if (selectedMethod === 'phone') {
+    return (
+      <div className="space-y-4">
+        <Button
+          variant="outline"
+          onClick={() => setSelectedMethod(null)}
+          className="mb-4"
+        >
+          ← Back to options
+        </Button>
+        <PhonePasswordAuth 
+          mode={mode} 
+          userType={userType} 
+          onSuccess={onSuccess} 
+        />
+      </div>
+    );
+  }
+
+  if (selectedMethod === 'email') {
+    return (
+      <div className="space-y-4">
+        <Button
+          variant="outline"
+          onClick={() => setSelectedMethod(null)}
+          className="mb-4"
+        >
+          ← Back to options
+        </Button>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Mail className="w-5 h-5 mr-2" />
+              {mode === 'login' ? 'Sign In' : 'Sign Up'} with Email
+            </CardTitle>
+            <CardDescription>
+              {mode === 'login' 
+                ? 'Enter your email and password to sign in' 
+                : 'Create an account with your email address'
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleEmailAuth} className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium mb-2">
+                  Email Address
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-gray-400" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <Button type="submit" disabled={loading} className="w-full">
+                {loading ? 'Please wait...' : (mode === 'login' ? 'Sign In' : 'Create Account')}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-xl border-2">
-      <CardHeader className="text-center pb-6">
-        <CardTitle className="text-2xl font-bold text-gray-900">
-          Choose Login Method
-        </CardTitle>
-        <CardDescription className="text-gray-600">
-          How would you like to access your {userType} account?
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4 px-6 pb-6">
+    <div className="space-y-4">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold">
+          {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+        </h2>
+        <p className="text-gray-600">
+          Choose your preferred {mode === 'login' ? 'sign in' : 'sign up'} method
+        </p>
+      </div>
+
+      <div className="grid gap-4">
         <Button
-          onClick={() => onMethodSelect('email')}
-          className={`w-full h-20 text-left flex items-center space-x-4 ${colors.emailBg} ${colors.emailHoverBg} border-2 ${colors.emailBorder} ${colors.emailHoverBorder} transition-all duration-200 shadow-sm hover:shadow-md group text-gray-900`}
           variant="outline"
+          onClick={() => setSelectedMethod('email')}
+          className="h-16 flex items-center justify-center space-x-3 text-base hover:bg-gray-50"
         >
-          <div className={`w-14 h-14 ${colors.emailIconBg} rounded-full flex items-center justify-center transition-colors duration-200`}>
-            <Mail className={`w-6 h-6 ${colors.emailIconColor}`} />
-          </div>
-          <div className="flex-1">
-            <div className="font-semibold text-gray-900 text-lg">Email & Password</div>
-            <div className="text-sm text-gray-600 mt-1">Login with your registered email address</div>
-          </div>
+          <Mail className="w-6 h-6 text-blue-600" />
+          <span>{mode === 'login' ? 'Sign in' : 'Sign up'} with Email</span>
         </Button>
 
         <Button
-          onClick={() => onMethodSelect('phone')}
-          className={`w-full h-20 text-left flex items-center space-x-4 ${colors.phoneBg} ${colors.phoneHoverBg} border-2 ${colors.phoneBorder} ${colors.phoneHoverBorder} transition-all duration-200 shadow-sm hover:shadow-md group text-gray-900`}
           variant="outline"
+          onClick={() => setSelectedMethod('phone')}
+          className="h-16 flex items-center justify-center space-x-3 text-base hover:bg-gray-50"
         >
-          <div className={`w-14 h-14 ${colors.phoneIconBg} rounded-full flex items-center justify-center transition-colors duration-200`}>
-            <Smartphone className={`w-6 h-6 ${colors.phoneIconColor}`} />
-          </div>
-          <div className="flex-1">
-            <div className="font-semibold text-gray-900 text-lg">Phone & Password</div>
-            <div className="text-sm text-gray-600 mt-1">Login with your mobile number and password</div>
-          </div>
+          <Phone className="w-6 h-6 text-green-600" />
+          <span>{mode === 'login' ? 'Sign in' : 'Sign up'} with Phone</span>
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

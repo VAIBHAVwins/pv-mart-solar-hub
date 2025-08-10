@@ -23,19 +23,7 @@ const AdminLogin = () => {
     setError('');
 
     try {
-      // Sign in with email and password
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase(),
-        password: password
-      });
-
-      if (authError) {
-        setError('Invalid email or password. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      // Check if the email is authorized as admin
+      // Check if the email is authorized as admin first
       const { data: adminUser, error: adminError } = await supabase
         .from('admin_users')
         .select('*')
@@ -44,9 +32,25 @@ const AdminLogin = () => {
         .single();
 
       if (adminError || !adminUser) {
-        // Sign out if not an admin
-        await supabase.auth.signOut();
         setError('Access denied. This email is not authorized for admin access.');
+        setLoading(false);
+        return;
+      }
+
+      // Sign in with email and password
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase(),
+        password: password
+      });
+
+      if (authError) {
+        if (authError.message.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please check your credentials and try again.');
+        } else if (authError.message.includes('Email not confirmed')) {
+          setError('Please confirm your email address before signing in.');
+        } else {
+          setError('Login failed. Please try again or contact support if the issue persists.');
+        }
         setLoading(false);
         return;
       }
@@ -54,7 +58,8 @@ const AdminLogin = () => {
       // Success - redirect to admin dashboard
       navigate('/admin/dashboard');
     } catch (err: any) {
-      setError('Login failed. Please try again.');
+      console.error('Login error:', err);
+      setError('An unexpected error occurred. Please try again.');
       setLoading(false);
     } finally {
       setLoading(false);
@@ -146,6 +151,9 @@ const AdminLogin = () => {
               <p className="text-sm text-gray-500">
                 Secure admin portal for authorized personnel only
               </p>
+              <div className="mt-2 text-xs text-gray-400">
+                <p>Authorized emails: ankurvaibhav22@gmail.com, ttemp604@yahoo.com</p>
+              </div>
             </div>
           </CardContent>
         </Card>
