@@ -22,13 +22,13 @@ const VendorLogin = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-4xl font-bold text-gray-900 mb-3">
               Vendor Login
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-lg">
               Access your vendor dashboard
             </p>
           </div>
@@ -41,11 +41,11 @@ const VendorLogin = () => {
           )}
 
           {authMethod === 'email' && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <Button
                 onClick={handleBackToSelection}
                 variant="ghost"
-                className="mb-4"
+                className="mb-4 text-orange-600 hover:text-orange-800 hover:bg-orange-50"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to method selection
@@ -55,11 +55,11 @@ const VendorLogin = () => {
           )}
 
           {authMethod === 'phone' && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <Button
                 onClick={handleBackToSelection}
                 variant="ghost"
-                className="mb-4"
+                className="mb-4 text-red-600 hover:text-red-800 hover:bg-red-50"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to method selection
@@ -68,10 +68,10 @@ const VendorLogin = () => {
             </div>
           )}
 
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center">
             <p className="text-gray-600">
               Don't have an account?{' '}
-              <Link to="/vendor/register" className="text-orange-600 hover:underline">
+              <Link to="/vendor/register" className="text-orange-600 hover:underline font-semibold">
                 Register here
               </Link>
             </p>

@@ -25,9 +25,21 @@ const PhonePasswordAuth = ({ onSuccess }: PhonePasswordAuthProps) => {
     try {
       const fullPhoneNumber = phoneNumber.startsWith('+91') ? phoneNumber : `+91${phoneNumber}`;
       
-      // Try to sign in with phone as email (since Supabase requires email format)
+      // First try to find a user with this phone number in the users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email, id')
+        .eq('phone', fullPhoneNumber)
+        .single();
+
+      if (userError || !userData?.email) {
+        setError('No account found with this phone number');
+        return;
+      }
+
+      // Now try to sign in with the found email and provided password
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: `${fullPhoneNumber}@phone.local`, // Use phone as email with domain
+        email: userData.email,
         password: password
       });
 
