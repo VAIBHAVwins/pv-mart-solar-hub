@@ -25,12 +25,11 @@ const Index = () => {
   useEffect(() => {
     const fetchHeroBanners = async () => {
       try {
-        // Use hero_images table since hero_banners doesn't exist in the database types
         const { data, error } = await supabase
           .from('hero_images')
           .select('*')
           .eq('is_active', true)
-          .order('display_order', { ascending: true });
+          .order('order_index', { ascending: true });
 
         if (error) {
           console.error('Error fetching hero banners:', error);
@@ -43,10 +42,10 @@ const Index = () => {
           title: item.title || 'Solar Power Solutions',
           description: item.description || 'Transform your home with clean, renewable energy',
           image_url: item.image_url,
-          button_text: item.button_text || 'Get Started',
-          button_link: item.button_link || '/contact',
+          button_text: item.cta_text || 'Get Started',
+          button_link: item.cta_link || '/contact',
           is_active: item.is_active,
-          display_order: item.display_order,
+          display_order: item.order_index,
           created_at: item.created_at,
           updated_at: item.updated_at
         })) || [];
