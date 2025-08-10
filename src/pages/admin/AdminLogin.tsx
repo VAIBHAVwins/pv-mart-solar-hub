@@ -11,46 +11,41 @@ const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-
     try {
-      // Step 1: Validate with Edge Function
-      const res = await fetch("https://nchxapviawfjtcsvjvfl.supabase.co/functions/v1/loginCheck", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, expectedRole: "admin" })
-      });
-
-      const data = await res.json();
-
-      if (data.error) {
-        setError(data.error);
-        if (data.redirectTo) {
-          window.location.href = data.redirectTo;
-        }
-        return;
-      }
-
-      // Step 2: Create Supabase client session
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      // Sign in with Supabase
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (signInError) {
-        setError('Failed to create session. Please try again.');
+        setError(signInError.message);
         return;
       }
 
-      // Success - redirect to dashboard
+      // Check if user is admin
+      const { data: adminCheck, error: adminError } = await supabase
+        .from('admin_users')
+        .select('email,is_active')
+        .eq('email', email)
+        .eq('is_active', true)
+        .single();
+
+      if (adminError || !adminCheck) {
+        await supabase.auth.signOut();
+        setError('Access denied. This email is not authorized for admin access.');
+        return;
+      }
+
+      // Success - redirect to admin dashboard
       window.location.href = '/admin/dashboard';
 
     } catch (err) {
@@ -85,6 +80,8 @@ const AdminLogin = () => {
                   type="email"
                   placeholder="Enter your email"
                   className="h-12"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={loading}
                 />
@@ -101,6 +98,8 @@ const AdminLogin = () => {
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     className="pr-12 h-12"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={loading}
                   />
@@ -137,9 +136,6 @@ const AdminLogin = () => {
               <p className="text-sm text-gray-500">
                 Secure admin portal for authorized personnel only
               </p>
-              <div className="mt-2 text-xs text-gray-400">
-                <p>Authorized emails: ankurvaibhav22@gmail.com, ttemp604@yahoo.com</p>
-              </div>
             </div>
           </CardContent>
         </Card>

@@ -194,44 +194,6 @@ export type Database = {
           },
         ]
       }
-      game_scores: {
-        Row: {
-          created_at: string | null
-          energy_generated: number
-          game_duration: number
-          id: string
-          panels_placed: number
-          score: number
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          energy_generated: number
-          game_duration: number
-          id?: string
-          panels_placed: number
-          score: number
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          energy_generated?: number
-          game_duration?: number
-          id?: string
-          panels_placed?: number
-          score?: number
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "game_scores_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       hero_images: {
         Row: {
           created_at: string | null

@@ -13,8 +13,8 @@ import AdminSidebar from './AdminSidebar';
 interface AdminUser {
   id: string;
   email: string;
+  full_name: string | null;
   is_active: boolean;
-  created_by: string | null;
   created_at: string;
 }
 
@@ -23,8 +23,10 @@ const AdminUserManager = () => {
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newFullName, setNewFullName] = useState('');
   const [addLoading, setAddLoading] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [revokeLoading, setRevokeLoading] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -50,21 +52,41 @@ const AdminUserManager = () => {
   }, []);
 
   const handleAddAdmin = async () => {
-    if (!newEmail.trim()) return;
+    if (!newEmail.trim() || !newPassword.trim()) return;
 
     setAddLoading(true);
     setError('');
     setSuccess('');
 
     try {
-      const { error } = await supabase
-        .from('admin_users')
-        .insert([{ email: newEmail.trim().toLowerCase() }]);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No valid session');
+      }
 
-      if (error) throw error;
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/admin-invite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          email: newEmail.trim().toLowerCase(),
+          password: newPassword,
+          full_name: newFullName.trim()
+        })
+      });
 
-      setSuccess(`Admin user ${newEmail} added successfully!`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create admin user');
+      }
+
+      setSuccess(`Admin user ${newEmail} created successfully!`);
       setNewEmail('');
+      setNewPassword('');
+      setNewFullName('');
       setShowAddDialog(false);
       fetchAdminUsers();
     } catch (err: any) {
@@ -75,50 +97,43 @@ const AdminUserManager = () => {
     }
   };
 
-  const handleDeleteAdmin = async (id: string, email: string) => {
-    if (!window.confirm(`Are you sure you want to remove ${email} from admin access?`)) {
+  const handleRevokeAdmin = async (email: string) => {
+    if (!window.confirm(`Are you sure you want to revoke admin access for ${email}?`)) {
       return;
     }
 
-    setDeleteLoading(id);
+    setRevokeLoading(email);
     setError('');
     setSuccess('');
 
     try {
-      const { error } = await supabase
-        .from('admin_users')
-        .delete()
-        .eq('id', id);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No valid session');
+      }
 
-      if (error) throw error;
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/admin-revoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ email })
+      });
 
-      setSuccess(`Admin user ${email} removed successfully!`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to revoke admin access');
+      }
+
+      setSuccess(`Admin access revoked for ${email}`);
       fetchAdminUsers();
     } catch (err: any) {
-      console.error('Error deleting admin user:', err);
-      setError(err.message || 'Failed to remove admin user');
+      console.error('Error revoking admin access:', err);
+      setError(err.message || 'Failed to revoke admin access');
     } finally {
-      setDeleteLoading(null);
-    }
-  };
-
-  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
-    setError('');
-    setSuccess('');
-
-    try {
-      const { error } = await supabase
-        .from('admin_users')
-        .update({ is_active: !currentStatus })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setSuccess(`Admin user status updated successfully!`);
-      fetchAdminUsers();
-    } catch (err: any) {
-      console.error('Error updating admin user status:', err);
-      setError(err.message || 'Failed to update admin user status');
+      setRevokeLoading(null);
     }
   };
 
@@ -174,6 +189,7 @@ const AdminUserManager = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Email</TableHead>
+                      <TableHead>Full Name</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Created At</TableHead>
                       <TableHead>Actions</TableHead>
@@ -183,6 +199,7 @@ const AdminUserManager = () => {
                     {adminUsers.map((admin) => (
                       <TableRow key={admin.id}>
                         <TableCell className="font-medium">{admin.email}</TableCell>
+                        <TableCell>{admin.full_name || '—'}</TableCell>
                         <TableCell>
                           <Badge variant={admin.is_active ? "default" : "secondary"}>
                             {admin.is_active ? "Active" : "Inactive"}
@@ -192,27 +209,18 @@ const AdminUserManager = () => {
                           {new Date(admin.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleToggleStatus(admin.id, admin.is_active)}
-                            >
-                              {admin.is_active ? "Deactivate" : "Activate"}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDeleteAdmin(admin.id, admin.email)}
-                              disabled={deleteLoading === admin.id}
-                            >
-                              {deleteLoading === admin.id ? (
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              ) : (
-                                <Trash2 className="w-4 h-4" />
-                              )}
-                            </Button>
-                          </div>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleRevokeAdmin(admin.email)}
+                            disabled={revokeLoading === admin.email || !admin.is_active}
+                          >
+                            {revokeLoading === admin.email ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -235,7 +243,7 @@ const AdminUserManager = () => {
             <DialogHeader>
               <DialogTitle>Add New Admin User</DialogTitle>
               <DialogDescription>
-                Enter the email address of the user you want to grant admin access to.
+                Create a new administrator account with full access to the admin panel.
               </DialogDescription>
             </DialogHeader>
             
@@ -252,6 +260,32 @@ const AdminUserManager = () => {
                   placeholder="admin@example.com"
                 />
               </div>
+
+              <div>
+                <label htmlFor="admin-password" className="block text-sm font-medium mb-2">
+                  Password
+                </label>
+                <Input
+                  id="admin-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter a secure password"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="admin-name" className="block text-sm font-medium mb-2">
+                  Full Name (Optional)
+                </label>
+                <Input
+                  id="admin-name"
+                  type="text"
+                  value={newFullName}
+                  onChange={(e) => setNewFullName(e.target.value)}
+                  placeholder="Admin's full name"
+                />
+              </div>
             </div>
 
             <DialogFooter>
@@ -260,15 +294,15 @@ const AdminUserManager = () => {
               </Button>
               <Button 
                 onClick={handleAddAdmin}
-                disabled={addLoading || !newEmail.trim()}
+                disabled={addLoading || !newEmail.trim() || !newPassword.trim()}
               >
                 {addLoading ? (
                   <div className="flex items-center space-x-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Adding...</span>
+                    <span>Creating...</span>
                   </div>
                 ) : (
-                  "Add Admin User"
+                  "Create Admin User"
                 )}
               </Button>
             </DialogFooter>
