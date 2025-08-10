@@ -23,38 +23,19 @@ const PhonePasswordAuth = ({ onSuccess }: PhonePasswordAuthProps) => {
     setError('');
 
     try {
-      // Try multiple phone number formats
-      const phoneFormats = [
-        phoneNumber.startsWith('+91') ? phoneNumber : `+91${phoneNumber}`,
-        phoneNumber,
-        phoneNumber.replace(/^\+91/, ''),
-        phoneNumber.replace(/^91/, ''),
-      ];
+      // Use the RPC function to get email by phone
+      const { data: email, error: phoneError } = await supabase.rpc('get_email_by_phone', {
+        _raw_phone: phoneNumber
+      });
 
-      let userData = null;
-      
-      // Try to find user with any of the phone formats
-      for (const format of phoneFormats) {
-        const { data, error: userError } = await supabase
-          .from('users')
-          .select('email, id')
-          .eq('phone', format)
-          .maybeSingle();
-
-        if (data && !userError) {
-          userData = data;
-          break;
-        }
-      }
-
-      if (!userData?.email) {
+      if (phoneError || !email) {
         setError('No account found with this phone number. Please check your number or register first.');
         return;
       }
 
       // Try to sign in with the found email and provided password
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: userData.email,
+        email: email,
         password: password
       });
 
@@ -89,8 +70,8 @@ const PhonePasswordAuth = ({ onSuccess }: PhonePasswordAuthProps) => {
   return (
     <Card className="w-full max-w-md mx-auto shadow-xl border-2">
       <CardHeader className="text-center">
-        <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-          <Smartphone className="w-8 h-8 text-green-600" />
+        <div className="mx-auto w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-4">
+          <Smartphone className="w-6 h-6 text-green-600" />
         </div>
         <CardTitle className="text-2xl font-bold">Phone & Password Login</CardTitle>
         <CardDescription className="text-gray-600">

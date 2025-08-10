@@ -50,7 +50,7 @@ import BannerDashboard from "./pages/admin/BannerDashboard";
 
 // Blog pages
 import Blogs from "./pages/Blogs";
-import BlogDetails from "./pages/BlogDetails";
+import BlogDetail from "./pages/BlogDetail";
 
 const queryClient = new QueryClient();
 
@@ -74,7 +74,7 @@ function App() {
               
               {/* Blog routes */}
               <Route path="/blogs" element={<Blogs />} />
-              <Route path="/blog/:slug" element={<BlogDetails />} />
+              <Route path="/blog/:slug" element={<BlogDetail />} />
 
               {/* Customer routes */}
               <Route path="/customer/login" element={<CustomerLogin />} />

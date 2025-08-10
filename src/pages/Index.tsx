@@ -1,446 +1,346 @@
-
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { supabase } from '@/integrations/supabase/client';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowRight, Phone, Shield, Zap, TrendingUp, MapPin, Clock, Users, Award, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import Layout from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { 
-  Sun, 
-  Zap, 
-  Leaf, 
-  Shield, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  ArrowRight,
-  CheckCircle,
-  Star,
-  Users,
-  TrendingUp,
-  Award
-} from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Link } from 'react-router-dom';
 
-interface HeroBanner {
+interface Blog {
   id: string;
   title: string;
-  description: string;
-  image_url: string;
-  cta_text: string;
-  cta_link: string;
-  is_active: boolean;
-  order_index: number;
-  display_duration: number;
-}
-
-interface BlogPost {
-  id: string;
-  title: string;
-  excerpt: string;
-  featured_image_url: string;
-  author: string;
-  published_at: string;
   slug: string;
-  category: string;
+  excerpt: string;
+  featured_image_url: string | null;
+  category: string | null;
+  published_at: string;
+  created_at: string;
 }
 
-export default function Index() {
-  const [heroBanners, setHeroBanners] = useState<HeroBanner[]>([]);
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+interface HeroImage {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string;
+  cta_text: string | null;
+  cta_link: string | null;
+  display_duration: number | null;
+  order_index: number | null;
+  is_active: boolean;
+}
+
+const Index = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchHeroBanners = async () => {
+    const fetchHeroImages = async () => {
       try {
         const { data, error } = await supabase
           .from('hero_images')
           .select('*')
           .eq('is_active', true)
           .order('order_index', { ascending: true });
-        
-        if (error) throw error;
-        setHeroBanners(data || []);
+
+        if (error) {
+          console.error('Error fetching hero images:', error);
+        } else {
+          setHeroImages(data || []);
+        }
       } catch (error) {
-        console.error('Error fetching hero banners:', error);
+        console.error('Error fetching hero images:', error);
       }
     };
 
-    const fetchBlogPosts = async () => {
+    const fetchBlogs = async () => {
       try {
         const { data, error } = await supabase
           .from('blogs')
-          .select('id, title, excerpt, featured_image_url, author, published_at, slug, category')
+          .select('*')
           .eq('status', 'published')
           .order('published_at', { ascending: false })
           .limit(3);
-        
-        if (error) throw error;
-        setBlogPosts(data || []);
+
+        if (error) {
+          console.error('Error fetching blogs:', error);
+        } else {
+          setBlogs(data || []);
+        }
       } catch (error) {
-        console.error('Error fetching blog posts:', error);
+        console.error('Error fetching blogs:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchHeroBanners();
-    fetchBlogPosts();
+    fetchHeroImages();
+    fetchBlogs();
   }, []);
 
-  // Auto-rotate hero banners
   useEffect(() => {
-    if (heroBanners.length > 1) {
+    if (heroImages.length > 1) {
       const interval = setInterval(() => {
-        setCurrentBannerIndex((prev) => (prev + 1) % heroBanners.length);
-      }, heroBanners[currentBannerIndex]?.display_duration || 5000);
-
+        setCurrentSlide((prev) => (prev + 1) % heroImages.length);
+      }, 5000);
       return () => clearInterval(interval);
     }
-  }, [heroBanners, currentBannerIndex]);
+  }, [heroImages.length]);
 
-  const currentBanner = heroBanners[currentBannerIndex];
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % heroImages.length);
+  };
 
-  const features = [
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + heroImages.length) % heroImages.length);
+  };
+
+  const benefits = [
     {
-      icon: Sun,
-      title: "Solar Panel Installation",
-      description: "Professional installation of high-efficiency solar panels for maximum energy output"
+      icon: <Zap className="w-8 h-8 text-blue-600" />,
+      title: "Reduce Electricity Bills",
+      description: "Save up to 90% on your monthly electricity costs with our efficient solar panels."
     },
     {
-      icon: Zap,
-      title: "Grid Connectivity",
-      description: "Seamless integration with the electrical grid for optimal energy distribution"
+      icon: <Shield className="w-8 h-8 text-green-600" />,
+      title: "25-Year Warranty",
+      description: "Industry-leading warranty on all our solar installations for complete peace of mind."
     },
     {
-      icon: Leaf,
-      title: "Eco-Friendly Solutions",
-      description: "Reduce your carbon footprint with clean, renewable energy solutions"
-    },
-    {
-      icon: Shield,
-      title: "Quality Assurance",
-      description: "Premium components with comprehensive warranties and ongoing support"
+      icon: <TrendingUp className="w-8 h-8 text-purple-600" />,
+      title: "Increase Property Value",
+      description: "Solar installations can increase your property value by up to 4% according to studies."
     }
   ];
 
-  const benefits = [
-    "Reduce electricity bills by up to 90%",
-    "25-year performance warranty",
-    "Government subsidies available",
-    "Professional installation & maintenance",
-    "Real-time energy monitoring",
-    "Increase property value"
-  ];
-
-  const stats = [
-    { icon: Users, value: "1000+", label: "Happy Customers" },
-    { icon: Zap, value: "50MW+", label: "Solar Installed" },
-    { icon: TrendingUp, value: "₹2Cr+", label: "Savings Generated" },
-    { icon: Award, value: "5 Star", label: "Average Rating" }
-  ];
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {currentBanner && (
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${currentBanner.image_url})` }}
-          >
-            <div className="absolute inset-0 bg-black/40"></div>
-          </div>
-        )}
-        
-        <div className="relative z-10 container mx-auto px-4 text-center text-white">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto"
-          >
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-              {currentBanner?.title || "Power Your Future with Solar Energy"}
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-gray-200">
-              {currentBanner?.description || "Join thousands of satisfied customers in the solar revolution. Get premium solar solutions with expert installation and ongoing support."}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                asChild
-              >
-                <a href="/customer/login">
-                  <Users className="w-5 h-5 mr-2" />
-                  Customer Login
-                </a>
-              </Button>
-              <Button 
-                size="lg" 
-                className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                asChild
-              >
-                <a href="/vendor/login">
-                  <Award className="w-5 h-5 mr-2" />
-                  Vendor Login
-                </a>
-              </Button>
+      <div className="min-h-screen">
+        {/* Hero Section with Carousel */}
+        <section className="relative h-[600px] overflow-hidden">
+          {heroImages.length > 0 ? (
+            <>
+              {heroImages.map((image, index) => (
+                <div
+                  key={image.id}
+                  className={`absolute inset-0 transition-opacity duration-1000 ${
+                    index === currentSlide ? 'opacity-100' : 'opacity-0'
+                  }`}
+                >
+                  <div 
+                    className="h-full bg-cover bg-center relative"
+                    style={{ backgroundImage: `url(${image.image_url})` }}
+                  >
+                    <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+                    <div className="relative z-10 h-full flex items-center justify-center text-center text-white px-4">
+                      <div className="max-w-4xl mx-auto">
+                        <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                          {image.title}
+                        </h1>
+                        {image.description && (
+                          <p className="text-xl md:text-2xl mb-8 text-gray-200">
+                            {image.description}
+                          </p>
+                        )}
+                        {image.cta_text && image.cta_link && (
+                          <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
+                            <a href={image.cta_link} className="flex items-center">
+                              {image.cta_text}
+                              <ArrowRight className="ml-2 w-5 h-5" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Navigation arrows */}
+              {heroImages.length > 1 && (
+                <>
+                  <button
+                    onClick={prevSlide}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 z-20"
+                  >
+                    <ChevronLeft className="w-6 h-6 text-white" />
+                  </button>
+                  <button
+                    onClick={nextSlide}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 z-20"
+                  >
+                    <ChevronRight className="w-6 h-6 text-white" />
+                  </button>
+                  
+                  {/* Slide indicators */}
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
+                    {heroImages.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentSlide(index)}
+                        className={`w-3 h-3 rounded-full transition-colors ${
+                          index === currentSlide ? 'bg-white' : 'bg-white bg-opacity-50'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            // Fallback hero if no images
+            <div className="h-full bg-gradient-to-r from-blue-600 to-purple-700 relative">
+              <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+              <div className="relative z-10 h-full flex items-center justify-center text-center text-white px-4">
+                <div className="max-w-4xl mx-auto">
+                  <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                    Power Your Future with Solar Energy
+                  </h1>
+                  <p className="text-xl md:text-2xl mb-8 text-gray-200">
+                    Join thousands of homeowners who have made the switch to clean, renewable energy
+                  </p>
+                  <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+                    Get Started Today
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
             </div>
-          </motion.div>
-        </div>
+          )}
+        </section>
 
-        {/* Hero Banner Indicators */}
-        {heroBanners.length > 1 && (
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2">
-            {heroBanners.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentBannerIndex(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  index === currentBannerIndex ? 'bg-white' : 'bg-white/50'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-16 bg-blue-600 text-white">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center"
-              >
-                <stat.icon className="w-12 h-12 mx-auto mb-4 text-blue-200" />
-                <div className="text-3xl font-bold mb-2">{stat.value}</div>
-                <div className="text-blue-200">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Why Choose PV Mart?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              We provide comprehensive solar solutions with cutting-edge technology and expert service
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <Card className="h-full hover:shadow-lg transition-shadow duration-300">
-                  <CardContent className="p-6 text-center">
-                    <feature.icon className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+        {/* Benefits Section - Center Aligned */}
+        <section className="py-16 bg-gray-50">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Solar Benefits That Matter
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Discover why solar energy is the smart choice for your home and your wallet
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              {benefits.map((benefit, index) => (
+                <Card key={index} className="text-center hover:shadow-lg transition-shadow">
+                  <CardContent className="p-8">
+                    <div className="flex justify-center mb-4">
+                      {benefit.icon}
+                    </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                      {feature.title}
+                      {benefit.title}
                     </h3>
                     <p className="text-gray-600">
-                      {feature.description}
+                      {benefit.description}
                     </p>
                   </CardContent>
                 </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">
-                Solar Benefits That Matter
-              </h2>
-              <p className="text-lg text-gray-600 mb-8">
-                Make the smart switch to solar energy and enjoy immediate and long-term benefits for your home and wallet.
-              </p>
-              <div className="space-y-4">
-                {benefits.map((benefit, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
-                    className="flex items-center space-x-3"
-                  >
-                    <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-700 font-medium">{benefit}</span>
-                  </motion.div>
-                ))}
-              </div>
-              <Button 
-                size="lg" 
-                className="mt-8 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                asChild
-              >
-                <a href="/customer/register">
-                  Get Started Today <ArrowRight className="w-5 h-5 ml-2" />
-                </a>
-              </Button>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="relative"
-            >
-              <img 
-                src="/api/placeholder/600/400" 
-                alt="Solar Installation" 
-                className="rounded-lg shadow-2xl w-full"
-              />
-              <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-lg shadow-lg">
-                <div className="flex items-center space-x-3">
-                  <Star className="w-8 h-8 text-yellow-500" />
-                  <div>
-                    <div className="text-2xl font-bold text-gray-900">4.9/5</div>
-                    <div className="text-sm text-gray-600">Customer Rating</div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Blog Section */}
-      {blogPosts.length > 0 && (
-        <section className="py-20 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-center mb-16"
-            >
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                Latest Solar Insights
-              </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Stay updated with the latest trends and news in solar energy
-              </p>
-            </motion.div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {blogPosts.map((post, index) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                >
-                  <Card className="h-full hover:shadow-lg transition-shadow duration-300">
-                    <CardContent className="p-0">
-                      {post.featured_image_url && (
-                        <img 
-                          src={post.featured_image_url} 
-                          alt={post.title}
-                          className="w-full h-48 object-cover rounded-t-lg"
-                        />
-                      )}
-                      <div className="p-6">
-                        <div className="text-sm text-blue-600 font-medium mb-2">
-                          {post.category}
-                        </div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-3 line-clamp-2">
-                          {post.title}
-                        </h3>
-                        <p className="text-gray-600 mb-4 line-clamp-3">
-                          {post.excerpt}
-                        </p>
-                        <div className="flex items-center justify-between text-sm text-gray-500">
-                          <span>By {post.author}</span>
-                          <span>{new Date(post.published_at).toLocaleDateString()}</span>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          className="mt-4 text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-0 h-auto font-semibold"
-                          asChild
-                        >
-                          <a href={`/blog/${post.slug}`}>
-                            Read More <ArrowRight className="w-4 h-4 ml-1" />
-                          </a>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
               ))}
             </div>
           </div>
         </section>
-      )}
 
-      {/* CTA Section */}
-      <section className="py-20 bg-blue-600 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-3xl mx-auto"
-          >
-            <h2 className="text-4xl font-bold mb-6">
-              Ready to Go Solar?
+        {/* Latest Solar Insights Section */}
+        {blogs.length > 0 && (
+          <section className="py-16 bg-white">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                  Latest Solar Insights
+                </h2>
+                <p className="text-xl text-gray-600">
+                  Stay updated with the latest trends and insights in solar energy
+                </p>
+              </div>
+              
+              <div className="grid md:grid-cols-3 gap-8">
+                {blogs.map((blog) => (
+                  <Card key={blog.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                    {blog.featured_image_url && (
+                      <img 
+                        src={blog.featured_image_url} 
+                        alt={blog.title}
+                        className="w-full h-48 object-cover"
+                      />
+                    )}
+                    <CardContent className="p-6">
+                      {blog.category && (
+                        <Badge variant="secondary" className="mb-2">
+                          {blog.category}
+                        </Badge>
+                      )}
+                      <h3 className="text-xl font-semibold text-gray-900 mb-3 line-clamp-2">
+                        {blog.title}
+                      </h3>
+                      <p className="text-gray-600 mb-4 line-clamp-3">
+                        {blog.excerpt}
+                      </p>
+                      <Link to={`/blog/${blog.slug}`}>
+                        <Button variant="outline" className="w-full">
+                          Read More
+                          <ArrowRight className="ml-2 w-4 h-4" />
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              
+              <div className="text-center mt-12">
+                <Link to="/blogs">
+                  <Button size="lg" variant="outline">
+                    View All Articles
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* CTA Section */}
+        <section className="py-16 bg-blue-600">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+              Ready to Make the Switch to Solar?
             </h2>
-            <p className="text-xl text-blue-100 mb-8">
-              Join thousands of satisfied customers who have made the switch to clean, renewable energy. 
-              Get your free consultation today and start saving on your electricity bills.
+            <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+              Join thousands of satisfied customers who have reduced their electricity bills and carbon footprint
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                asChild
-              >
-                <a href="/customer/register">
-                  Get Free Quote <ArrowRight className="w-5 h-5 ml-2" />
-                </a>
-              </Button>
+              <Link to="/customer/register">
+                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+                  Get Free Quote
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                asChild
+                className="border-white text-white hover:bg-white hover:text-blue-600 bg-blue-600"
               >
-                <a href="/contact">
-                  <Phone className="w-5 h-5 mr-2" />
-                  Call Now
-                </a>
+                <Phone className="mr-2 w-5 h-5" />
+                Call Now
               </Button>
             </div>
-          </motion.div>
-        </div>
-      </section>
+          </div>
+        </section>
+      </div>
     </Layout>
   );
-}
+};
+
+export default Index;

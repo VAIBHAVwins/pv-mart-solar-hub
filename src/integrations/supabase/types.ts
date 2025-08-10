@@ -513,7 +513,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_email_by_phone: {
+        Args: { _raw_phone: string }
+        Returns: string
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      normalize_phone: {
+        Args: { raw: string }
+        Returns: string
+      }
     }
     Enums: {
       installation_type: "rooftop" | "ground_mounted" | "carport" | "other"

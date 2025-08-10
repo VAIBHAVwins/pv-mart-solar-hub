@@ -62,7 +62,7 @@ const AuthMethodSelector = ({ onMethodSelect, userType }: AuthMethodSelectorProp
           variant="outline"
         >
           <div className={`w-14 h-14 ${colors.emailIconBg} rounded-full flex items-center justify-center transition-colors duration-200`}>
-            <Mail className={`w-7 h-7 ${colors.emailIconColor}`} />
+            <Mail className={`w-6 h-6 ${colors.emailIconColor}`} />
           </div>
           <div className="flex-1">
             <div className="font-semibold text-gray-900 text-lg">Email & Password</div>
@@ -76,7 +76,7 @@ const AuthMethodSelector = ({ onMethodSelect, userType }: AuthMethodSelectorProp
           variant="outline"
         >
           <div className={`w-14 h-14 ${colors.phoneIconBg} rounded-full flex items-center justify-center transition-colors duration-200`}>
-            <Smartphone className={`w-7 h-7 ${colors.phoneIconColor}`} />
+            <Smartphone className={`w-6 h-6 ${colors.phoneIconColor}`} />
           </div>
           <div className="flex-1">
             <div className="font-semibold text-gray-900 text-lg">Phone & Password</div>
