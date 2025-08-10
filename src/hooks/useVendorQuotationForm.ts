@@ -2,45 +2,12 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-
-interface VendorInfo {
-  vendorName: string;
-  vendorEmail: string;
-  vendorPhone: string;
-}
-
-interface SystemDetails {
-  installationType: string;
-  systemType: string;
-  totalPrice: number;
-  installationCharge: number;
-  warrantyYears: number;
-  description: string;
-}
-
-interface Component {
-  component_name: string;
-  brand: string;
-  model: string;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-}
-
-interface FormData {
-  vendor_name: string;
-  vendor_phone: string;
-  installation_type: string;
-  system_type: string;
-  installation_charge: string;
-  warranty_years: string;
-  description: string;
-}
+import { Component, VendorQuotationFormData } from '@/types/vendorQuotation';
 
 export const useVendorQuotationForm = () => {
   const { user } = useSupabaseAuth();
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<VendorQuotationFormData>({
     vendor_name: '',
     vendor_phone: '',
     installation_type: '',
@@ -52,12 +19,14 @@ export const useVendorQuotationForm = () => {
 
   const [components, setComponents] = useState<Component[]>([
     {
-      component_name: '',
+      component_type: '',
       brand: '',
       model: '',
+      specifications: '',
       quantity: 1,
       unit_price: 0,
-      total_price: 0,
+      included_length_meters: 0,
+      warranty_years: 1,
     }
   ]);
 
@@ -65,12 +34,14 @@ export const useVendorQuotationForm = () => {
 
   const addComponent = () => {
     setComponents([...components, {
-      component_name: '',
+      component_type: '',
       brand: '',
       model: '',
+      specifications: '',
       quantity: 1,
       unit_price: 0,
-      total_price: 0,
+      included_length_meters: 0,
+      warranty_years: 1,
     }]);
   };
 
@@ -81,18 +52,11 @@ export const useVendorQuotationForm = () => {
   const updateComponent = (index: number, field: keyof Component, value: string | number) => {
     const updatedComponents = [...components];
     updatedComponents[index] = { ...updatedComponents[index], [field]: value };
-    
-    // Recalculate total price for this component
-    if (field === 'quantity' || field === 'unit_price') {
-      updatedComponents[index].total_price = 
-        updatedComponents[index].quantity * updatedComponents[index].unit_price;
-    }
-    
     setComponents(updatedComponents);
   };
 
   const calculateTotalPrice = () => {
-    const componentsTotal = components.reduce((sum, comp) => sum + comp.total_price, 0);
+    const componentsTotal = components.reduce((sum, comp) => sum + (comp.quantity * comp.unit_price), 0);
     const installationCharge = parseFloat(formData.installation_charge) || 0;
     return componentsTotal + installationCharge;
   };
@@ -133,12 +97,14 @@ export const useVendorQuotationForm = () => {
       if (quotation && components.length > 0) {
         const componentData = components.map(comp => ({
           quotation_id: quotation.id,
-          component_name: comp.component_name,
+          component_type: comp.component_type,
           brand: comp.brand,
           model: comp.model,
+          specifications: comp.specifications,
           quantity: comp.quantity,
           unit_price: comp.unit_price,
-          total_price: comp.total_price,
+          included_length_meters: comp.included_length_meters,
+          warranty_years: comp.warranty_years,
         }));
 
         const { error: componentsError } = await supabase
@@ -159,12 +125,14 @@ export const useVendorQuotationForm = () => {
         description: '',
       });
       setComponents([{
-        component_name: '',
+        component_type: '',
         brand: '',
         model: '',
+        specifications: '',
         quantity: 1,
         unit_price: 0,
-        total_price: 0,
+        included_length_meters: 0,
+        warranty_years: 1,
       }]);
 
       alert('Quotation submitted successfully!');
