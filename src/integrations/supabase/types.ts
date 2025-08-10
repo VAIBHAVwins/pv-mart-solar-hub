@@ -14,7 +14,411 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admin_users: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_users_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blogs: {
+        Row: {
+          author: string
+          category: string | null
+          content: string
+          created_at: string | null
+          excerpt: string | null
+          featured_image_url: string | null
+          id: string
+          is_pinned: boolean | null
+          published_at: string | null
+          slug: string
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author: string
+          category?: string | null
+          content: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          published_at?: string | null
+          slug: string
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          published_at?: string | null
+          slug?: string
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      customer_requirements: {
+        Row: {
+          address: string
+          created_at: string | null
+          customer_email: string
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string
+          id: string
+          installation_type: Database["public"]["Enums"]["installation_type"]
+          monthly_bill: number
+          pincode: string
+          system_type: Database["public"]["Enums"]["system_type"]
+        }
+        Insert: {
+          address: string
+          created_at?: string | null
+          customer_email: string
+          customer_id?: string | null
+          customer_name: string
+          customer_phone: string
+          id?: string
+          installation_type: Database["public"]["Enums"]["installation_type"]
+          monthly_bill: number
+          pincode: string
+          system_type: Database["public"]["Enums"]["system_type"]
+        }
+        Update: {
+          address?: string
+          created_at?: string | null
+          customer_email?: string
+          customer_id?: string | null
+          customer_name?: string
+          customer_phone?: string
+          id?: string
+          installation_type?: Database["public"]["Enums"]["installation_type"]
+          monthly_bill?: number
+          pincode?: string
+          system_type?: Database["public"]["Enums"]["system_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_requirements_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_scores: {
+        Row: {
+          created_at: string | null
+          energy_generated: number
+          game_duration: number
+          id: string
+          panels_placed: number
+          score: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          energy_generated: number
+          game_duration: number
+          id?: string
+          panels_placed: number
+          score: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          energy_generated?: number
+          game_duration?: number
+          id?: string
+          panels_placed?: number
+          score?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_scores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hero_images: {
+        Row: {
+          created_at: string | null
+          cta_link: string | null
+          cta_text: string | null
+          description: string | null
+          display_duration: number | null
+          id: string
+          image_url: string
+          is_active: boolean | null
+          order_index: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          description?: string | null
+          display_duration?: number | null
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          order_index?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          description?: string | null
+          display_duration?: number | null
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          order_index?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      otp_verifications: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          is_used: boolean | null
+          otp_code: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          is_used?: boolean | null
+          otp_code: string
+          phone: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          is_used?: boolean | null
+          otp_code?: string
+          phone?: string
+        }
+        Relationships: []
+      }
+      quotation_components: {
+        Row: {
+          brand: string | null
+          component_name: string
+          created_at: string | null
+          id: string
+          model: string | null
+          quantity: number
+          quotation_id: string | null
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          brand?: string | null
+          component_name: string
+          created_at?: string | null
+          id?: string
+          model?: string | null
+          quantity: number
+          quotation_id?: string | null
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          brand?: string | null
+          component_name?: string
+          created_at?: string | null
+          id?: string
+          model?: string | null
+          quantity?: number
+          quotation_id?: string | null
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_components_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          is_verified: boolean | null
+          phone: string
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          is_verified?: boolean | null
+          phone: string
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          is_verified?: boolean | null
+          phone?: string
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
+      vendor_profiles: {
+        Row: {
+          address: string | null
+          company_name: string | null
+          contact_person: string | null
+          created_at: string | null
+          id: string
+          license_number: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          company_name?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          id?: string
+          license_number?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          company_name?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          id?: string
+          license_number?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_quotations: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          installation_charge: number | null
+          installation_type: Database["public"]["Enums"]["installation_type"]
+          system_type: Database["public"]["Enums"]["system_type"]
+          total_price: number
+          vendor_email: string
+          vendor_id: string | null
+          vendor_name: string
+          vendor_phone: string
+          warranty_years: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          installation_charge?: number | null
+          installation_type: Database["public"]["Enums"]["installation_type"]
+          system_type: Database["public"]["Enums"]["system_type"]
+          total_price: number
+          vendor_email: string
+          vendor_id?: string | null
+          vendor_name: string
+          vendor_phone: string
+          warranty_years?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          installation_charge?: number | null
+          installation_type?: Database["public"]["Enums"]["installation_type"]
+          system_type?: Database["public"]["Enums"]["system_type"]
+          total_price?: number
+          vendor_email?: string
+          vendor_id?: string | null
+          vendor_name?: string
+          vendor_phone?: string
+          warranty_years?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_quotations_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +427,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      installation_type: "rooftop" | "ground_mounted" | "carport" | "other"
+      system_type: "on_grid" | "off_grid" | "hybrid"
+      user_role: "admin" | "customer" | "vendor"
+      weather_condition: "sunny" | "cloudy" | "rainy" | "stormy" | "night"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +557,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      installation_type: ["rooftop", "ground_mounted", "carport", "other"],
+      system_type: ["on_grid", "off_grid", "hybrid"],
+      user_role: ["admin", "customer", "vendor"],
+      weather_condition: ["sunny", "cloudy", "rainy", "stormy", "night"],
+    },
   },
 } as const

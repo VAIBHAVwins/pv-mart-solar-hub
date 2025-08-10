@@ -1,0 +1,282 @@
+
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Trash2, AlertCircle, CheckCircle, User } from 'lucide-react';
+import AdminSidebar from './AdminSidebar';
+
+interface AdminUser {
+  id: string;
+  email: string;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+}
+
+const AdminUserManager = () => {
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [addLoading, setAddLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const fetchAdminUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAdminUsers(data || []);
+    } catch (err: any) {
+      console.error('Error fetching admin users:', err);
+      setError('Failed to load admin users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAdminUsers();
+  }, []);
+
+  const handleAddAdmin = async () => {
+    if (!newEmail.trim()) return;
+
+    setAddLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { error } = await supabase
+        .from('admin_users')
+        .insert([{ email: newEmail.trim().toLowerCase() }]);
+
+      if (error) throw error;
+
+      setSuccess(`Admin user ${newEmail} added successfully!`);
+      setNewEmail('');
+      setShowAddDialog(false);
+      fetchAdminUsers();
+    } catch (err: any) {
+      console.error('Error adding admin user:', err);
+      setError(err.message || 'Failed to add admin user');
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
+  const handleDeleteAdmin = async (id: string, email: string) => {
+    if (!window.confirm(`Are you sure you want to remove ${email} from admin access?`)) {
+      return;
+    }
+
+    setDeleteLoading(id);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { error } = await supabase
+        .from('admin_users')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setSuccess(`Admin user ${email} removed successfully!`);
+      fetchAdminUsers();
+    } catch (err: any) {
+      console.error('Error deleting admin user:', err);
+      setError(err.message || 'Failed to remove admin user');
+    } finally {
+      setDeleteLoading(null);
+    }
+  };
+
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    setError('');
+    setSuccess('');
+
+    try {
+      const { error } = await supabase
+        .from('admin_users')
+        .update({ is_active: !currentStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setSuccess(`Admin user status updated successfully!`);
+      fetchAdminUsers();
+    } catch (err: any) {
+      console.error('Error updating admin user status:', err);
+      setError(err.message || 'Failed to update admin user status');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      <AdminSidebar />
+      
+      <div className="flex-1 p-6">
+        <div className="max-w-6xl mx-auto">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center">
+                    <User className="w-5 h-5 mr-2" />
+                    Admin User Management
+                  </CardTitle>
+                  <CardDescription>
+                    Manage administrator access to the PV Mart admin panel
+                  </CardDescription>
+                </div>
+                <Button onClick={() => setShowAddDialog(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Admin User
+                </Button>
+              </div>
+            </CardHeader>
+            
+            <CardContent>
+              {/* Messages */}
+              {error && (
+                <div className="flex items-center space-x-2 text-red-600 bg-red-50 p-3 rounded-lg mb-4">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {success && (
+                <div className="flex items-center space-x-2 text-green-600 bg-green-50 p-3 rounded-lg mb-4">
+                  <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{success}</span>
+                </div>
+              )}
+
+              {/* Admin Users Table */}
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading admin users...</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created At</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {adminUsers.map((admin) => (
+                      <TableRow key={admin.id}>
+                        <TableCell className="font-medium">{admin.email}</TableCell>
+                        <TableCell>
+                          <Badge variant={admin.is_active ? "default" : "secondary"}>
+                            {admin.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(admin.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleToggleStatus(admin.id, admin.is_active)}
+                            >
+                              {admin.is_active ? "Deactivate" : "Activate"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteAdmin(admin.id, admin.email)}
+                              disabled={deleteLoading === admin.id}
+                            >
+                              {deleteLoading === admin.id ? (
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+
+              {!loading && adminUsers.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No admin users found.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Add Admin Dialog */}
+        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Admin User</DialogTitle>
+              <DialogDescription>
+                Enter the email address of the user you want to grant admin access to.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="admin-email" className="block text-sm font-medium mb-2">
+                  Email Address
+                </label>
+                <Input
+                  id="admin-email"
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="admin@example.com"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAddAdmin}
+                disabled={addLoading || !newEmail.trim()}
+              >
+                {addLoading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Adding...</span>
+                  </div>
+                ) : (
+                  "Add Admin User"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+};
+
+export default AdminUserManager;
