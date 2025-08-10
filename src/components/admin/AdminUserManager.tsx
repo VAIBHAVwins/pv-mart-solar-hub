@@ -13,7 +13,7 @@ import AdminSidebar from './AdminSidebar';
 interface AdminUser {
   id: string;
   email: string;
-  full_name: string | null;
+  created_by: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -24,7 +24,6 @@ const AdminUserManager = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [newFullName, setNewFullName] = useState('');
   const [addLoading, setAddLoading] = useState(false);
   const [revokeLoading, setRevokeLoading] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -34,7 +33,7 @@ const AdminUserManager = () => {
     try {
       const { data, error } = await supabase
         .from('admin_users')
-        .select('id, email, full_name, is_active, created_at')
+        .select('id, email, created_by, is_active, created_at')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -72,8 +71,7 @@ const AdminUserManager = () => {
         },
         body: JSON.stringify({
           email: newEmail.trim().toLowerCase(),
-          password: newPassword,
-          full_name: newFullName.trim()
+          password: newPassword
         })
       });
 
@@ -86,7 +84,6 @@ const AdminUserManager = () => {
       setSuccess(`Admin user ${newEmail} created successfully!`);
       setNewEmail('');
       setNewPassword('');
-      setNewFullName('');
       setShowAddDialog(false);
       fetchAdminUsers();
     } catch (err: any) {
@@ -189,7 +186,6 @@ const AdminUserManager = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Email</TableHead>
-                      <TableHead>Full Name</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Created At</TableHead>
                       <TableHead>Actions</TableHead>
@@ -199,7 +195,6 @@ const AdminUserManager = () => {
                     {adminUsers.map((admin) => (
                       <TableRow key={admin.id}>
                         <TableCell className="font-medium">{admin.email}</TableCell>
-                        <TableCell>{admin.full_name || '—'}</TableCell>
                         <TableCell>
                           <Badge variant={admin.is_active ? "default" : "secondary"}>
                             {admin.is_active ? "Active" : "Inactive"}
@@ -271,19 +266,6 @@ const AdminUserManager = () => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter a secure password"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="admin-name" className="block text-sm font-medium mb-2">
-                  Full Name (Optional)
-                </label>
-                <Input
-                  id="admin-name"
-                  type="text"
-                  value={newFullName}
-                  onChange={(e) => setNewFullName(e.target.value)}
-                  placeholder="Admin's full name"
                 />
               </div>
             </div>
