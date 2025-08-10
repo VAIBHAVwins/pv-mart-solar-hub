@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 interface VendorInfo {
   vendorName: string;
@@ -26,19 +27,26 @@ interface Component {
   total_price: number;
 }
 
-export const useVendorQuotationForm = () => {
-  const [vendorInfo, setVendorInfo] = useState<VendorInfo>({
-    vendorName: '',
-    vendorEmail: '',
-    vendorPhone: '',
-  });
+interface FormData {
+  vendor_name: string;
+  vendor_phone: string;
+  installation_type: string;
+  system_type: string;
+  installation_charge: string;
+  warranty_years: string;
+  description: string;
+}
 
-  const [systemDetails, setSystemDetails] = useState<SystemDetails>({
-    installationType: '',
-    systemType: '',
-    totalPrice: 0,
-    installationCharge: 0,
-    warrantyYears: 1,
+export const useVendorQuotationForm = () => {
+  const { user } = useSupabaseAuth();
+
+  const [formData, setFormData] = useState<FormData>({
+    vendor_name: '',
+    vendor_phone: '',
+    installation_type: '',
+    system_type: '',
+    installation_charge: '',
+    warranty_years: '1',
     description: '',
   });
 
@@ -54,8 +62,6 @@ export const useVendorQuotationForm = () => {
   ]);
 
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
 
   const addComponent = () => {
     setComponents([...components, {
@@ -87,26 +93,32 @@ export const useVendorQuotationForm = () => {
 
   const calculateTotalPrice = () => {
     const componentsTotal = components.reduce((sum, comp) => sum + comp.total_price, 0);
-    return componentsTotal + systemDetails.installationCharge;
+    const installationCharge = parseFloat(formData.installation_charge) || 0;
+    return componentsTotal + installationCharge;
   };
 
-  const submitQuotation = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      console.error('User not authenticated');
+      return;
+    }
+
     setLoading(true);
-    setError('');
-    setSuccess(false);
 
     try {
       // First, insert the main quotation
       const quotationData = {
-        vendor_name: vendorInfo.vendorName,
-        vendor_email: vendorInfo.vendorEmail,
-        vendor_phone: vendorInfo.vendorPhone,
-        installation_type: systemDetails.installationType as any,
-        system_type: systemDetails.systemType as any,
+        vendor_id: user.id,
+        vendor_name: formData.vendor_name,
+        vendor_email: user.email || '',
+        vendor_phone: formData.vendor_phone,
+        installation_type: formData.installation_type as any,
+        system_type: formData.system_type as any,
         total_price: calculateTotalPrice(),
-        installation_charge: systemDetails.installationCharge,
-        warranty_years: systemDetails.warrantyYears,
-        description: systemDetails.description,
+        installation_charge: parseFloat(formData.installation_charge) || 0,
+        warranty_years: parseInt(formData.warranty_years) || 1,
+        description: formData.description,
       };
 
       const { data: quotation, error: quotationError } = await supabase
@@ -136,15 +148,14 @@ export const useVendorQuotationForm = () => {
         if (componentsError) throw componentsError;
       }
 
-      setSuccess(true);
       // Reset form
-      setVendorInfo({ vendorName: '', vendorEmail: '', vendorPhone: '' });
-      setSystemDetails({
-        installationType: '',
-        systemType: '',
-        totalPrice: 0,
-        installationCharge: 0,
-        warrantyYears: 1,
+      setFormData({
+        vendor_name: '',
+        vendor_phone: '',
+        installation_type: '',
+        system_type: '',
+        installation_charge: '',
+        warranty_years: '1',
         description: '',
       });
       setComponents([{
@@ -156,27 +167,25 @@ export const useVendorQuotationForm = () => {
         total_price: 0,
       }]);
 
+      alert('Quotation submitted successfully!');
+
     } catch (err: any) {
       console.error('Error submitting quotation:', err);
-      setError(err.message || 'Failed to submit quotation');
+      alert('Failed to submit quotation: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return {
-    vendorInfo,
-    setVendorInfo,
-    systemDetails,
-    setSystemDetails,
+    formData,
+    setFormData,
     components,
     addComponent,
     removeComponent,
     updateComponent,
     calculateTotalPrice,
-    submitQuotation,
+    handleSubmit,
     loading,
-    success,
-    error,
   };
 };

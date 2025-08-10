@@ -19,7 +19,7 @@ interface Vendor {
     contact_person: string;
     license_number: string;
     address: string;
-  };
+  }[];
 }
 
 const VendorManagement = () => {
@@ -53,7 +53,7 @@ const VendorManagement = () => {
         .order('created_at', { ascending: true });
       
       if (!error && data) {
-        setVendors(data);
+        setVendors(data as Vendor[]);
       }
     } catch (error) {
       console.error('Error fetching vendors:', error);
@@ -74,14 +74,15 @@ const VendorManagement = () => {
 
   const openEdit = (vendor: Vendor) => {
     setEditingVendor(vendor);
+    const profile = vendor.vendor_profiles?.[0];
     setEditForm({
       email: vendor.email,
       full_name: vendor.full_name,
       phone: vendor.phone,
-      company_name: vendor.vendor_profiles?.company_name || '',
-      contact_person: vendor.vendor_profiles?.contact_person || '',
-      license_number: vendor.vendor_profiles?.license_number || '',
-      address: vendor.vendor_profiles?.address || ''
+      company_name: profile?.company_name || '',
+      contact_person: profile?.contact_person || '',
+      license_number: profile?.license_number || '',
+      address: profile?.address || ''
     });
   };
 
@@ -141,15 +142,18 @@ const VendorManagement = () => {
   const handleDownloadCSV = () => {
     const csv = [
       ['Email', 'Full Name', 'Phone', 'Company Name', 'Contact Person', 'License Number', 'Address'],
-      ...vendors.map(v => [
-        v.email, 
-        v.full_name || '', 
-        v.phone, 
-        v.vendor_profiles?.company_name || '', 
-        v.vendor_profiles?.contact_person || '', 
-        v.vendor_profiles?.license_number || '', 
-        v.vendor_profiles?.address || ''
-      ])
+      ...vendors.map(v => {
+        const profile = v.vendor_profiles?.[0];
+        return [
+          v.email, 
+          v.full_name || '', 
+          v.phone, 
+          profile?.company_name || '', 
+          profile?.contact_person || '', 
+          profile?.license_number || '', 
+          profile?.address || ''
+        ];
+      })
     ].map(row => row.map(String).join(',')).join('\n');
     
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -185,20 +189,23 @@ const VendorManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {vendors.map(vendor => (
-                <tr key={vendor.id} className="border-b">
-                  <td className="p-2">{vendor.email}</td>
-                  <td className="p-2">{vendor.full_name}</td>
-                  <td className="p-2">{vendor.phone}</td>
-                  <td className="p-2">{vendor.vendor_profiles?.company_name || 'N/A'}</td>
-                  <td className="p-2">{vendor.vendor_profiles?.contact_person || 'N/A'}</td>
-                  <td className="p-2">{vendor.vendor_profiles?.license_number || 'N/A'}</td>
-                  <td className="p-2">
-                    <Button size="sm" onClick={() => openEdit(vendor)} className="mr-2">Edit</Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(vendor.id)}>Delete</Button>
-                  </td>
-                </tr>
-              ))}
+              {vendors.map(vendor => {
+                const profile = vendor.vendor_profiles?.[0];
+                return (
+                  <tr key={vendor.id} className="border-b">
+                    <td className="p-2">{vendor.email}</td>
+                    <td className="p-2">{vendor.full_name}</td>
+                    <td className="p-2">{vendor.phone}</td>
+                    <td className="p-2">{profile?.company_name || 'N/A'}</td>
+                    <td className="p-2">{profile?.contact_person || 'N/A'}</td>
+                    <td className="p-2">{profile?.license_number || 'N/A'}</td>
+                    <td className="p-2">
+                      <Button size="sm" onClick={() => openEdit(vendor)} className="mr-2">Edit</Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(vendor.id)}>Delete</Button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
