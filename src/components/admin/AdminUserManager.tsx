@@ -1,10 +1,10 @@
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, AlertCircle, CheckCircle, User } from 'lucide-react';
@@ -34,7 +34,7 @@ const AdminUserManager = () => {
     try {
       const { data, error } = await supabase
         .from('admin_users')
-        .select('*')
+        .select('id, email, full_name, is_active, created_at')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -64,7 +64,7 @@ const AdminUserManager = () => {
         throw new Error('No valid session');
       }
 
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/admin-invite`, {
+      const response = await fetch(`https://nchxapviawfjtcsvjvfl.supabase.co/functions/v1/admin-invite`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ const AdminUserManager = () => {
         throw new Error('No valid session');
       }
 
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/admin-revoke`, {
+      const response = await fetch(`https://nchxapviawfjtcsvjvfl.supabase.co/functions/v1/admin-revoke`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,212 +1,232 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import { 
-  Sun, 
-  Zap, 
-  Target, 
-  Trophy, 
-  CloudRain, 
-  Cloud, 
-  CloudSnow,
-  Moon,
-  Timer,
-  Coins,
-  Award,
-  RotateCcw,
-  Info
-} from 'lucide-react';
+import { Sun, Cloud, CloudRain, Zap, Trophy, RotateCcw, Play, Pause } from 'lucide-react';
+
+interface GameState {
+  score: number;
+  energy: number;
+  targetEnergy: number;
+  panelsPlaced: number;
+  weather: 'sunny' | 'cloudy' | 'rainy';
+  timeLeft: number;
+  isPlaying: boolean;
+  gameCompleted: boolean;
+  level: number;
+}
 
 interface Panel {
-  id: number;
+  id: string;
   x: number;
   y: number;
-  angle: number;
   efficiency: number;
-  isActive: boolean;
-  energyGenerated: number;
 }
 
-interface WeatherConditions {
-  type: 'sunny' | 'cloudy' | 'rainy' | 'night';
-  multiplier: number;
-  icon: React.ComponentType<any>;
-  description: string;
-}
+const WEATHER_EFFECTS = {
+  sunny: { multiplier: 1.0, icon: Sun, color: 'text-yellow-500' },
+  cloudy: { multiplier: 0.6, icon: Cloud, color: 'text-gray-500' },
+  rainy: { multiplier: 0.3, icon: CloudRain, color: 'text-blue-500' }
+};
 
-const weatherTypes: WeatherConditions[] = [
-  { type: 'sunny', multiplier: 1.0, icon: Sun, description: 'Perfect conditions!' },
-  { type: 'cloudy', multiplier: 0.6, icon: Cloud, description: 'Reduced sunlight' },
-  { type: 'rainy', multiplier: 0.3, icon: CloudRain, description: 'Very low generation' },
-  { type: 'night', multiplier: 0.0, icon: Moon, description: 'No solar generation' }
-];
+const GRID_SIZE = 8;
+const GAME_DURATION = 120; // 2 minutes
 
 const EnhancedSolarGame = () => {
-  const { user } = useSupabaseAuth();
-  const [panels, setPanels] = useState<Panel[]>([]);
-  const [score, setScore] = useState(0);
-  const [energy, setEnergy] = useState(0);
-  const [weather, setWeather] = useState<WeatherConditions>(weatherTypes[0]);
-  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes
-  const [gameActive, setGameActive] = useState(false);
-  const [gameCompleted, setGameCompleted] = useState(false);
-  const [level, setLevel] = useState(1);
-  const [coins, setCoins] = useState(100);
-  const [objectives, setObjectives] = useState({
-    energyTarget: 1000,
-    panelTarget: 10,
-    efficiencyTarget: 80
-  });
-  const [gameStats, setGameStats] = useState({
-    energyGenerated: 0,
+  const [gameState, setGameState] = useState<GameState>({
+    score: 0,
+    energy: 0,
+    targetEnergy: 500,
     panelsPlaced: 0,
-    averageEfficiency: 0,
-    weatherChanges: 0
+    weather: 'sunny',
+    timeLeft: GAME_DURATION,
+    isPlaying: false,
+    gameCompleted: false,
+    level: 1
   });
 
-  const startGame = () => {
-    setGameActive(true);
-    setGameCompleted(false);
-    setScore(0);
-    setEnergy(0);
-    setPanels([]);
-    setTimeLeft(120);
-    setCoins(100);
-    setLevel(1);
-    setGameStats({
-      energyGenerated: 0,
-      panelsPlaced: 0,
-      averageEfficiency: 0,
-      weatherChanges: 0
-    });
-    setWeather(weatherTypes[0]);
-  };
+  const [panels, setPanels] = useState<Panel[]>([]);
+  const [selectedPanel, setSelectedPanel] = useState<Panel | null>(null);
+  const [gameHistory, setGameHistory] = useState<any[]>([]);
 
-  const endGame = useCallback(async () => {
-    setGameActive(false);
-    setGameCompleted(true);
-
-    // Save score if user is logged in
-    if (user) {
-      try {
-        await supabase.from('game_scores').insert({
-          user_id: user.id,
-          score,
-          energy_generated: energy,
-          panels_placed: panels.length,
-          game_duration: 120 - timeLeft
-        });
-      } catch (error) {
-        console.error('Error saving game score:', error);
-      }
-    }
-  }, [user, score, energy, panels.length, timeLeft]);
+  // Generate random session ID for game tracking
+  const [sessionId] = useState(() => Math.random().toString(36).substring(7));
 
   // Game timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
-    if (gameActive && timeLeft > 0) {
+    if (gameState.isPlaying && gameState.timeLeft > 0 && !gameState.gameCompleted) {
       interval = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            endGame();
-            return 0;
+        setGameState(prev => {
+          const newTimeLeft = prev.timeLeft - 1;
+          
+          // Check if game should end
+          if (newTimeLeft <= 0 || prev.energy >= prev.targetEnergy) {
+            return {
+              ...prev,
+              timeLeft: Math.max(0, newTimeLeft),
+              isPlaying: false,
+              gameCompleted: true
+            };
           }
-          return prev - 1;
+          
+          return { ...prev, timeLeft: newTimeLeft };
         });
       }, 1000);
     }
 
-    return () => clearInterval(interval);
-  }, [gameActive, timeLeft, endGame]);
-
-  // Weather changes
-  useEffect(() => {
-    if (!gameActive) return;
-
-    const weatherInterval = setInterval(() => {
-      const randomWeather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
-      setWeather(randomWeather);
-      setGameStats(prev => ({ ...prev, weatherChanges: prev.weatherChanges + 1 }));
-    }, 15000); // Change weather every 15 seconds
-
-    return () => clearInterval(weatherInterval);
-  }, [gameActive]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [gameState.isPlaying, gameState.timeLeft, gameState.gameCompleted]);
 
   // Energy generation
   useEffect(() => {
-    if (!gameActive || panels.length === 0) return;
+    let interval: NodeJS.Timeout;
+    
+    if (gameState.isPlaying && panels.length > 0) {
+      interval = setInterval(() => {
+        const weatherMultiplier = WEATHER_EFFECTS[gameState.weather].multiplier;
+        const energyGenerated = panels.reduce((total, panel) => {
+          return total + (panel.efficiency * weatherMultiplier * 0.5);
+        }, 0);
 
-    const energyInterval = setInterval(() => {
-      let totalEnergyGenerated = 0;
-      
-      setPanels(prevPanels => 
-        prevPanels.map(panel => {
-          const baseGeneration = panel.efficiency * 0.5;
-          const weatherAdjusted = baseGeneration * weather.multiplier;
-          const energyThisTick = weatherAdjusted;
-          
-          totalEnergyGenerated += energyThisTick;
-          
-          return {
-            ...panel,
-            energyGenerated: panel.energyGenerated + energyThisTick
-          };
-        })
-      );
+        setGameState(prev => ({
+          ...prev,
+          energy: prev.energy + energyGenerated,
+          score: prev.score + Math.floor(energyGenerated * 10)
+        }));
+      }, 1000);
+    }
 
-      setEnergy(prev => prev + totalEnergyGenerated);
-      setScore(prev => prev + Math.floor(totalEnergyGenerated * 10));
-      setGameStats(prev => ({ 
-        ...prev, 
-        energyGenerated: prev.energyGenerated + totalEnergyGenerated 
-      }));
-    }, 1000);
-
-    return () => clearInterval(energyInterval);
-  }, [gameActive, panels.length, weather.multiplier]);
-
-  const placeSolarPanel = (x: number, y: number) => {
-    if (!gameActive || coins < 20) return;
-
-    const angle = Math.random() * 360;
-    const efficiency = Math.floor(Math.random() * 40) + 60; // 60-100% efficiency
-
-    const newPanel: Panel = {
-      id: Date.now(),
-      x,
-      y,
-      angle,
-      efficiency,
-      isActive: true,
-      energyGenerated: 0
+    return () => {
+      if (interval) clearInterval(interval);
     };
+  }, [gameState.isPlaying, panels, gameState.weather]);
 
-    setPanels(prev => [...prev, newPanel]);
-    setCoins(prev => prev - 20);
-    setGameStats(prev => ({ 
-      ...prev, 
-      panelsPlaced: prev.panelsPlaced + 1,
-      averageEfficiency: prev.panelsPlaced === 0 ? efficiency : 
-        ((prev.averageEfficiency * prev.panelsPlaced) + efficiency) / (prev.panelsPlaced + 1)
-    }));
+  // Weather changes
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (gameState.isPlaying) {
+      interval = setInterval(() => {
+        const weathers: Array<'sunny' | 'cloudy' | 'rainy'> = ['sunny', 'cloudy', 'rainy'];
+        const randomWeather = weathers[Math.floor(Math.random() * weathers.length)];
+        setGameState(prev => ({ ...prev, weather: randomWeather }));
+      }, 15000); // Change weather every 15 seconds
+    }
 
-    // Level up logic
-    if (panels.length + 1 >= level * 5) {
-      setLevel(prev => prev + 1);
-      setCoins(prev => prev + 50);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [gameState.isPlaying]);
+
+  // Save game score when game completes
+  useEffect(() => {
+    if (gameState.gameCompleted && gameState.score > 0) {
+      saveGameScore();
+    }
+  }, [gameState.gameCompleted]);
+
+  const saveGameScore = async () => {
+    try {
+      const { error } = await supabase
+        .from('temp_game_scores')
+        .insert({
+          session_id: sessionId,
+          score: gameState.score,
+          energy_generated: gameState.energy,
+          panels_placed: gameState.panelsPlaced,
+          game_duration: GAME_DURATION - gameState.timeLeft
+        });
+
+      if (error) {
+        console.error('Error saving game score:', error);
+      }
+    } catch (err) {
+      console.error('Failed to save game score:', err);
     }
   };
 
-  const getWeatherIcon = () => {
-    const IconComponent = weather.icon;
-    return <IconComponent className="w-6 h-6" />;
+  const startGame = () => {
+    setGameState(prev => ({
+      ...prev,
+      isPlaying: true,
+      gameCompleted: false
+    }));
+  };
+
+  const pauseGame = () => {
+    setGameState(prev => ({ ...prev, isPlaying: false }));
+  };
+
+  const resetGame = () => {
+    setGameState({
+      score: 0,
+      energy: 0,
+      targetEnergy: 500 + (gameState.level - 1) * 200,
+      panelsPlaced: 0,
+      weather: 'sunny',
+      timeLeft: GAME_DURATION,
+      isPlaying: false,
+      gameCompleted: false,
+      level: gameState.level
+    });
+    setPanels([]);
+    setSelectedPanel(null);
+  };
+
+  const nextLevel = () => {
+    setGameState(prev => ({
+      score: prev.score,
+      energy: 0,
+      targetEnergy: 500 + prev.level * 200,
+      panelsPlaced: 0,
+      weather: 'sunny',
+      timeLeft: GAME_DURATION,
+      isPlaying: false,
+      gameCompleted: false,
+      level: prev.level + 1
+    }));
+    setPanels([]);
+    setSelectedPanel(null);
+  };
+
+  const placePanelOnGrid = (gridX: number, gridY: number) => {
+    if (!gameState.isPlaying || gameState.gameCompleted) return;
+    
+    // Check if position is already occupied
+    const isOccupied = panels.some(panel => panel.x === gridX && panel.y === gridY);
+    if (isOccupied) return;
+
+    const newPanel: Panel = {
+      id: `panel-${Date.now()}-${gridX}-${gridY}`,
+      x: gridX,
+      y: gridY,
+      efficiency: 50 + Math.random() * 50 // Random efficiency between 50-100%
+    };
+
+    setPanels(prev => [...prev, newPanel]);
+    setGameState(prev => ({
+      ...prev,
+      panelsPlaced: prev.panelsPlaced + 1,
+      score: prev.score + 10
+    }));
+  };
+
+  const removePanelFromGrid = (panelId: string) => {
+    if (!gameState.isPlaying || gameState.gameCompleted) return;
+    
+    setPanels(prev => prev.filter(panel => panel.id !== panelId));
+    setGameState(prev => ({
+      ...prev,
+      panelsPlaced: Math.max(0, prev.panelsPlaced - 1),
+      score: Math.max(0, prev.score - 5)
+    }));
   };
 
   const formatTime = (seconds: number) => {
@@ -215,340 +235,161 @@ const EnhancedSolarGame = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getProgressPercentage = (current: number, target: number) => {
-    return Math.min((current / target) * 100, 100);
-  };
-
-  if (!gameActive && !gameCompleted) {
-    return (
-      <Card className="max-w-4xl mx-auto">
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center space-x-2 text-2xl">
-            <Sun className="w-8 h-8 text-yellow-500" />
-            <span>Solar Panel Challenge</span>
-            <Zap className="w-8 h-8 text-blue-500" />
-          </CardTitle>
-          <CardDescription className="text-lg">
-            Master solar energy generation in this educational game!
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div className="p-4 bg-yellow-50 rounded-lg">
-              <Target className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
-              <h3 className="font-semibold text-yellow-800">Objectives</h3>
-              <p className="text-sm text-yellow-700">
-                Generate 1000 kWh, place 10 panels, maintain efficiency
-              </p>
-            </div>
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <CloudRain className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-              <h3 className="font-semibold text-blue-800">Weather System</h3>
-              <p className="text-sm text-blue-700">
-                Adapt to changing weather conditions affecting generation
-              </p>
-            </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <Trophy className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <h3 className="font-semibold text-green-800">Learn & Earn</h3>
-              <p className="text-sm text-green-700">
-                Discover solar energy principles while having fun
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2 flex items-center">
-              <Info className="w-4 h-4 mr-2" />
-              How to Play
-            </h3>
-            <ul className="text-sm space-y-1 text-gray-700">
-              <li>• Click on the solar field to place panels (costs 20 coins)</li>
-              <li>• Each panel generates energy based on efficiency and weather</li>
-              <li>• Weather changes every 15 seconds affecting generation</li>
-              <li>• Complete objectives within 2 minutes to win!</li>
-              <li>• Level up by placing more panels to earn bonus coins</li>
-            </ul>
-          </div>
-
-          <div className="text-center">
-            <Button onClick={startGame} size="lg" className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600">
-              <Sun className="w-5 h-5 mr-2" />
-              Start Solar Challenge
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (gameCompleted) {
-    const energyObjectiveComplete = energy >= objectives.energyTarget;
-    const panelObjectiveComplete = panels.length >= objectives.panelTarget;
-    const efficiencyObjectiveComplete = gameStats.averageEfficiency >= objectives.efficiencyTarget;
-    const allObjectivesComplete = energyObjectiveComplete && panelObjectiveComplete && efficiencyObjectiveComplete;
-
-    return (
-      <Card className="max-w-4xl mx-auto">
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center space-x-2 text-2xl">
-            <Trophy className={`w-8 h-8 ${allObjectivesComplete ? 'text-yellow-500' : 'text-gray-400'}`} />
-            <span>{allObjectivesComplete ? 'Congratulations!' : 'Game Complete'}</span>
-          </CardTitle>
-          <CardDescription>
-            {allObjectivesComplete 
-              ? 'You successfully completed all objectives!' 
-              : 'Good effort! Try again to complete all objectives.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <Zap className="w-6 h-6 text-blue-600 mx-auto mb-1" />
-              <div className="text-2xl font-bold text-blue-800">{Math.floor(energy)}</div>
-              <div className="text-sm text-blue-600">kWh Generated</div>
-            </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <Target className="w-6 h-6 text-green-600 mx-auto mb-1" />
-              <div className="text-2xl font-bold text-green-800">{panels.length}</div>
-              <div className="text-sm text-green-600">Panels Placed</div>
-            </div>
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <Award className="w-6 h-6 text-purple-600 mx-auto mb-1" />
-              <div className="text-2xl font-bold text-purple-800">{Math.floor(gameStats.averageEfficiency)}%</div>
-              <div className="text-sm text-purple-600">Avg Efficiency</div>
-            </div>
-            <div className="p-4 bg-orange-50 rounded-lg">
-              <Coins className="w-6 h-6 text-orange-600 mx-auto mb-1" />
-              <div className="text-2xl font-bold text-orange-800">{score}</div>
-              <div className="text-sm text-orange-600">Final Score</div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="font-semibold">Objectives</h3>
-            <div className="space-y-2">
-              <div className={`flex items-center justify-between p-2 rounded ${energyObjectiveComplete ? 'bg-green-50' : 'bg-red-50'}`}>
-                <span>Generate {objectives.energyTarget} kWh</span>
-                <Badge variant={energyObjectiveComplete ? 'default' : 'destructive'}>
-                  {energyObjectiveComplete ? 'Complete' : 'Failed'}
-                </Badge>
-              </div>
-              <div className={`flex items-center justify-between p-2 rounded ${panelObjectiveComplete ? 'bg-green-50' : 'bg-red-50'}`}>
-                <span>Place {objectives.panelTarget} panels</span>
-                <Badge variant={panelObjectiveComplete ? 'default' : 'destructive'}>
-                  {panelObjectiveComplete ? 'Complete' : 'Failed'}
-                </Badge>
-              </div>
-              <div className={`flex items-center justify-between p-2 rounded ${efficiencyObjectiveComplete ? 'bg-green-50' : 'bg-red-50'}`}>
-                <span>Maintain {objectives.efficiencyTarget}% efficiency</span>
-                <Badge variant={efficiencyObjectiveComplete ? 'default' : 'destructive'}>
-                  {efficiencyObjectiveComplete ? 'Complete' : 'Failed'}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-center space-x-4">
-            <Button onClick={startGame} className="bg-gradient-to-r from-green-500 to-blue-500">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Play Again
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const currentWeather = WEATHER_EFFECTS[gameState.weather];
+  const WeatherIcon = currentWeather.icon;
+  const energyProgress = (gameState.energy / gameState.targetEnergy) * 100;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-4">
+    <div className="max-w-6xl mx-auto p-4 space-y-6">
       {/* Game Header */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-        <Card className="p-3">
-          <div className="flex items-center space-x-2">
-            <Timer className="w-4 h-4 text-blue-600" />
-            <div>
-              <div className="text-lg font-bold">{formatTime(timeLeft)}</div>
-              <div className="text-xs text-gray-500">Time Left</div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center">
+              <Zap className="w-6 h-6 mr-2 text-yellow-500" />
+              Solar Energy Challenge - Level {gameState.level}
+            </span>
+            <div className="flex items-center space-x-4">
+              <Badge variant="outline" className="text-lg px-3 py-1">
+                Score: {gameState.score}
+              </Badge>
+              <Badge variant="outline" className="text-lg px-3 py-1">
+                Time: {formatTime(gameState.timeLeft)}
+              </Badge>
             </div>
-          </div>
-        </Card>
+          </CardTitle>
+        </CardHeader>
         
-        <Card className="p-3">
-          <div className="flex items-center space-x-2">
-            <Zap className="w-4 h-4 text-yellow-600" />
-            <div>
-              <div className="text-lg font-bold">{Math.floor(energy)}</div>
-              <div className="text-xs text-gray-500">kWh</div>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            {/* Energy Progress */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Energy Generated</span>
+                <span>{Math.floor(gameState.energy)} / {gameState.targetEnergy} kWh</span>
+              </div>
+              <Progress value={energyProgress} className="h-3" />
             </div>
-          </div>
-        </Card>
-        
-        <Card className="p-3">
-          <div className="flex items-center space-x-2">
-            <Target className="w-4 h-4 text-green-600" />
-            <div>
-              <div className="text-lg font-bold">{score}</div>
-              <div className="text-xs text-gray-500">Score</div>
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-3">
-          <div className="flex items-center space-x-2">
-            <Coins className="w-4 h-4 text-orange-600" />
-            <div>
-              <div className="text-lg font-bold">{coins}</div>
-              <div className="text-xs text-gray-500">Coins</div>
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-3">
-          <div className="flex items-center space-x-2">
-            {getWeatherIcon()}
-            <div>
-              <div className="text-sm font-medium capitalize">{weather.type}</div>
-              <div className="text-xs text-gray-500">{Math.floor(weather.multiplier * 100)}%</div>
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-3">
-          <div className="flex items-center space-x-2">
-            <Award className="w-4 h-4 text-purple-600" />
-            <div>
-              <div className="text-lg font-bold">{level}</div>
-              <div className="text-xs text-gray-500">Level</div>
-            </div>
-          </div>
-        </Card>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        {/* Solar Field */}
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Solar Field</span>
-              <span className="text-sm font-normal text-gray-500">
-                Click to place panels (20 coins each)
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div 
-              className="relative w-full h-96 bg-gradient-to-b from-sky-200 to-green-200 rounded-lg border-2 border-dashed border-gray-300 cursor-crosshair overflow-hidden"
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                placeSolarPanel(x, y);
-              }}
-            >
-              {panels.map(panel => (
-                <div
-                  key={panel.id}
-                  className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
-                  style={{ 
-                    left: `${panel.x}%`, 
-                    top: `${panel.y}%`,
-                    transform: `translate(-50%, -50%) rotate(${panel.angle}deg)`
-                  }}
-                >
-                  <div className="w-8 h-6 bg-gradient-to-r from-blue-800 to-blue-900 rounded shadow-lg relative group">
-                    <div className="absolute inset-0 bg-white bg-opacity-20 rounded grid grid-cols-2 gap-px p-px">
-                      <div className="bg-blue-700 rounded-sm"></div>
-                      <div className="bg-blue-700 rounded-sm"></div>
-                      <div className="bg-blue-700 rounded-sm"></div>
-                      <div className="bg-blue-700 rounded-sm"></div>
-                    </div>
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      {panel.efficiency}% • {Math.floor(panel.energyGenerated)} kWh
-                    </div>
-                  </div>
+            {/* Weather */}
+            <div className="flex items-center space-x-2">
+              <WeatherIcon className={`w-6 h-6 ${currentWeather.color}`} />
+              <div>
+                <div className="text-sm font-medium capitalize">{gameState.weather}</div>
+                <div className="text-xs text-gray-500">
+                  {Math.round(currentWeather.multiplier * 100)}% efficiency
                 </div>
-              ))}
+              </div>
+            </div>
+
+            {/* Panels Placed */}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{gameState.panelsPlaced}</div>
+              <div className="text-xs text-gray-500">Panels Placed</div>
+            </div>
+
+            {/* Game Controls */}
+            <div className="flex space-x-2">
+              {!gameState.isPlaying && !gameState.gameCompleted && (
+                <Button onClick={startGame} className="flex-1">
+                  <Play className="w-4 h-4 mr-1" />
+                  Start
+                </Button>
+              )}
               
-              {panels.length === 0 && (
-                <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                  <div className="text-center">
-                    <Sun className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>Click anywhere to place your first solar panel!</p>
-                    <p className="text-sm">Cost: 20 coins</p>
+              {gameState.isPlaying && (
+                <Button onClick={pauseGame} variant="outline" className="flex-1">
+                  <Pause className="w-4 h-4 mr-1" />
+                  Pause
+                </Button>
+              )}
+              
+              <Button onClick={resetGame} variant="outline" className="flex-1">
+                <RotateCcw className="w-4 h-4 mr-1" />
+                Reset
+              </Button>
+            </div>
+          </div>
+
+          {/* Game Grid */}
+          <div className="grid grid-cols-8 gap-1 bg-green-100 p-4 rounded-lg max-w-md mx-auto">
+            {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, index) => {
+              const gridX = index % GRID_SIZE;
+              const gridY = Math.floor(index / GRID_SIZE);
+              const panel = panels.find(p => p.x === gridX && p.y === gridY);
+              
+              return (
+                <div
+                  key={index}
+                  className={`
+                    aspect-square border border-green-300 cursor-pointer transition-all duration-200 rounded
+                    ${panel 
+                      ? 'bg-blue-600 hover:bg-blue-700 shadow-md' 
+                      : 'bg-green-50 hover:bg-green-200'
+                    }
+                  `}
+                  onClick={() => {
+                    if (panel) {
+                      if (selectedPanel?.id === panel.id) {
+                        removePanelFromGrid(panel.id);
+                        setSelectedPanel(null);
+                      } else {
+                        setSelectedPanel(panel);
+                      }
+                    } else {
+                      placePanelOnGrid(gridX, gridY);
+                    }
+                  }}
+                  title={panel ? `Solar Panel (${Math.round(panel.efficiency)}% efficiency)` : 'Click to place solar panel'}
+                >
+                  {panel && (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="w-3 h-3 bg-white rounded-sm opacity-80"></div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Game Status */}
+          {gameState.gameCompleted && (
+            <div className="text-center mt-6 space-y-4">
+              {gameState.energy >= gameState.targetEnergy ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center space-x-2 text-green-600">
+                    <Trophy className="w-8 h-8" />
+                    <span className="text-2xl font-bold">Level Complete!</span>
                   </div>
+                  <p className="text-lg">
+                    You generated {Math.floor(gameState.energy)} kWh of clean energy!
+                  </p>
+                  <Button onClick={nextLevel} className="text-lg px-8 py-3">
+                    Next Level
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-orange-600 text-xl font-bold">Time's Up!</div>
+                  <p>
+                    You generated {Math.floor(gameState.energy)} kWh out of {gameState.targetEnergy} kWh target.
+                  </p>
+                  <Button onClick={resetGame} className="text-lg px-8 py-3">
+                    Try Again
+                  </Button>
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          )}
 
-        {/* Objectives Panel */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Objectives</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>Energy Target</span>
-                <span>{Math.floor(energy)}/{objectives.energyTarget} kWh</span>
-              </div>
-              <Progress value={getProgressPercentage(energy, objectives.energyTarget)} className="h-2" />
-            </div>
-            
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>Panels Target</span>
-                <span>{panels.length}/{objectives.panelTarget}</span>
-              </div>
-              <Progress value={getProgressPercentage(panels.length, objectives.panelTarget)} className="h-2" />
-            </div>
-            
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>Efficiency</span>
-                <span>{Math.floor(gameStats.averageEfficiency)}%/{objectives.efficiencyTarget}%</span>
-              </div>
-              <Progress value={getProgressPercentage(gameStats.averageEfficiency, objectives.efficiencyTarget)} className="h-2" />
-            </div>
-
-            <div className="pt-4 border-t space-y-2">
-              <h4 className="font-medium text-sm">Weather Effects</h4>
-              <div className="space-y-1 text-xs">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    <Sun className="w-3 h-3 text-yellow-500" />
-                    <span>Sunny</span>
-                  </div>
-                  <span className="text-green-600">100%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    <Cloud className="w-3 h-3 text-gray-500" />
-                    <span>Cloudy</span>
-                  </div>
-                  <span className="text-yellow-600">60%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    <CloudRain className="w-3 h-3 text-blue-500" />
-                    <span>Rainy</span>
-                  </div>
-                  <span className="text-orange-600">30%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    <Moon className="w-3 h-3 text-indigo-500" />
-                    <span>Night</span>
-                  </div>
-                  <span className="text-red-600">0%</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          {/* Instructions */}
+          <div className="mt-6 text-sm text-gray-600 text-center space-y-2">
+            <p><strong>How to play:</strong> Click on empty green squares to place solar panels</p>
+            <p>Generate energy based on weather conditions • Reach the target energy to advance levels</p>
+            <p>Click placed panels to remove them • Weather changes every 15 seconds</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
