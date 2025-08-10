@@ -1,6 +1,6 @@
 
-
 import Header from '../common/Header';
+import Footer from '../common/Footer';
 import { Helmet } from 'react-helmet';
 
 interface LayoutProps {
@@ -18,9 +18,9 @@ const Layout = ({ children, className }: LayoutProps) => (
     <div className={`min-h-screen flex flex-col ${className || ''}`}>
       <Header />
       <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   </>
 );
 
 export default Layout;
-

@@ -7,8 +7,6 @@ const Navigation = ({ getLinkClasses }: { getLinkClasses: () => string }) => {
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/about', label: 'About' },
-    { path: '/installation-type', label: 'Installation Types' },
-    { path: '/grid-connectivity', label: 'Grid Connectivity' },
     { path: '/blogs', label: 'Blog' },
     { path: '/contact', label: 'Contact' }
   ];

@@ -181,17 +181,26 @@ const Index = () => {
               {currentImage ? currentImage.description : "Connect with trusted solar vendors for affordable, high-quality installations across India"}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300">
-                <Sun className="mr-2 h-5 w-5" />
-                Get Solar Quote
+              <Button 
+                asChild
+                size="lg" 
+                className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-white"
+              >
+                <a href="/customer/requirement-form">
+                  <Sun className="mr-2 h-5 w-5" />
+                  Get Solar Quote
+                </a>
               </Button>
               <Button 
+                asChild
                 variant="outline" 
                 size="lg" 
-                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300"
+                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300 bg-transparent"
               >
-                Learn More
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <a href="/about">
+                  Learn More
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </a>
               </Button>
             </div>
           </motion.div>
@@ -348,9 +357,15 @@ const Index = () => {
                     </CardHeader>
                     <CardContent>
                       <p className="text-gray-600 text-sm line-clamp-3 mb-4">{post.excerpt}</p>
-                      <Button variant="ghost" className="p-0 h-auto text-blue-600 hover:text-blue-700 font-medium">
-                        Read More
-                        <ArrowRight className="ml-1 h-4 w-4" />
+                      <Button 
+                        asChild
+                        variant="ghost" 
+                        className="p-0 h-auto text-blue-600 hover:text-blue-700 font-medium hover:bg-transparent"
+                      >
+                        <a href={`/blog/${post.slug}`}>
+                          Read More
+                          <ArrowRight className="ml-1 h-4 w-4" />
+                        </a>
                       </Button>
                     </CardContent>
                   </Card>
@@ -360,12 +375,15 @@ const Index = () => {
 
             <div className="text-center mt-12">
               <Button 
+                asChild
                 variant="outline" 
                 size="lg"
                 className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold px-8 py-3"
               >
-                View All Articles
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <a href="/blogs">
+                  View All Articles
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </a>
               </Button>
             </div>
           </div>
@@ -386,17 +404,26 @@ const Index = () => {
               Join thousands of satisfied customers who have made the switch to clean, renewable energy
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300">
-                <Sun className="mr-2 h-5 w-5" />
-                Get Free Quote
+              <Button 
+                asChild
+                size="lg" 
+                className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-white"
+              >
+                <a href="/customer/requirement-form">
+                  <Sun className="mr-2 h-5 w-5" />
+                  Get Free Quote
+                </a>
               </Button>
               <Button 
+                asChild
                 variant="outline" 
                 size="lg" 
-                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300"
+                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300 bg-transparent"
               >
-                <Users className="mr-2 h-5 w-5" />
-                Find Vendors
+                <a href="/vendor/register">
+                  <Users className="mr-2 h-5 w-5" />
+                  Find Vendors
+                </a>
               </Button>
             </div>
           </motion.div>

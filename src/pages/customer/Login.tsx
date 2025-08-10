@@ -4,12 +4,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import AuthMethodSelector from '@/components/auth/AuthMethodSelector';
 import { SupabaseAuthForm } from '@/components/auth/SupabaseAuthForm';
-import MobileOTPAuth from '@/components/auth/MobileOTPAuth';
+import PhonePasswordAuth from '@/components/auth/PhonePasswordAuth';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const CustomerLogin = () => {
-  const [authMethod, setAuthMethod] = useState<'select' | 'email' | 'mobile'>('select');
+  const [authMethod, setAuthMethod] = useState<'select' | 'email' | 'phone'>('select');
   const navigate = useNavigate();
 
   const handleAuthSuccess = () => {
@@ -54,7 +54,7 @@ const CustomerLogin = () => {
             </div>
           )}
 
-          {authMethod === 'mobile' && (
+          {authMethod === 'phone' && (
             <div className="space-y-4">
               <Button
                 onClick={handleBackToSelection}
@@ -64,7 +64,7 @@ const CustomerLogin = () => {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to method selection
               </Button>
-              <MobileOTPAuth onSuccess={handleAuthSuccess} />
+              <PhonePasswordAuth onSuccess={handleAuthSuccess} />
             </div>
           )}
 

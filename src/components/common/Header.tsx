@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +22,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, userRole, signOut } = useSupabaseAuth();
+  const { user, userRole } = useSupabaseAuth();
 
   const isCustomerRoute = location.pathname.includes('/customer');
   const isVendorRoute = location.pathname.includes('/vendor');
@@ -43,11 +43,6 @@ const Header = () => {
       return 'text-gray-300 hover:text-white font-medium transition-colors duration-200 hover:bg-gray-700/50 px-3 py-2 rounded-md';
     }
     return 'text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 px-3 py-2 rounded-md';
-  };
-
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/');
   };
 
   const handleCustomerDashboardClick = () => {
@@ -124,20 +119,14 @@ const Header = () => {
                       <User className="mr-2 h-4 w-4" />
                       <span>Dashboard</span>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
                 <div className="hidden lg:flex items-center space-x-3">
                   <Button 
                     asChild 
-                    variant="outline" 
                     size="sm" 
-                    className="bg-transparent border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-medium transition-all duration-200"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md hover:shadow-lg transition-all duration-200"
                   >
                     <a href="/customer/login">Customer Login</a>
                   </Button>
@@ -166,7 +155,6 @@ const Header = () => {
             getLinkClasses={getLinkClasses}
             user={user}
             userType={userRole}
-            handleLogout={handleLogout}
             handleCustomerDashboardClick={handleCustomerDashboardClick}
             handleVendorDashboardClick={handleVendorDashboardClick}
           />

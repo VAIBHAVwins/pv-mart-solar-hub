@@ -1,8 +1,13 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Zap } from 'lucide-react';
 
 const Logo = () => {
+  const location = useLocation();
+  const isCustomerRoute = location.pathname.includes('/customer');
+  const isVendorRoute = location.pathname.includes('/vendor');
+  const isOnWhiteBackground = !isCustomerRoute && !isVendorRoute;
+
   return (
     <Link to="/" className="flex items-center space-x-3 group">
       <div className="relative">
@@ -14,7 +19,13 @@ const Logo = () => {
         <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
           PV Mart
         </h1>
-        <p className="text-xs text-gray-500 font-medium">Solar Solutions</p>
+        <p className={`text-xs font-medium ${
+          isOnWhiteBackground 
+            ? 'text-gray-900' 
+            : 'text-white'
+        }`}>
+          Solar Solutions
+        </p>
       </div>
     </Link>
   );

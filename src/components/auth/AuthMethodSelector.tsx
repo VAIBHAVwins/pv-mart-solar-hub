@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Mail, Smartphone } from 'lucide-react';
 
 interface AuthMethodSelectorProps {
-  onMethodSelect: (method: 'email' | 'mobile') => void;
+  onMethodSelect: (method: 'email' | 'phone') => void;
   userType: 'customer' | 'vendor';
 }
 
@@ -36,7 +36,7 @@ const AuthMethodSelector = ({ onMethodSelect, userType }: AuthMethodSelectorProp
         </Button>
 
         <Button
-          onClick={() => onMethodSelect('mobile')}
+          onClick={() => onMethodSelect('phone')}
           className="w-full h-16 text-left flex items-center space-x-4 hover:bg-green-50 border-2 border-transparent hover:border-green-200"
           variant="outline"
         >
@@ -44,8 +44,8 @@ const AuthMethodSelector = ({ onMethodSelect, userType }: AuthMethodSelectorProp
             <Smartphone className="w-6 h-6 text-green-600" />
           </div>
           <div>
-            <div className="font-semibold text-gray-900">Mobile & OTP</div>
-            <div className="text-sm text-gray-600">Login with your mobile number</div>
+            <div className="font-semibold text-gray-900">Phone & Password</div>
+            <div className="text-sm text-gray-600">Login with your mobile number and password</div>
           </div>
         </Button>
       </CardContent>
