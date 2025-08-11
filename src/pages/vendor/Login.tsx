@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
@@ -11,7 +10,7 @@ export default function VendorLogin() {
   const [success, setSuccess] = useState('');
   const [showRegistration, setShowRegistration] = useState(false);
   const [showOTPVerification, setShowOTPVerification] = useState(false);
-  const [verificationPhone, setVerificationPhone] = useState('');
+  const [verificationEmail, setVerificationEmail] = useState('');
   const [showAuthSelector, setShowAuthSelector] = useState(true);
   
   const location = useLocation();
@@ -30,7 +29,9 @@ export default function VendorLogin() {
   };
 
   const handleOTPRequired = (phone: string) => {
-    setVerificationPhone(phone);
+    // Convert phone to email format for OTP verification component
+    // Since the component expects email, we'll use a placeholder email
+    setVerificationEmail('vendor@example.com');
     setShowOTPVerification(true);
     setShowRegistration(false);
   };
@@ -50,7 +51,7 @@ export default function VendorLogin() {
     return (
       <Layout className="bg-gradient-to-br from-[#797a83] to-[#4f4f56] min-h-screen">
         <OTPVerification
-          phone={verificationPhone}
+          email={verificationEmail}
           onVerificationComplete={handleOTPVerificationComplete}
           onBack={handleBackToLogin}
         />
