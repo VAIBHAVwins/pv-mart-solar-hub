@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import HeroImageManager from './HeroImageManager';
 import BlogManager from './blog/BlogManager';
-import UserManagement from './UserManagement';
 import VendorManagement from './VendorManagement';
 import CustomerManagement from './CustomerManagement';
 import QuotationsManagement from './QuotationsManagement';
@@ -176,7 +175,7 @@ const AdminDashboard = () => {
 
       {/* Admin Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">
             <Database className="w-4 h-4 mr-2" />
             Overview
@@ -189,20 +188,20 @@ const AdminDashboard = () => {
             <FileText className="w-4 h-4 mr-2" />
             Blogs
           </TabsTrigger>
-          <TabsTrigger value="users">
-            <Users className="w-4 h-4 mr-2" />
-            Users
-          </TabsTrigger>
           <TabsTrigger value="vendors">
             <Users className="w-4 h-4 mr-2" />
-            Vendors
+            Vendor Management
           </TabsTrigger>
           <TabsTrigger value="customers">
             <Users className="w-4 h-4 mr-2" />
-            Customers
+            Customer Management
           </TabsTrigger>
-          <TabsTrigger value="quotations">Quotations</TabsTrigger>
-          <TabsTrigger value="requirements">Requirements</TabsTrigger>
+          <TabsTrigger value="settings">
+            <Settings className="w-4 h-4 mr-2" />
+            Settings
+          </TabsTrigger>
+          <TabsTrigger value="quotations">Quotations Management</TabsTrigger>
+          <TabsTrigger value="requirements">Requirements Management</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -275,14 +274,9 @@ const AdminDashboard = () => {
           <BlogManager />
         </TabsContent>
 
-        <TabsContent value="users" className="space-y-4">
-          <UserManagement />
-        </TabsContent>
-
         <TabsContent value="vendors" className="space-y-4">
           <VendorManagement />
         </TabsContent>
-
         <TabsContent value="customers" className="space-y-4">
           <CustomerManagement />
         </TabsContent>
@@ -290,9 +284,50 @@ const AdminDashboard = () => {
         <TabsContent value="quotations" className="space-y-4">
           <QuotationsManagement />
         </TabsContent>
-
         <TabsContent value="requirements" className="space-y-4">
           <RequirementsManagement />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>System Settings</CardTitle>
+              <CardDescription>
+                Configure system-wide settings and preferences
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-medium">Email Notifications</h4>
+                    <p className="text-sm text-gray-600">Send email notifications for new registrations</p>
+                  </div>
+                  <button className="w-12 h-6 bg-green-500 rounded-full p-1">
+                    <div className="w-4 h-4 bg-white rounded-full ml-auto"></div>
+                  </button>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-medium">Auto-approve Vendors</h4>
+                    <p className="text-sm text-gray-600">Automatically approve new vendor registrations</p>
+                  </div>
+                  <button className="w-12 h-6 bg-gray-300 rounded-full p-1">
+                    <div className="w-4 h-4 bg-white rounded-full"></div>
+                  </button>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-medium">Maintenance Mode</h4>
+                    <p className="text-sm text-gray-600">Enable maintenance mode for system updates</p>
+                  </div>
+                  <button className="w-12 h-6 bg-gray-300 rounded-full p-1">
+                    <div className="w-4 h-4 bg-white rounded-full"></div>
+                  </button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

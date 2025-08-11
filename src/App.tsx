@@ -24,10 +24,17 @@ import QuotationForm from "@/pages/vendor/QuotationForm";
 // Admin pages
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/Dashboard";
+import AdminEnhancedDashboard from "@/pages/admin/EnhancedDashboard";
+import AdminCustomers from "@/pages/admin/Customers";
+import AdminVendors from "@/pages/admin/Vendors";
+import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminBlogManager from "@/pages/admin/BlogManager";
+import AdminHeroBanners from "@/pages/admin/HeroBanners";
 import AdminBannerDashboard from "@/pages/admin/BannerDashboard";
 import AdminApplianceManager from "@/pages/admin/ApplianceManager";
 import AdminBiharTariffManager from "@/pages/admin/BiharTariffManager";
+import AdminRequirements from "@/pages/admin/Requirements";
+import AdminQuotations from "@/pages/admin/Quotations";
 
 // Tool pages
 import BillCalculator from "@/pages/tools/BillCalculator";
@@ -118,8 +125,28 @@ const router = createBrowserRouter([
     element: <AdminDashboard />,
   },
   {
+    path: "/admin/enhanced-dashboard",
+    element: <AdminEnhancedDashboard />,
+  },
+  {
+    path: "/admin/customers",
+    element: <AdminCustomers />,
+  },
+  {
+    path: "/admin/vendors",
+    element: <AdminVendors />,
+  },
+  {
+    path: "/admin/users",
+    element: <AdminUsers />,
+  },
+  {
     path: "/admin/blog-manager",
     element: <AdminBlogManager />,
+  },
+  {
+    path: "/admin/hero-banners",
+    element: <AdminHeroBanners />,
   },
   {
     path: "/admin/banner-dashboard",
@@ -132,6 +159,14 @@ const router = createBrowserRouter([
   {
     path: "/admin/bihar-tariff-manager",
     element: <AdminBiharTariffManager />,
+  },
+  {
+    path: "/admin/requirements",
+    element: <AdminRequirements />,
+  },
+  {
+    path: "/admin/quotations",
+    element: <AdminQuotations />,
   },
   {
     path: "/tools/bill-calculator",
