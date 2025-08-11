@@ -25,6 +25,11 @@ interface Provider {
 
 type UnifiedBillResult = BiharBillResult | BillCalculationResult;
 
+// Type guard to check if result is a Bihar result
+const isBiharResult = (result: UnifiedBillResult): result is BiharBillResult => {
+  return 'free_units_applied' in result.applied_rules;
+};
+
 const UnifiedBillCalculator = () => {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
@@ -172,7 +177,7 @@ const UnifiedBillCalculator = () => {
         });
       }
 
-      if ('applied_rules' in result && result.applied_rules.free_units_applied > 0) {
+      if (isBiharResult(result) && result.applied_rules.free_units_applied > 0) {
         toast({
           title: "Free Units Applied!",
           description: `${result.applied_rules.free_units_applied} units provided free under government scheme.`,
@@ -424,11 +429,11 @@ const UnifiedBillCalculator = () => {
                     {billResult.applied_rules && (
                       (billResult.applied_rules.lifeline_applied || 
                        billResult.applied_rules.timely_payment_applied ||
-                       ('free_units_applied' in billResult.applied_rules && billResult.applied_rules.free_units_applied > 0)) && (
+                       (isBiharResult(billResult) && billResult.applied_rules.free_units_applied > 0)) && (
                         <div className="bg-green-50 p-3 rounded-lg">
                           <h4 className="font-medium text-green-800 mb-2">Applied Benefits:</h4>
                           <div className="space-y-1 text-sm">
-                            {'free_units_applied' in billResult.applied_rules && billResult.applied_rules.free_units_applied > 0 && (
+                            {isBiharResult(billResult) && billResult.applied_rules.free_units_applied > 0 && (
                               <div className="flex items-center gap-2 text-green-700">
                                 <CheckCircle className="w-4 h-4" />
                                 {billResult.applied_rules.free_units_applied} units free (Government Scheme)
@@ -503,13 +508,13 @@ const UnifiedBillCalculator = () => {
                 <CardTitle>Slab-wise Energy Charges</CardTitle>
                 <CardDescription>
                   Detailed breakdown of energy charges by consumption slabs
-                  {'applied_rules' in billResult && billResult.applied_rules.free_units_applied > 0 && 
+                  {isBiharResult(billResult) && billResult.applied_rules.free_units_applied > 0 && 
                     ` (after ${billResult.applied_rules.free_units_applied} free units deduction)`
                   }
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {'applied_rules' in billResult && billResult.applied_rules.free_units_applied > 0 && (
+                {isBiharResult(billResult) && billResult.applied_rules.free_units_applied > 0 && (
                   <div className="mb-4 p-3 bg-green-50 rounded-lg">
                     <p className="text-sm text-green-700">
                       <strong>Note:</strong> {billResult.applied_rules.free_units_applied} units were provided free under the government scheme. 
