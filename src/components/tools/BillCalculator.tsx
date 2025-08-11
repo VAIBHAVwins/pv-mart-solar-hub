@@ -52,7 +52,7 @@ const BillCalculator = () => {
   const fetchProviders = async () => {
     try {
       const { data, error } = await supabase
-        .from('electricity_providers' as any)
+        .from('electricity_providers')
         .select('*')
         .eq('is_active', true)
         .order('name');
@@ -77,12 +77,12 @@ const BillCalculator = () => {
     try {
       const [slabsResult, configResult] = await Promise.all([
         supabase
-          .from('electricity_slabs' as any)
+          .from('electricity_slabs')
           .select('*')
           .eq('provider_id', providerId)
           .order('min_unit'),
         supabase
-          .from('electricity_provider_config' as any)
+          .from('electricity_provider_config')
           .select('*')
           .eq('provider_id', providerId)
           .single()
