@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, EyeOff, Mail, Smartphone, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Mail, Phone } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useNavigate } from 'react-router-dom';
 
 interface UnifiedLoginFormProps {
   userType: 'customer' | 'vendor';
@@ -15,11 +16,11 @@ interface UnifiedLoginFormProps {
 }
 
 export function UnifiedLoginForm({ userType, onRegisterClick }: UnifiedLoginFormProps) {
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -47,53 +48,49 @@ export function UnifiedLoginForm({ userType, onRegisterClick }: UnifiedLoginForm
     setError('');
 
     try {
-      let loginIdentifier = '';
+      let signInData;
       
       if (loginMethod === 'email') {
-        loginIdentifier = formData.email;
-      } else {
-        loginIdentifier = normalizePhone(formData.phone);
-      }
-
-      // First check if user exists and get their role
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('role, email, phone')
-        .or(`email.eq.${loginMethod === 'email' ? formData.email : ''},phone.eq.${loginMethod === 'phone' ? normalizePhone(formData.phone) : ''}`)
-        .maybeSingle();
-
-      if (userError && userError.code !== 'PGRST116') {
-        throw userError;
-      }
-
-      // Check if user exists but has wrong role
-      if (userData && userData.role !== userType) {
-        const correctLoginPage = userData.role === 'customer' ? 'customer' : 'vendor';
-        setError(`You are registered as a ${userData.role}. Please use the ${correctLoginPage} login page to access your dashboard.`);
+        if (!formData.email || !formData.password) {
+          setError('Please enter both email and password');
+          return;
+        }
         
-        toast({
-          title: "Wrong Login Page",
-          description: `Please use the ${correctLoginPage} login page to access your account.`,
-          variant: "destructive"
+        signInData = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password
         });
-        return;
+      } else {
+        if (!formData.phone || !formData.password) {
+          setError('Please enter both phone number and password');
+          return;
+        }
+
+        const normalizedPhone = normalizePhone(formData.phone);
+        
+        // First get the email associated with this phone number
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('email')
+          .eq('phone', normalizedPhone)
+          .single();
+
+        if (userError || !userData) {
+          setError('No account found with this phone number');
+          return;
+        }
+
+        signInData = await supabase.auth.signInWithPassword({
+          email: userData.email,
+          password: formData.password
+        });
       }
 
-      // If user doesn't exist
-      if (!userData) {
-        setError(`No account found. Please register as a ${userType} first.`);
-        return;
-      }
-
-      // Attempt login with Supabase Auth
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: userData.email || '',
-        password: formData.password
-      });
+      const { data, error: signInError } = signInData;
 
       if (signInError) {
         if (signInError.message.includes('Invalid login credentials')) {
-          setError('Invalid password. Please check your password and try again.');
+          setError('Invalid credentials. Please check your email/phone and password.');
         } else {
           setError(signInError.message);
         }
@@ -101,15 +98,41 @@ export function UnifiedLoginForm({ userType, onRegisterClick }: UnifiedLoginForm
       }
 
       if (data.user) {
+        // Check user role
+        const { data: userRole, error: roleError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        if (roleError) {
+          setError('Failed to verify user role');
+          return;
+        }
+
+        // Validate user type matches login page
+        if (userRole.role !== userType) {
+          if (userType === 'customer' && userRole.role === 'vendor') {
+            setError('You are registered as a vendor. Please use the vendor login page to access your dashboard.');
+          } else if (userType === 'vendor' && userRole.role === 'customer') {
+            setError('You are registered as a customer. Please use the customer login page to access your dashboard.');
+          } else {
+            setError('Invalid user type for this login page.');
+          }
+          
+          // Sign out the user since they're on wrong page
+          await supabase.auth.signOut();
+          return;
+        }
+
         toast({
           title: "Login Successful",
-          description: `Welcome back! Redirecting to your ${userType} dashboard...`
+          description: `Welcome back! Redirecting to your ${userType} dashboard.`
         });
-        
-        // Redirect to appropriate dashboard
-        window.location.href = `/${userType}/dashboard`;
-      }
 
+        // Redirect to appropriate dashboard
+        navigate(`/${userType}/dashboard`);
+      }
     } catch (err: any) {
       console.error('Login error:', err);
       setError('Login failed. Please try again.');
@@ -132,18 +155,18 @@ export function UnifiedLoginForm({ userType, onRegisterClick }: UnifiedLoginForm
       <CardContent>
         <Tabs value={loginMethod} onValueChange={(value) => setLoginMethod(value as 'email' | 'phone')}>
           <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="email" className="flex items-center">
-              <Mail className="w-4 h-4 mr-2" />
-              Email
+            <TabsTrigger value="email" className="flex items-center space-x-2">
+              <Mail className="w-4 h-4" />
+              <span>Email</span>
             </TabsTrigger>
-            <TabsTrigger value="phone" className="flex items-center">
-              <Smartphone className="w-4 h-4 mr-2" />
-              Phone
+            <TabsTrigger value="phone" className="flex items-center space-x-2">
+              <Phone className="w-4 h-4" />
+              <span>Phone</span>
             </TabsTrigger>
           </TabsList>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <TabsContent value="email" className="mt-0">
+            <TabsContent value="email" className="space-y-4 mt-0">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address
@@ -155,14 +178,14 @@ export function UnifiedLoginForm({ userType, onRegisterClick }: UnifiedLoginForm
                   placeholder="Enter your email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  required
+                  required={loginMethod === 'email'}
                   disabled={loading}
                   className="h-12"
                 />
               </div>
             </TabsContent>
 
-            <TabsContent value="phone" className="mt-0">
+            <TabsContent value="phone" className="space-y-4 mt-0">
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                   Phone Number
@@ -178,7 +201,7 @@ export function UnifiedLoginForm({ userType, onRegisterClick }: UnifiedLoginForm
                     placeholder="9876543210"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    required
+                    required={loginMethod === 'phone'}
                     disabled={loading}
                     className="pl-12 h-12"
                     maxLength={10}
@@ -191,30 +214,17 @@ export function UnifiedLoginForm({ userType, onRegisterClick }: UnifiedLoginForm
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                  disabled={loading}
-                  className="pr-12 h-12"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
-                </button>
-              </div>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+                disabled={loading}
+                className="h-12"
+              />
             </div>
 
             {error && (
@@ -232,21 +242,19 @@ export function UnifiedLoginForm({ userType, onRegisterClick }: UnifiedLoginForm
               {loading ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 mb-4">
-              Don't have an account?
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onRegisterClick}
-              className="w-full"
-            >
-              Register as {userType === 'customer' ? 'Customer' : 'Vendor'}
-            </Button>
-          </div>
         </Tabs>
+
+        <div className="mt-6 text-center space-y-2">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <button
+              onClick={onRegisterClick}
+              className="text-blue-600 hover:underline font-medium"
+            >
+              Register here
+            </button>
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

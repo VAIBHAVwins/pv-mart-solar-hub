@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,9 +21,9 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
-    vendorName: '',
+    contactPersonName: '',
     companyName: '',
-    contactPerson: '',
+    companyAddress: '',
     phone: '',
     email: '',
     password: '',
@@ -30,7 +31,7 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
     pmSuryaGharRegistered: false
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (error) setError('');
@@ -41,7 +42,7 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
   };
 
   const validateForm = () => {
-    const requiredFields = ['vendorName', 'companyName', 'contactPerson', 'phone', 'email', 'password', 'confirmPassword'];
+    const requiredFields = ['contactPersonName', 'companyName', 'companyAddress', 'phone', 'email', 'password', 'confirmPassword'];
     
     for (const field of requiredFields) {
       if (!formData[field as keyof typeof formData] || (formData[field as keyof typeof formData] as string).trim() === '') {
@@ -90,17 +91,17 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
     try {
       const normalizedPhone = normalizePhone(formData.phone);
 
-      // Check if user already exists
+      // Check if user already exists with this email or phone
       const { data: existingUser } = await supabase
         .from('users')
-        .select('email, phone')
+        .select('email, phone, role')
         .or(`email.eq.${formData.email},phone.eq.${normalizedPhone}`)
         .maybeSingle();
 
       if (existingUser) {
         if (existingUser.email === formData.email) {
           setError('An account with this email already exists');
-        } else {
+        } else if (existingUser.phone === normalizedPhone) {
           setError('An account with this phone number already exists');
         }
         return;
@@ -113,12 +114,12 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
         options: {
           emailRedirectTo: `${window.location.origin}/vendor/dashboard`,
           data: {
-            full_name: formData.contactPerson,
+            full_name: formData.contactPersonName,
             phone: normalizedPhone,
             role: 'vendor',
-            vendor_name: formData.vendorName,
+            contact_person: formData.contactPersonName,
             company_name: formData.companyName,
-            contact_person: formData.contactPerson,
+            company_address: formData.companyAddress,
             pm_surya_ghar_registered: formData.pmSuryaGharRegistered
           }
         }
@@ -130,19 +131,18 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
       }
 
       if (data.user) {
-        // Send OTP for mobile verification
-        const { data: otpCode, error: otpError } = await supabase.rpc('send_mobile_otp', {
-          phone_number: normalizedPhone,
-          user_type: 'vendor'
+        // Send OTP using Twilio via edge function
+        const { data: otpResponse, error: otpError } = await supabase.functions.invoke('send-otp', {
+          body: {
+            phone: normalizedPhone,
+            userType: 'vendor'
+          }
         });
 
         if (otpError) {
-          throw otpError;
+          setError('Failed to send OTP. Please try again.');
+          return;
         }
-
-        // For demo purposes, show the OTP (in production, this would be sent via SMS)
-        console.log(`OTP for ${normalizedPhone}: ${otpCode}`);
-        alert(`Demo Mode: Your OTP is ${otpCode}`);
 
         toast({
           title: "Registration Initiated",
@@ -170,56 +170,53 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
       
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="vendorName" className="block text-sm font-medium text-gray-700 mb-2">
-                Vendor Name *
-              </label>
-              <Input
-                id="vendorName"
-                name="vendorName"
-                type="text"
-                placeholder="Enter vendor name"
-                value={formData.vendorName}
-                onChange={handleInputChange}
-                required
-                disabled={loading}
-                className="h-12"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
-                Company Name *
-              </label>
-              <Input
-                id="companyName"
-                name="companyName"
-                type="text"
-                placeholder="Enter company name"
-                value={formData.companyName}
-                onChange={handleInputChange}
-                required
-                disabled={loading}
-                className="h-12"
-              />
-            </div>
-          </div>
-
           <div>
-            <label htmlFor="contactPerson" className="block text-sm font-medium text-gray-700 mb-2">
-              Contact Person *
+            <label htmlFor="contactPersonName" className="block text-sm font-medium text-gray-700 mb-2">
+              Contact Person Name *
             </label>
             <Input
-              id="contactPerson"
-              name="contactPerson"
+              id="contactPersonName"
+              name="contactPersonName"
               type="text"
               placeholder="Enter contact person name"
-              value={formData.contactPerson}
+              value={formData.contactPersonName}
               onChange={handleInputChange}
               required
               disabled={loading}
               className="h-12"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
+              Company Name *
+            </label>
+            <Input
+              id="companyName"
+              name="companyName"
+              type="text"
+              placeholder="Enter company name"
+              value={formData.companyName}
+              onChange={handleInputChange}
+              required
+              disabled={loading}
+              className="h-12"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="companyAddress" className="block text-sm font-medium text-gray-700 mb-2">
+              Company Address *
+            </label>
+            <Textarea
+              id="companyAddress"
+              name="companyAddress"
+              placeholder="Enter complete company address"
+              value={formData.companyAddress}
+              onChange={handleInputChange}
+              required
+              disabled={loading}
+              className="min-h-[80px] resize-none"
             />
           </div>
 

@@ -19,7 +19,7 @@ export function MobileOTPRegistration({ phone, userType, onVerificationComplete,
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
   const [canResend, setCanResend] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const { toast } = useToast();
@@ -60,26 +60,25 @@ export function MobileOTPRegistration({ phone, userType, onVerificationComplete,
     try {
       const normalizedPhone = normalizePhone(phone);
       
-      // Verify OTP using the database function
-      const { data, error: verifyError } = await supabase.rpc('verify_mobile_otp', {
-        phone_number: normalizedPhone,
-        otp_code: otp,
-        user_type: userType
+      // Verify OTP using Twilio via edge function
+      const { data, error: verifyError } = await supabase.functions.invoke('verify-otp', {
+        body: {
+          phone: normalizedPhone,
+          otp: otp,
+          userType: userType
+        }
       });
 
-      if (verifyError) {
-        throw verifyError;
+      if (verifyError || !data?.success) {
+        setError(data?.error || 'Failed to verify OTP. Please try again.');
+        return;
       }
 
-      if (data) {
-        toast({
-          title: "Verification Successful",
-          description: "Your mobile number has been verified successfully!"
-        });
-        onVerificationComplete();
-      } else {
-        setError('Invalid or expired OTP. Please check the code and try again.');
-      }
+      toast({
+        title: "Verification Successful",
+        description: "Your mobile number has been verified successfully!"
+      });
+      onVerificationComplete();
     } catch (err: any) {
       console.error('OTP verification error:', err);
       setError('Failed to verify OTP. Please try again.');
@@ -95,19 +94,18 @@ export function MobileOTPRegistration({ phone, userType, onVerificationComplete,
     try {
       const normalizedPhone = normalizePhone(phone);
       
-      // Send new OTP using the database function
-      const { data: otpCode, error: sendError } = await supabase.rpc('send_mobile_otp', {
-        phone_number: normalizedPhone,
-        user_type: userType
+      // Send new OTP using Twilio via edge function
+      const { data, error: sendError } = await supabase.functions.invoke('send-otp', {
+        body: {
+          phone: normalizedPhone,
+          userType: userType
+        }
       });
 
-      if (sendError) {
-        throw sendError;
+      if (sendError || !data?.success) {
+        setError('Failed to resend OTP. Please try again.');
+        return;
       }
-
-      // For demo purposes, show the OTP (in production, this would be sent via SMS)
-      console.log(`New OTP for ${normalizedPhone}: ${otpCode}`);
-      alert(`Demo Mode: Your new OTP is ${otpCode}`);
 
       toast({
         title: "OTP Resent",
@@ -115,7 +113,7 @@ export function MobileOTPRegistration({ phone, userType, onVerificationComplete,
       });
 
       // Reset timer
-      setTimeLeft(600);
+      setTimeLeft(300);
       setCanResend(false);
       setOtp('');
     } catch (err: any) {
