@@ -31,12 +31,22 @@ export const SupabaseAuthProvider: React.FC<{ children: ReactNode }> = ({ childr
     const skipAuthEmail = localStorage.getItem('skipAuthEmail');
 
     if (skipAuth === 'true' && skipAuthUserType && skipAuthEmail) {
-      // Create a mock user for demo purposes
-      const mockUser = {
+      // Create a mock user for demo purposes with all required User properties
+      const mockUser: User = {
         id: `demo-${skipAuthUserType}`,
+        aud: 'authenticated',
+        role: 'authenticated',
         email: skipAuthEmail,
-        user_metadata: { user_type: skipAuthUserType }
-      } as User;
+        email_confirmed_at: new Date().toISOString(),
+        phone: '',
+        confirmed_at: new Date().toISOString(),
+        last_sign_in_at: new Date().toISOString(),
+        app_metadata: {},
+        user_metadata: { user_type: skipAuthUserType },
+        identities: [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
 
       if (mounted) {
         setUser(mockUser);
