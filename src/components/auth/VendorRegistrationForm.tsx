@@ -58,7 +58,7 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
   };
 
   const validateForm = () => {
-    const requiredFields = ['contactPersonName', 'companyName', 'companyAddress', 'phone', 'email', 'password', 'confirmPassword'];
+    const requiredFields = ['contactPersonName', 'companyName', 'companyAddress', 'phone', 'email', 'gstNumber', 'password', 'confirmPassword'];
     
     for (const field of requiredFields) {
       if (!validation.required(formData[field as keyof typeof formData] as string)) {
@@ -77,8 +77,7 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
       return false;
     }
 
-    // GST number validation (optional field)
-    if (formData.gstNumber && !validation.gstNumber(formData.gstNumber)) {
+    if (!validation.gstNumber(formData.gstNumber)) {
       setError(validationMessages.gstNumber);
       return false;
     }
@@ -146,7 +145,7 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
             contact_person: formData.contactPersonName,
             company_name: formData.companyName,
             company_address: formData.companyAddress,
-            gst_number: formData.gstNumber || null,
+            gst_number: formData.gstNumber,
             pm_surya_ghar_registered: formData.pmSuryaGharRegistered
           }
         }
@@ -176,7 +175,7 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
           description: "Please verify your phone number with the OTP sent to your mobile."
         });
 
-        onOTPRequired(formData.phone);
+        onOTPRequired(normalizedPhone);
       }
     } catch (err: any) {
       console.error('Registration error:', err);
@@ -187,7 +186,7 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
   };
 
   return (
-    <Card className="w-full max-w-lg mx-auto">
+    <Card className="w-full max-w-2xl mx-auto">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Vendor Registration</CardTitle>
         <CardDescription>
@@ -197,38 +196,40 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
       
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="contactPersonName" className="block text-sm font-medium text-gray-700 mb-2">
-              Contact Person Name *
-            </label>
-            <Input
-              id="contactPersonName"
-              name="contactPersonName"
-              type="text"
-              placeholder="Enter contact person name"
-              value={formData.contactPersonName}
-              onChange={handleInputChange}
-              required
-              disabled={loading}
-              className="h-12"
-            />
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="contactPersonName" className="block text-sm font-medium text-gray-700 mb-2">
+                Contact Person Name *
+              </label>
+              <Input
+                id="contactPersonName"
+                name="contactPersonName"
+                type="text"
+                placeholder="Enter contact person name"
+                value={formData.contactPersonName}
+                onChange={handleInputChange}
+                required
+                disabled={loading}
+                className="h-12"
+              />
+            </div>
 
-          <div>
-            <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
-              Company Name *
-            </label>
-            <Input
-              id="companyName"
-              name="companyName"
-              type="text"
-              placeholder="Enter company name"
-              value={formData.companyName}
-              onChange={handleInputChange}
-              required
-              disabled={loading}
-              className="h-12"
-            />
+            <div>
+              <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
+                Company Name *
+              </label>
+              <Input
+                id="companyName"
+                name="companyName"
+                type="text"
+                placeholder="Enter company name"
+                value={formData.companyName}
+                onChange={handleInputChange}
+                required
+                disabled={loading}
+                className="h-12"
+              />
+            </div>
           </div>
 
           <div>
@@ -247,7 +248,45 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
             />
           </div>
 
+          <div>
+            <label htmlFor="gstNumber" className="block text-sm font-medium text-gray-700 mb-2">
+              GST Number *
+            </label>
+            <Input
+              id="gstNumber"
+              name="gstNumber"
+              type="text"
+              placeholder="22AAAAA0000A1Z5"
+              value={formData.gstNumber}
+              onChange={handleInputChange}
+              required
+              disabled={loading}
+              className="h-12"
+              maxLength={15}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              15-character GST number (Required)
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address *
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                disabled={loading}
+                className="h-12"
+              />
+            </div>
+
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                 Phone Number *
@@ -269,57 +308,6 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
                   maxLength={10}
                 />
               </div>
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address *
-              </label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-                disabled={loading}
-                className="h-12"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="gstNumber" className="block text-sm font-medium text-gray-700 mb-2">
-              GST Number
-            </label>
-            <Input
-              id="gstNumber"
-              name="gstNumber"
-              type="text"
-              placeholder="22AAAAA0000A1Z5 (Optional)"
-              value={formData.gstNumber}
-              onChange={handleInputChange}
-              disabled={loading}
-              className="h-12"
-              maxLength={15}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              15-character GST number (Optional)
-            </p>
-          </div>
-
-          <div>
-            <div className="flex items-center space-x-3 p-4 border rounded-lg">
-              <Switch
-                id="pmSuryaGhar"
-                checked={formData.pmSuryaGharRegistered}
-                onCheckedChange={handleSwitchChange}
-                disabled={loading}
-              />
-              <label htmlFor="pmSuryaGhar" className="text-sm font-medium text-gray-700">
-                I am a PM Surya Ghar Yojna registered vendor
-              </label>
             </div>
           </div>
 
@@ -356,6 +344,20 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
                 disabled={loading}
                 className="h-12"
               />
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center space-x-3 p-4 border rounded-lg">
+              <Switch
+                id="pmSuryaGhar"
+                checked={formData.pmSuryaGharRegistered}
+                onCheckedChange={handleSwitchChange}
+                disabled={loading}
+              />
+              <label htmlFor="pmSuryaGhar" className="text-sm font-medium text-gray-700">
+                I am a PM Surya Ghar Yojna registered vendor
+              </label>
             </div>
           </div>
 

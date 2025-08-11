@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, User, Mail, Phone, Lock, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { validation, sanitize, validationMessages } from '@/lib/validation';
 
 interface CustomerRegistrationFormProps {
   onOTPRequired: (phone: string) => void;
@@ -26,32 +27,61 @@ export function CustomerRegistrationForm({ onOTPRequired, onBack }: CustomerRegi
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    let sanitizedValue = value;
+    
+    if (name === 'phone') {
+      sanitizedValue = sanitize.phone(value);
+    } else {
+      sanitizedValue = sanitize.text(value);
+    }
+    
+    if (!validation.noScriptTags(sanitizedValue)) {
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
     if (error) setError('');
   };
 
   const validateForm = () => {
-    if (!formData.fullName.trim()) {
-      setError('Full name is required');
+    const requiredFields = ['fullName', 'phone', 'email', 'password', 'confirmPassword'];
+    
+    for (const field of requiredFields) {
+      if (!validation.required(formData[field as keyof typeof formData])) {
+        setError(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} is required`);
+        return false;
+      }
+    }
+
+    if (!validation.email(formData.email)) {
+      setError(validationMessages.email);
       return false;
     }
-    if (!formData.phone.trim() || formData.phone.length !== 10) {
-      setError('Please enter a valid 10-digit phone number');
+
+    if (!validation.phone(formData.phone)) {
+      setError(validationMessages.phone);
       return false;
     }
-    if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
-      setError('Please enter a valid email address');
+
+    if (!validation.password(formData.password)) {
+      setError(validationMessages.password);
       return false;
     }
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return false;
-    }
+
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(validationMessages.noMatch);
       return false;
     }
+
     return true;
+  };
+
+  const normalizePhone = (phone: string) => {
+    const cleaned = phone.replace(/[^\d]/g, '');
+    if (cleaned.length === 10) {
+      return `+91${cleaned}`;
+    }
+    return phone;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,10 +93,7 @@ export function CustomerRegistrationForm({ onOTPRequired, onBack }: CustomerRegi
     setError('');
 
     try {
-      // Sign out any existing session first
-      await supabase.auth.signOut();
-
-      const normalizedPhone = `+91${formData.phone}`;
+      const normalizedPhone = normalizePhone(formData.phone);
 
       // Check if email or phone already exists
       const { data: existingUsers, error: checkError } = await supabase
@@ -97,6 +124,7 @@ export function CustomerRegistrationForm({ onOTPRequired, onBack }: CustomerRegi
         email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/customer/dashboard`,
           data: {
             full_name: formData.fullName,
             phone: normalizedPhone,
@@ -113,24 +141,19 @@ export function CustomerRegistrationForm({ onOTPRequired, onBack }: CustomerRegi
 
       if (authData.user) {
         // Send OTP
-        const otpResponse = await fetch('https://nchxapviawfjtcsvjvfl.supabase.co/functions/v1/send-otp', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+        const { data: otpResponse, error: otpError } = await supabase.functions.invoke('send-otp', {
+          body: {
             phone: normalizedPhone,
             userType: 'customer'
-          }),
+          }
         });
 
-        const otpData = await otpResponse.json();
-
-        if (otpData.success) {
-          onOTPRequired(normalizedPhone);
-        } else {
-          setError(otpData.error || 'Failed to send OTP. Please try again.');
+        if (otpError) {
+          setError('Failed to send OTP. Please try again.');
+          return;
         }
+
+        onOTPRequired(normalizedPhone);
       }
     } catch (err: any) {
       console.error('Registration error:', err);

@@ -1,27 +1,17 @@
 
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
-import { supabase } from '@/integrations/supabase/client';
-import { Eye, EyeOff } from 'lucide-react';
+import { UnifiedLoginForm } from '@/components/auth/UnifiedLoginForm';
 import { CustomerRegistrationForm } from '@/components/auth/CustomerRegistrationForm';
-import { OTPVerification } from '@/components/auth/OTPVerification';
-import AuthMethodSelector from '@/components/auth/AuthMethodSelector';
+import { MobileOTPRegistration } from '@/components/auth/MobileOTPRegistration';
 
 export default function CustomerLogin() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
   const [showRegistration, setShowRegistration] = useState(false);
   const [showOTPVerification, setShowOTPVerification] = useState(false);
-  const [verificationEmail, setVerificationEmail] = useState('');
-  const [showAuthSelector, setShowAuthSelector] = useState(true);
+  const [verificationPhone, setVerificationPhone] = useState('');
   
   const location = useLocation();
 
@@ -31,32 +21,34 @@ export default function CustomerLogin() {
     }
   }, [location]);
 
-  const handleAuthSuccess = () => {
-    setSuccess('Login successful! Redirecting...');
-    setTimeout(() => {
-      window.location.href = '/';
-    }, 1500);
-  };
-
-  const handleRegistrationSuccess = (email: string) => {
-    setVerificationEmail(email);
+  const handleRegistrationSuccess = (phone: string) => {
+    setVerificationPhone(phone);
     setShowRegistration(false);
     setShowOTPVerification(true);
   };
 
   const handleOTPVerificationComplete = () => {
     setShowOTPVerification(false);
-    handleAuthSuccess();
+    // Redirect to customer dashboard
+    window.location.href = '/customer/dashboard';
+  };
+
+  const handleBackToLogin = () => {
+    setShowRegistration(false);
+    setShowOTPVerification(false);
   };
 
   if (showOTPVerification) {
     return (
       <Layout>
-        <OTPVerification
-          email={verificationEmail}
-          onVerificationComplete={handleOTPVerificationComplete}
-          onBack={() => setShowOTPVerification(false)}
-        />
+        <div className="min-h-screen flex flex-col items-center justify-center bg-jonquil py-16 px-4">
+          <MobileOTPRegistration
+            phone={verificationPhone}
+            userType="customer"
+            onVerificationComplete={handleOTPVerificationComplete}
+            onBack={handleBackToLogin}
+          />
+        </div>
       </Layout>
     );
   }
@@ -64,10 +56,12 @@ export default function CustomerLogin() {
   if (showRegistration) {
     return (
       <Layout>
-        <CustomerRegistrationForm 
-          onOTPRequired={handleRegistrationSuccess}
-          onBack={() => setShowRegistration(false)}
-        />
+        <div className="min-h-screen flex flex-col items-center justify-center bg-jonquil py-16 px-4">
+          <CustomerRegistrationForm 
+            onOTPRequired={handleRegistrationSuccess}
+            onBack={handleBackToLogin}
+          />
+        </div>
       </Layout>
     );
   }
@@ -75,36 +69,18 @@ export default function CustomerLogin() {
   return (
     <Layout>
       <div className="min-h-screen flex flex-col items-center justify-center bg-jonquil py-16 px-4">
-        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-licorice mb-2">Customer Login</h1>
-            <p className="text-brown">Access your solar energy dashboard</p>
-          </div>
-          
-          {error && <div className="text-red-600 font-semibold text-center p-3 bg-red-50 rounded mb-4">{error}</div>}
-          {success && <div className="text-green-600 font-semibold text-center p-3 bg-green-50 rounded mb-4">{success}</div>}
-          
-          {showAuthSelector ? (
-            <AuthMethodSelector 
-              mode="login"
-              userType="customer"
-              onSuccess={handleAuthSuccess}
-            />
-          ) : null}
-          
-          <div className="mt-6 text-center space-y-3">
-            <button
-              onClick={() => setShowRegistration(true)}
-              className="text-brown hover:underline"
-            >
-              Don't have an account? Register here
-            </button>
-            <div>
-              <Link to="/" className="text-licorice hover:underline">
-                ← Back to Home
-              </Link>
-            </div>
-          </div>
+        {error && <div className="text-red-600 font-semibold text-center p-3 bg-red-50 rounded mb-4">{error}</div>}
+        {success && <div className="text-green-600 font-semibold text-center p-3 bg-green-50 rounded mb-4">{success}</div>}
+        
+        <UnifiedLoginForm 
+          userType="customer"
+          onRegisterClick={() => setShowRegistration(true)}
+        />
+        
+        <div className="mt-6 text-center">
+          <Link to="/" className="text-licorice hover:underline">
+            ← Back to Home
+          </Link>
         </div>
       </div>
     </Layout>
