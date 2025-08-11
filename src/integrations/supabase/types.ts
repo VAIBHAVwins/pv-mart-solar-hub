@@ -803,6 +803,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           full_name: string | null
+          gst_number: string | null
           id: string
           is_verified: boolean | null
           password_hash: string | null
@@ -817,6 +818,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           full_name?: string | null
+          gst_number?: string | null
           id?: string
           is_verified?: boolean | null
           password_hash?: string | null
@@ -831,6 +833,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           full_name?: string | null
+          gst_number?: string | null
           id?: string
           is_verified?: boolean | null
           password_hash?: string | null
@@ -847,6 +850,7 @@ export type Database = {
           company_name: string | null
           contact_person: string | null
           created_at: string | null
+          gst_number: string | null
           id: string
           license_number: string | null
           user_id: string | null
@@ -856,6 +860,7 @@ export type Database = {
           company_name?: string | null
           contact_person?: string | null
           created_at?: string | null
+          gst_number?: string | null
           id?: string
           license_number?: string | null
           user_id?: string | null
@@ -865,6 +870,7 @@ export type Database = {
           company_name?: string | null
           contact_person?: string | null
           created_at?: string | null
+          gst_number?: string | null
           id?: string
           license_number?: string | null
           user_id?: string | null

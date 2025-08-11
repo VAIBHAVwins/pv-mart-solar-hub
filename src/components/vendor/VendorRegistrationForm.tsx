@@ -16,6 +16,7 @@ interface VendorRegistrationFormData {
   address: string;
   pmSuryaGharRegistered: string;
   licenseNumber: string;
+  gstNumber: string;
   serviceAreas: string;
   specializations: string;
   password: string;
@@ -33,6 +34,7 @@ export function VendorRegistrationForm() {
     address: '',
     pmSuryaGharRegistered: '',
     licenseNumber: '',
+    gstNumber: '',
     serviceAreas: '',
     specializations: '',
     password: '',
@@ -49,6 +51,8 @@ export function VendorRegistrationForm() {
     
     if (name === 'phone') {
       sanitizedValue = sanitize.phone(value);
+    } else if (name === 'gstNumber') {
+      sanitizedValue = sanitize.gstNumber(value);
     } else if ([
       'address', 'serviceAreas', 'specializations',
       'companyName', 'contactPerson', 'email', 'licenseNumber'
@@ -110,6 +114,12 @@ export function VendorRegistrationForm() {
       return false;
     }
 
+    // GST number validation (optional field)
+    if (formData.gstNumber && !validation.gstNumber(formData.gstNumber)) {
+      setError(validationMessages.gstNumber);
+      return false;
+    }
+
     if (!validation.password(formData.password)) {
       setError(validationMessages.password);
       return false;
@@ -144,6 +154,7 @@ export function VendorRegistrationForm() {
           company_name: formData.companyName,
           contact_person: formData.contactPerson,
           license_number: formData.licenseNumber,
+          gst_number: formData.gstNumber || null,
           address: formData.address,
           service_areas: formData.serviceAreas,
           specializations: formData.specializations,

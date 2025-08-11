@@ -1,3 +1,4 @@
+
 // Enhanced validation functions with security in mind
 export const validation = {
   email: (email: string): boolean => {
@@ -39,6 +40,14 @@ export const validation = {
   licenseNumber: (value: string): boolean => {
     // Basic license number validation (alphanumeric with common separators)
     return /^[A-Z0-9\-\/]+$/i.test(value) && value.length >= 5 && value.length <= 20;
+  },
+
+  gstNumber: (value: string): boolean => {
+    // GST number format: 15 characters, alphanumeric
+    // Format: 2 digits (state code) + 10 alphanumeric (PAN) + 1 digit (entity number) + 1 character (Z) + 1 check digit
+    if (!value || value.trim() === '') return true; // GST is optional
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/;
+    return gstRegex.test(value.toUpperCase());
   }
 };
 
@@ -60,6 +69,10 @@ export const sanitize = {
 
   phone: (input: string): string => {
     return input.replace(/[^\d\+]/g, '');
+  },
+
+  gstNumber: (input: string): string => {
+    return input.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 15);
   }
 };
 
@@ -72,5 +85,6 @@ export const validationMessages = {
   maxLength: (max: number) => `Maximum ${max} characters allowed`,
   minLength: (min: number) => `Minimum ${min} characters required`,
   licenseNumber: 'License number must be 5-20 alphanumeric characters',
+  gstNumber: 'Please enter a valid GST number (15 characters in format: 22AAAAA0000A1Z5)',
   noMatch: 'Passwords do not match'
 };

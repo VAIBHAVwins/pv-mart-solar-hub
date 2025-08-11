@@ -13,6 +13,7 @@ interface VendorRegistrationFormData {
   address: string;
   pmSuryaGharRegistered: string;
   licenseNumber: string;
+  gstNumber: string;
   serviceAreas: string;
   specializations: string;
   password: string;
@@ -152,19 +153,39 @@ const VendorRegistrationFormFields = ({ formData, loading, onChange, onSelectCha
         </Select>
       </div>
 
-      {/* License Number */}
-      <div>
-        <label className="block text-sm font-medium text-[#4f4f56] mb-2">
-          License Number
-        </label>
-        <Input
-          name="licenseNumber"
-          value={formData.licenseNumber}
-          onChange={onChange}
-          placeholder="Enter your license number (if any)"
-          disabled={loading}
-          className="w-full"
-        />
+      {/* License Number and GST Number */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-[#4f4f56] mb-2">
+            License Number *
+          </label>
+          <Input
+            name="licenseNumber"
+            value={formData.licenseNumber}
+            onChange={onChange}
+            placeholder="Enter your license number"
+            disabled={loading}
+            className="w-full"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-[#4f4f56] mb-2">
+            GST Number
+          </label>
+          <Input
+            name="gstNumber"
+            value={formData.gstNumber}
+            onChange={onChange}
+            placeholder="22AAAAA0000A1Z5 (Optional)"
+            disabled={loading}
+            className="w-full"
+            maxLength={15}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            15-character GST number (Optional)
+          </p>
+        </div>
       </div>
 
       {/* Service Areas */}
