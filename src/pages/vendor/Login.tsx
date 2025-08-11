@@ -1,26 +1,17 @@
 
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
-import { supabase } from '@/integrations/supabase/client';
-import { Eye, EyeOff } from 'lucide-react';
 import { VendorRegistrationForm } from '@/components/auth/VendorRegistrationForm';
 import { OTPVerification } from '@/components/auth/OTPVerification';
 import AuthMethodSelector from '@/components/auth/AuthMethodSelector';
 
 export default function VendorLogin() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
   const [showRegistration, setShowRegistration] = useState(false);
   const [showOTPVerification, setShowOTPVerification] = useState(false);
-  const [verificationEmail, setVerificationEmail] = useState('');
+  const [verificationPhone, setVerificationPhone] = useState('');
   const [showAuthSelector, setShowAuthSelector] = useState(true);
   
   const location = useLocation();
@@ -34,12 +25,13 @@ export default function VendorLogin() {
   const handleAuthSuccess = () => {
     setSuccess('Login successful! Redirecting...');
     setTimeout(() => {
-      window.location.href = '/';
+      window.location.href = '/vendor/dashboard';
     }, 1500);
   };
 
-  const handleRegistrationSuccess = () => {
-    setSuccess('Registration successful! Please check your email to verify your account.');
+  const handleOTPRequired = (phone: string) => {
+    setVerificationPhone(phone);
+    setShowOTPVerification(true);
     setShowRegistration(false);
   };
 
@@ -48,13 +40,19 @@ export default function VendorLogin() {
     handleAuthSuccess();
   };
 
+  const handleBackToLogin = () => {
+    setShowRegistration(false);
+    setShowOTPVerification(false);
+    setShowAuthSelector(true);
+  };
+
   if (showOTPVerification) {
     return (
       <Layout className="bg-gradient-to-br from-[#797a83] to-[#4f4f56] min-h-screen">
         <OTPVerification
-          email={verificationEmail}
+          phone={verificationPhone}
           onVerificationComplete={handleOTPVerificationComplete}
-          onBack={() => setShowOTPVerification(false)}
+          onBack={handleBackToLogin}
         />
       </Layout>
     );
@@ -63,7 +61,14 @@ export default function VendorLogin() {
   if (showRegistration) {
     return (
       <Layout className="bg-gradient-to-br from-[#797a83] to-[#4f4f56] min-h-screen">
-        <VendorRegistrationForm />
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-2xl mx-auto">
+            <VendorRegistrationForm
+              onOTPRequired={handleOTPRequired}
+              onBack={handleBackToLogin}
+            />
+          </div>
+        </div>
       </Layout>
     );
   }
