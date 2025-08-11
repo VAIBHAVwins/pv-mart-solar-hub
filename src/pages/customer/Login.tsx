@@ -18,10 +18,10 @@ export default function CustomerLogin() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
   const [showRegistration, setShowRegistration] = useState(false);
   const [showOTPVerification, setShowOTPVerification] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+  const [showAuthSelector, setShowAuthSelector] = useState(true);
   
   const location = useLocation();
 
@@ -31,80 +31,22 @@ export default function CustomerLogin() {
     }
   }, [location]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setLoading(true);
-
-    try {
-      if (authMethod === 'email') {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          setError(error.message);
-        } else {
-          setSuccess('Login successful! Redirecting...');
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 1500);
-        }
-      } else if (authMethod === 'phone') {
-        const { data, error } = await supabase.auth.signInWithOtp({
-          phone: email,
-          options: {
-            shouldCreateUser: false,
-            channel: 'sms'
-          },
-        });
-
-        if (error) {
-          setError(error.message);
-        } else {
-          setVerificationEmail(email);
-          setShowOTPVerification(true);
-        }
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
-    }
+  const handleAuthSuccess = () => {
+    setSuccess('Login successful! Redirecting...');
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 1500);
   };
 
-  const handleRegistrationSuccess = (phone: string) => {
-    setVerificationEmail(phone);
+  const handleRegistrationSuccess = (email: string) => {
+    setVerificationEmail(email);
     setShowRegistration(false);
     setShowOTPVerification(true);
   };
 
-  const handleOTPSubmit = async (otp: string) => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        phone: verificationEmail,
-        token: otp,
-        type: 'sms',
-      });
-
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccess('Login successful! Redirecting...');
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1500);
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
-    }
+  const handleOTPVerificationComplete = () => {
+    setShowOTPVerification(false);
+    handleAuthSuccess();
   };
 
   if (showOTPVerification) {
@@ -112,13 +54,7 @@ export default function CustomerLogin() {
       <Layout>
         <OTPVerification
           email={verificationEmail}
-          onVerificationComplete={() => {
-            setShowOTPVerification(false);
-            setSuccess('Login successful! Redirecting...');
-            setTimeout(() => {
-              window.location.href = '/';
-            }, 1500);
-          }}
+          onVerificationComplete={handleOTPVerificationComplete}
           onBack={() => setShowOTPVerification(false)}
         />
       </Layout>
@@ -145,64 +81,16 @@ export default function CustomerLogin() {
             <p className="text-brown">Access your solar energy dashboard</p>
           </div>
           
-          <AuthMethodSelector 
-            authMethod={authMethod} 
-            onMethodChange={setAuthMethod}
-          />
+          {error && <div className="text-red-600 font-semibold text-center p-3 bg-red-50 rounded mb-4">{error}</div>}
+          {success && <div className="text-green-600 font-semibold text-center p-3 bg-green-50 rounded mb-4">{success}</div>}
           
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && <div className="text-red-600 font-semibold text-center p-3 bg-red-50 rounded">{error}</div>}
-            {success && <div className="text-green-600 font-semibold text-center p-3 bg-green-50 rounded">{success}</div>}
-            
-            <div>
-              <Label htmlFor="email" className="text-licorice">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 border-brown focus:border-licorice"
-                placeholder="Enter your email"
-                required
-                disabled={loading}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="password" className="text-licorice">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 border-brown focus:border-licorice pr-10"
-                  placeholder="Enter your password"
-                  required
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-brown" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-brown" />
-                  )}
-                </button>
-              </div>
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full bg-brown hover:bg-licorice text-white font-semibold" 
-              disabled={loading}
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
+          {showAuthSelector ? (
+            <AuthMethodSelector 
+              mode="login"
+              userType="customer"
+              onSuccess={handleAuthSuccess}
+            />
+          ) : null}
           
           <div className="mt-6 text-center space-y-3">
             <button
