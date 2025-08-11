@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import VendorRegistrationForm from '@/components/auth/VendorRegistrationForm';
-import OTPVerification from '@/components/auth/OTPVerification';
+import { VendorRegistrationForm } from '@/components/auth/VendorRegistrationForm';
+import { OTPVerification } from '@/components/auth/OTPVerification';
 
 const VendorLogin = () => {
   const { signIn, user } = useSupabaseAuth();
@@ -16,6 +16,7 @@ const VendorLogin = () => {
   const [showRegistration, setShowRegistration] = useState(false);
   const [showOTPVerification, setShowOTPVerification] = useState(false);
   const [registrationPhone, setRegistrationPhone] = useState('');
+  const [registrationEmail, setRegistrationEmail] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -71,10 +72,9 @@ const VendorLogin = () => {
       <Layout>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <OTPVerification 
-            phone={registrationPhone}
-            userType="vendor"
+            email={registrationEmail}
             onVerificationComplete={handleOTPVerified}
-            onBackToLogin={() => {
+            onBack={() => {
               setShowOTPVerification(false);
               setShowRegistration(false);
             }}
@@ -90,7 +90,7 @@ const VendorLogin = () => {
         <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <VendorRegistrationForm 
             onOTPRequired={handleOTPRequired}
-            onBackToLogin={() => setShowRegistration(false)}
+            onBack={() => setShowRegistration(false)}
           />
         </div>
       </Layout>
