@@ -1,7 +1,8 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { User } from 'lucide-react';
+import { User, Calculator } from 'lucide-react';
+import SkipAuth from './SkipAuth';
 
 interface MobileMenuProps {
   isMenuOpen: boolean;
@@ -45,6 +46,19 @@ const MobileMenu = ({
           </Link>
         ))}
         
+        {/* Tools Menu */}
+        <div className="pt-2 border-t border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-500 mb-2">Tools</h3>
+          <Link
+            to="/tools/load-calculation"
+            className={`${getLinkClasses()} block text-center flex items-center justify-center gap-2`}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <Calculator className="w-4 h-4" />
+            Load Calculation
+          </Link>
+        </div>
+        
         {user ? (
           <div className="pt-4 border-t border-gray-200">
             <Button
@@ -69,6 +83,16 @@ const MobileMenu = ({
             >
               <a href="/vendor/login">Vendor Login</a>
             </Button>
+            
+            {/* Skip Auth Buttons */}
+            <div className="space-y-2 pt-2 border-t border-gray-200">
+              <p className="text-xs text-gray-500 text-center">Demo Access (Skip Authentication)</p>
+              <div className="flex flex-col space-y-2">
+                <SkipAuth targetPath="/customer/dashboard" userType="customer" className="w-full text-xs" />
+                <SkipAuth targetPath="/vendor/dashboard" userType="vendor" className="w-full text-xs" />
+                <SkipAuth targetPath="/admin/dashboard" userType="admin" className="w-full text-xs" />
+              </div>
+            </div>
           </div>
         )}
       </div>

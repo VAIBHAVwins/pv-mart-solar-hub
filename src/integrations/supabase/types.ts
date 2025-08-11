@@ -46,6 +46,36 @@ export type Database = {
           },
         ]
       }
+      appliances: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          type: string
+          updated_at: string | null
+          wattage: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          type: string
+          updated_at?: string | null
+          wattage: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          type?: string
+          updated_at?: string | null
+          wattage?: number
+        }
+        Relationships: []
+      }
       blogs: {
         Row: {
           author: string
@@ -470,6 +500,39 @@ export type Database = {
           },
         ]
       }
+      website_users: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string
+          id: string
+          is_active: boolean | null
+          phone: string | null
+          updated_at: string | null
+          user_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          updated_at?: string | null
+          user_type: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          updated_at?: string | null
+          user_type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -483,8 +546,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      normalize_phone: {
-        Args: { raw: string }
+      pvmart_create_otp_verification: {
+        Args: { phone_input: string }
+        Returns: string
+      }
+      pvmart_generate_otp: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      pvmart_normalize_phone: {
+        Args: { phone_input: string }
         Returns: string
       }
     }

@@ -15,6 +15,9 @@ import InstallationType from "./pages/InstallationType";
 import EnhancedGame from "./pages/EnhancedGame";
 import MobileAuth from "./pages/MobileAuth";
 
+// Tools pages
+import LoadCalculation from "./pages/tools/LoadCalculation";
+
 // Customer pages
 import CustomerLogin from "./pages/customer/Login";
 import CustomerRegister from "./pages/customer/Register";
@@ -47,6 +50,7 @@ import Vendors from "./pages/admin/Vendors";
 import Quotations from "./pages/admin/Quotations";
 import Requirements from "./pages/admin/Requirements";
 import BannerDashboard from "./pages/admin/BannerDashboard";
+import ApplianceManager from "./pages/admin/ApplianceManager";
 
 // Blog pages
 import Blogs from "./pages/Blogs";
@@ -71,6 +75,9 @@ function App() {
               <Route path="/grid-connectivity" element={<GridConnectivity />} />
               <Route path="/installation-type" element={<InstallationType />} />
               <Route path="/enhanced-game" element={<EnhancedGame />} />
+              
+              {/* Tools routes */}
+              <Route path="/tools/load-calculation" element={<LoadCalculation />} />
               
               {/* Blog routes */}
               <Route path="/blogs" element={<Blogs />} />
@@ -108,6 +115,7 @@ function App() {
               <Route path="/admin/quotations" element={<Quotations />} />
               <Route path="/admin/requirements" element={<Requirements />} />
               <Route path="/admin/banner-dashboard" element={<BannerDashboard />} />
+              <Route path="/admin/appliances" element={<ApplianceManager />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

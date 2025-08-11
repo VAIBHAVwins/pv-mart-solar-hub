@@ -1,5 +1,6 @@
 
 import { Link, useLocation } from 'react-router-dom';
+import NavigationMenuDemo from './NavigationMenuDemo';
 
 const Navigation = ({ getLinkClasses }: { getLinkClasses: () => string }) => {
   const location = useLocation();
@@ -24,6 +25,7 @@ const Navigation = ({ getLinkClasses }: { getLinkClasses: () => string }) => {
           {item.label}
         </Link>
       ))}
+      <NavigationMenuDemo />
     </nav>
   );
 };

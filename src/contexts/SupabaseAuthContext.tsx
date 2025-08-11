@@ -25,6 +25,27 @@ export const SupabaseAuthProvider: React.FC<{ children: ReactNode }> = ({ childr
   useEffect(() => {
     let mounted = true;
 
+    // Check for skip auth mode
+    const skipAuth = localStorage.getItem('skipAuth');
+    const skipAuthUserType = localStorage.getItem('skipAuthUserType');
+    const skipAuthEmail = localStorage.getItem('skipAuthEmail');
+
+    if (skipAuth === 'true' && skipAuthUserType && skipAuthEmail) {
+      // Create a mock user for demo purposes
+      const mockUser = {
+        id: `demo-${skipAuthUserType}`,
+        email: skipAuthEmail,
+        user_metadata: { user_type: skipAuthUserType }
+      } as User;
+
+      if (mounted) {
+        setUser(mockUser);
+        setUserRole(skipAuthUserType);
+        setLoading(false);
+      }
+      return;
+    }
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -135,6 +156,11 @@ export const SupabaseAuthProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   const signOut = async () => {
+    // Clear skip auth data
+    localStorage.removeItem('skipAuth');
+    localStorage.removeItem('skipAuthUserType');
+    localStorage.removeItem('skipAuthEmail');
+    
     setUserRole(null);
     localStorage.removeItem('userRole');
     await supabase.auth.signOut();
