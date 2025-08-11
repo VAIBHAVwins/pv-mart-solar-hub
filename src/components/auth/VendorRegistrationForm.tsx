@@ -9,6 +9,7 @@ import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { validation, sanitize, validationMessages } from '@/lib/validation';
 
 interface VendorRegistrationFormProps {
   onOTPRequired: (phone: string) => void;
@@ -26,6 +27,7 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
     companyAddress: '',
     phone: '',
     email: '',
+    gstNumber: '',
     password: '',
     confirmPassword: '',
     pmSuryaGharRegistered: false
@@ -33,7 +35,21 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    let sanitizedValue = value;
+    
+    if (name === 'phone') {
+      sanitizedValue = sanitize.phone(value);
+    } else if (name === 'gstNumber') {
+      sanitizedValue = sanitize.gstNumber(value);
+    } else {
+      sanitizedValue = sanitize.text(value);
+    }
+    
+    if (!validation.noScriptTags(sanitizedValue)) {
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
     if (error) setError('');
   };
 
@@ -45,28 +61,38 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
     const requiredFields = ['contactPersonName', 'companyName', 'companyAddress', 'phone', 'email', 'password', 'confirmPassword'];
     
     for (const field of requiredFields) {
-      if (!formData[field as keyof typeof formData] || (formData[field as keyof typeof formData] as string).trim() === '') {
+      if (!validation.required(formData[field as keyof typeof formData] as string)) {
         setError(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} is required`);
         return false;
       }
     }
 
-    if (formData.phone.length !== 10) {
-      setError('Please enter a valid 10-digit phone number');
+    if (!validation.phone(formData.phone)) {
+      setError(validationMessages.phone);
       return false;
     }
-    if (!formData.email.includes('@')) {
-      setError('Please enter a valid email address');
+
+    if (!validation.email(formData.email)) {
+      setError(validationMessages.email);
       return false;
     }
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long');
+
+    // GST number validation (optional field)
+    if (formData.gstNumber && !validation.gstNumber(formData.gstNumber)) {
+      setError(validationMessages.gstNumber);
       return false;
     }
+
+    if (!validation.password(formData.password)) {
+      setError(validationMessages.password);
+      return false;
+    }
+
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(validationMessages.noMatch);
       return false;
     }
+
     return true;
   };
 
@@ -120,6 +146,7 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
             contact_person: formData.contactPersonName,
             company_name: formData.companyName,
             company_address: formData.companyAddress,
+            gst_number: formData.gstNumber || null,
             pm_surya_ghar_registered: formData.pmSuryaGharRegistered
           }
         }
@@ -260,6 +287,26 @@ export function VendorRegistrationForm({ onOTPRequired, onBack }: VendorRegistra
                 className="h-12"
               />
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="gstNumber" className="block text-sm font-medium text-gray-700 mb-2">
+              GST Number
+            </label>
+            <Input
+              id="gstNumber"
+              name="gstNumber"
+              type="text"
+              placeholder="22AAAAA0000A1Z5 (Optional)"
+              value={formData.gstNumber}
+              onChange={handleInputChange}
+              disabled={loading}
+              className="h-12"
+              maxLength={15}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              15-character GST number (Optional)
+            </p>
           </div>
 
           <div>
