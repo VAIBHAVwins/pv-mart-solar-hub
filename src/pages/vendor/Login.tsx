@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,9 +7,9 @@ import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { Eye, EyeOff } from 'lucide-react';
-import { VendorRegistrationForm } from '@/components/auth/VendorRegistrationForm';
+import { VendorRegistrationForm } from '@/components/vendor/VendorRegistrationForm';
 import { OTPVerification } from '@/components/auth/OTPVerification';
-import { AuthMethodSelector } from '@/components/auth/AuthMethodSelector';
+import AuthMethodSelector from '@/components/auth/AuthMethodSelector';
 
 export default function VendorLogin() {
   const [email, setEmail] = useState('');
@@ -43,7 +44,6 @@ export default function VendorLogin() {
         return;
       }
 
-      // For email auth, use Supabase
       if (authMethod === 'email') {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: email,
@@ -57,14 +57,12 @@ export default function VendorLogin() {
         }
 
         if (data?.user) {
-          // Check if email is verified
           if (!data.user.email_confirmed_at) {
             setError('Please verify your email before logging in.');
             setLoading(false);
             return;
           }
 
-          // Redirect based on user role (assuming role is stored in user_metadata)
           const { data: userRecord, error: userError } = await supabase
             .from('users')
             .select('role')
@@ -78,20 +76,18 @@ export default function VendorLogin() {
           }
 
           if (userRecord?.role === 'vendor') {
-            window.location.href = '/vendor/dashboard';
+            window.location.href = '/';
           } else {
             setError('Invalid credentials or unauthorized access.');
             setLoading(false);
           }
         }
       } else if (authMethod === 'phone') {
-        // Handle phone authentication
         const { data, error } = await supabase.auth.signInWithOtp({
           phone: email,
           options: {
-            email: {
-              shouldCreateUser: false,
-            },
+            shouldCreateUser: false,
+            channel: 'sms'
           },
         });
 
@@ -111,9 +107,8 @@ export default function VendorLogin() {
     }
   };
 
-  const handleRegistrationSuccess = (email: string) => {
+  const handleRegistrationSuccess = () => {
     setSuccess('Registration successful! Please check your email to verify your account.');
-    setEmail(email);
     setShowRegistration(false);
   };
 
@@ -135,7 +130,6 @@ export default function VendorLogin() {
       }
 
       if (data?.user) {
-        // Redirect based on user role (assuming role is stored in user_metadata)
         const { data: userRecord, error: userError } = await supabase
           .from('users')
           .select('role')
@@ -149,7 +143,7 @@ export default function VendorLogin() {
         }
 
         if (userRecord?.role === 'vendor') {
-          window.location.href = '/vendor/dashboard';
+          window.location.href = '/';
         } else {
           setError('Invalid credentials or unauthorized access.');
           setLoading(false);
@@ -167,7 +161,7 @@ export default function VendorLogin() {
       <Layout className="bg-gradient-to-br from-[#797a83] to-[#4f4f56] min-h-screen">
         <OTPVerification
           email={verificationEmail}
-          onSuccess={() => {
+          onVerificationComplete={() => {
             setShowOTPVerification(false);
             setSuccess('Login successful! Redirecting...');
             setTimeout(() => {
@@ -183,10 +177,7 @@ export default function VendorLogin() {
   if (showRegistration) {
     return (
       <Layout className="bg-gradient-to-br from-[#797a83] to-[#4f4f56] min-h-screen">
-        <VendorRegistrationForm 
-          onSuccess={handleRegistrationSuccess}
-          onBackToLogin={() => setShowRegistration(false)}
-        />
+        <VendorRegistrationForm />
       </Layout>
     );
   }

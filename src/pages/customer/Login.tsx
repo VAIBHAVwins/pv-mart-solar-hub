@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Eye, EyeOff } from 'lucide-react';
 import { CustomerRegistrationForm } from '@/components/auth/CustomerRegistrationForm';
 import { OTPVerification } from '@/components/auth/OTPVerification';
-import { AuthMethodSelector } from '@/components/auth/AuthMethodSelector';
+import AuthMethodSelector from '@/components/auth/AuthMethodSelector';
 
 export default function CustomerLogin() {
   const [email, setEmail] = useState('');
@@ -55,7 +56,8 @@ export default function CustomerLogin() {
         const { data, error } = await supabase.auth.signInWithOtp({
           phone: email,
           options: {
-            emailRedirectTo: `${window.location.origin}/customer/login`,
+            shouldCreateUser: false,
+            channel: 'sms'
           },
         });
 
@@ -73,8 +75,8 @@ export default function CustomerLogin() {
     }
   };
 
-  const handleRegistrationSuccess = (email: string) => {
-    setVerificationEmail(email);
+  const handleRegistrationSuccess = (phone: string) => {
+    setVerificationEmail(phone);
     setShowRegistration(false);
     setShowOTPVerification(true);
   };
@@ -87,7 +89,7 @@ export default function CustomerLogin() {
       const { error } = await supabase.auth.verifyOtp({
         phone: verificationEmail,
         token: otp,
-        type: 'signin',
+        type: 'sms',
       });
 
       if (error) {
@@ -110,7 +112,7 @@ export default function CustomerLogin() {
       <Layout>
         <OTPVerification
           email={verificationEmail}
-          onSuccess={() => {
+          onVerificationComplete={() => {
             setShowOTPVerification(false);
             setSuccess('Login successful! Redirecting...');
             setTimeout(() => {
@@ -127,8 +129,8 @@ export default function CustomerLogin() {
     return (
       <Layout>
         <CustomerRegistrationForm 
-          onSuccess={handleRegistrationSuccess}
-          onBackToLogin={() => setShowRegistration(false)}
+          onOTPRequired={handleRegistrationSuccess}
+          onBack={() => setShowRegistration(false)}
         />
       </Layout>
     );
