@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Calculator, IndianRupee, Zap, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calculator, IndianRupee, Zap, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { computeBiharBill, type BiharBillResult } from '@/lib/billing/computeBiharBill';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -26,10 +27,17 @@ const BiharBillCalculator = () => {
   const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
   
-  // Input states
+  // Get current date for default values
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+  const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+  const previousMonthYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+  
+  // Input states - default to current month
   const [category, setCategory] = useState<'RURAL_DOMESTIC' | 'URBAN_DOMESTIC'>('RURAL_DOMESTIC');
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [year, setYear] = useState(currentYear);
+  const [month, setMonth] = useState(currentMonth);
   const [unitsConsumed, setUnitsConsumed] = useState<number>(0);
   const [sanctionedLoad, setSanctionedLoad] = useState<number>(1.0);
   const [timelyPaymentOptIn, setTimelyPaymentOptIn] = useState(false);
@@ -38,15 +46,23 @@ const BiharBillCalculator = () => {
   // Results
   const [billResult, setBillResult] = useState<BiharBillResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasCalculated, setHasCalculated] = useState(false);
   
   const { toast } = useToast();
 
-  const months = [
-    { value: 1, label: 'January' }, { value: 2, label: 'February' }, { value: 3, label: 'March' },
-    { value: 4, label: 'April' }, { value: 5, label: 'May' }, { value: 6, label: 'June' },
-    { value: 7, label: 'July' }, { value: 8, label: 'August' }, { value: 9, label: 'September' },
-    { value: 10, label: 'October' }, { value: 11, label: 'November' }, { value: 12, label: 'December' }
+  // Available periods (current and previous month only)
+  const availablePeriods = [
+    { year: currentYear, month: currentMonth, label: `${getMonthName(currentMonth)} ${currentYear}` },
+    { year: previousMonthYear, month: previousMonth, label: `${getMonthName(previousMonth)} ${previousMonthYear}` }
   ];
+
+  function getMonthName(monthNum: number): string {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months[monthNum - 1];
+  }
 
   const categoryOptions = [
     { value: 'RURAL_DOMESTIC', label: 'Rural Domestic' },
@@ -82,10 +98,27 @@ const BiharBillCalculator = () => {
   };
 
   const handleCalculate = async () => {
-    if (!selectedProvider) return;
+    if (!selectedProvider) {
+      toast({
+        title: "Error",
+        description: "Please select a provider first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (unitsConsumed < 0 || sanctionedLoad <= 0) {
+      toast({
+        title: "Invalid Input",
+        description: "Please enter valid consumption and load values.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setCalculating(true);
     setError(null);
+    setBillResult(null);
 
     try {
       const result = await computeBiharBill({
@@ -100,11 +133,20 @@ const BiharBillCalculator = () => {
       });
 
       setBillResult(result);
+      setHasCalculated(true);
       
       if (result.warnings?.fppca_missing) {
         toast({
           title: "Notice",
           description: "FPPCA rate not available for this month. Using default rate of ₹0.00",
+          variant: "default"
+        });
+      }
+
+      if (result.applied_rules.free_units_applied > 0) {
+        toast({
+          title: "Free Units Applied!",
+          description: `${result.applied_rules.free_units_applied} units provided free under Bihar government scheme.`,
           variant: "default"
         });
       }
@@ -121,13 +163,20 @@ const BiharBillCalculator = () => {
     }
   };
 
+  const resetCalculation = () => {
+    setBillResult(null);
+    setError(null);
+    setHasCalculated(false);
+  };
+
   useEffect(() => {
     fetchProviders();
   }, []);
 
+  // Reset calculation when inputs change
   useEffect(() => {
-    if (selectedProvider && unitsConsumed >= 0 && sanctionedLoad >= 0) {
-      handleCalculate();
+    if (hasCalculated) {
+      resetCalculation();
     }
   }, [selectedProvider, category, year, month, unitsConsumed, sanctionedLoad, timelyPaymentOptIn, isLifelineRegistered]);
 
@@ -152,7 +201,7 @@ const BiharBillCalculator = () => {
           <h1 className="text-3xl font-bold text-gray-900">Bihar Electricity Bill Calculator</h1>
         </div>
         <p className="text-gray-600 text-lg">
-          Calculate your electricity bill for Bihar (NBPCL/SBPCL) with automatic tariff detection and lifeline eligibility.
+          Calculate your electricity bill for Bihar (NBPCL/SBPCL) with automatic tariff detection and government schemes.
         </p>
       </div>
 
@@ -209,38 +258,31 @@ const BiharBillCalculator = () => {
               </Select>
             </div>
 
-            {/* Period Selection */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="year">Year</Label>
-                <Select value={year.toString()} onValueChange={(value) => setYear(parseInt(value))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(yearOption => (
-                      <SelectItem key={yearOption} value={yearOption.toString()}>
-                        {yearOption}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="month">Month</Label>
-                <Select value={month.toString()} onValueChange={(value) => setMonth(parseInt(value))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map(monthOption => (
-                      <SelectItem key={monthOption.value} value={monthOption.value.toString()}>
-                        {monthOption.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Period Selection - Restricted to current/previous month */}
+            <div>
+              <Label htmlFor="period">Billing Period</Label>
+              <Select 
+                value={`${year}-${month}`} 
+                onValueChange={(value) => {
+                  const [selectedYear, selectedMonth] = value.split('-').map(Number);
+                  setYear(selectedYear);
+                  setMonth(selectedMonth);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availablePeriods.map(period => (
+                    <SelectItem key={`${period.year}-${period.month}`} value={`${period.year}-${period.month}`}>
+                      {period.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-gray-500 mt-1">
+                Only current and previous month calculations are available
+              </p>
             </div>
 
             {/* Units Consumed */}
@@ -307,105 +349,154 @@ const BiharBillCalculator = () => {
                 </div>
               </div>
             )}
+
+            {/* Calculate Button */}
+            <Button 
+              onClick={handleCalculate} 
+              disabled={calculating || !selectedProvider}
+              size="lg"
+              className="w-full"
+            >
+              {calculating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Calculating...
+                </>
+              ) : (
+                <>
+                  <Calculator className="w-4 h-4 mr-2" />
+                  Calculate Bill
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
 
         {/* Results Section */}
         <div className="space-y-6">
+          {/* Show placeholder when no calculation has been done */}
+          {!hasCalculated && !error && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <IndianRupee className="w-5 h-5" />
+                  Bill Breakdown
+                </CardTitle>
+                <CardDescription>
+                  Enter your details and click "Calculate Bill" to see your electricity bill breakdown
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12 text-gray-500">
+                  <Calculator className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p className="text-lg font-medium mb-2">Ready to Calculate</p>
+                  <p>Fill in your consumption details and click the Calculate Bill button</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Bill Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <IndianRupee className="w-5 h-5" />
-                Bill Breakdown
-              </CardTitle>
-              <CardDescription>
-                Detailed breakdown of your Bihar electricity bill
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {error ? (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              ) : billResult ? (
-                <div className="space-y-4">
-                  {/* Applied Rules */}
-                  {(billResult.applied_rules.lifeline_applied || billResult.applied_rules.timely_payment_applied) && (
-                    <div className="bg-green-50 p-3 rounded-lg">
-                      <h4 className="font-medium text-green-800 mb-2">Applied Benefits:</h4>
-                      <div className="space-y-1 text-sm">
-                        {billResult.applied_rules.lifeline_applied && (
-                          <div className="flex items-center gap-2 text-green-700">
-                            <CheckCircle className="w-4 h-4" />
-                            Lifeline rate applied (≤50 units)
-                          </div>
-                        )}
-                        {billResult.applied_rules.timely_payment_applied && (
-                          <div className="flex items-center gap-2 text-green-700">
-                            <CheckCircle className="w-4 h-4" />
-                            Timely payment rebate applied
-                          </div>
-                        )}
+          {(hasCalculated || error) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <IndianRupee className="w-5 h-5" />
+                  Bill Breakdown
+                </CardTitle>
+                <CardDescription>
+                  Detailed breakdown of your Bihar electricity bill
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {error ? (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                ) : billResult ? (
+                  <div className="space-y-4">
+                    {/* Applied Rules */}
+                    {(billResult.applied_rules.lifeline_applied || 
+                      billResult.applied_rules.timely_payment_applied ||
+                      billResult.applied_rules.free_units_applied > 0) && (
+                      <div className="bg-green-50 p-3 rounded-lg">
+                        <h4 className="font-medium text-green-800 mb-2">Applied Benefits:</h4>
+                        <div className="space-y-1 text-sm">
+                          {billResult.applied_rules.free_units_applied > 0 && (
+                            <div className="flex items-center gap-2 text-green-700">
+                              <CheckCircle className="w-4 h-4" />
+                              {billResult.applied_rules.free_units_applied} units free (Bihar Government Scheme)
+                            </div>
+                          )}
+                          {billResult.applied_rules.lifeline_applied && (
+                            <div className="flex items-center gap-2 text-green-700">
+                              <CheckCircle className="w-4 h-4" />
+                              Lifeline rate applied (≤50 units)
+                            </div>
+                          )}
+                          {billResult.applied_rules.timely_payment_applied && (
+                            <div className="flex items-center gap-2 text-green-700">
+                              <CheckCircle className="w-4 h-4" />
+                              Timely payment rebate applied
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Warnings */}
-                  {billResult.warnings?.fppca_missing && (
-                    <Alert>
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        FPPCA rate not available for {month}/{year}. Using ₹0.00 per unit.
-                      </AlertDescription>
-                    </Alert>
-                  )}
+                    {/* Warnings */}
+                    {billResult.warnings?.fppca_missing && (
+                      <Alert>
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          FPPCA rate not available for {month}/{year}. Using ₹0.00 per unit.
+                        </AlertDescription>
+                      </Alert>
+                    )}
 
-                  {/* Bill Details */}
-                  <div className="space-y-3">
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-gray-600">Energy Charges:</span>
-                      <span className="font-medium">₹{billResult.breakdown.energy_charge}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-gray-600">Fixed Charges:</span>
-                      <span className="font-medium">₹{billResult.breakdown.fixed_charge}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-gray-600">FPPCA Charges:</span>
-                      <span className="font-medium">₹{billResult.breakdown.fppca_charge}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-gray-600">Government Duty:</span>
-                      <span className="font-medium">₹{billResult.breakdown.duty_charge}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-gray-600">Meter Rent:</span>
-                      <span className="font-medium">₹{billResult.breakdown.meter_rent}</span>
-                    </div>
-                    
-                    {Object.entries(billResult.breakdown.rebates).map(([code, amount]) => (
-                      <div key={code} className="flex justify-between py-2 border-b">
-                        <span className="text-green-600">{code.replace('_', ' ')} Rebate:</span>
-                        <span className="font-medium text-green-600">-₹{amount}</span>
+                    {/* Bill Details */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-gray-600">Energy Charges:</span>
+                        <span className="font-medium">₹{billResult.breakdown.energy_charge}</span>
                       </div>
-                    ))}
-                    
-                    <div className="flex justify-between py-3 border-t-2 border-gray-300 text-lg font-bold">
-                      <span>Total Payable Amount:</span>
-                      <span className="text-green-600">₹{billResult.total_payable}</span>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-gray-600">Fixed Charges:</span>
+                        <span className="font-medium">₹{billResult.breakdown.fixed_charge}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-gray-600">FPPCA Charges:</span>
+                        <span className="font-medium">₹{billResult.breakdown.fppca_charge}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-gray-600">Government Duty:</span>
+                        <span className="font-medium">₹{billResult.breakdown.duty_charge}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-gray-600">Meter Rent:</span>
+                        <span className="font-medium">₹{billResult.breakdown.meter_rent}</span>
+                      </div>
+                      
+                      {Object.entries(billResult.breakdown.rebates).map(([code, amount]) => (
+                        <div key={code} className="flex justify-between py-2 border-b">
+                          <span className="text-green-600">
+                            {code === 'GOVT_FREE_UNITS' ? 'Free Units Rebate' : code.replace('_', ' ')} Rebate:
+                          </span>
+                          <span className="font-medium text-green-600">-₹{amount}</span>
+                        </div>
+                      ))}
+                      
+                      <div className="flex justify-between py-3 border-t-2 border-gray-300 text-lg font-bold">
+                        <span>Total Payable Amount:</span>
+                        <span className="text-green-600">₹{billResult.total_payable}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Zap className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Enter your details to calculate bill</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                ) : null}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Slab-wise Breakdown */}
           {billResult?.slab_wise && billResult.slab_wise.length > 0 && (
@@ -413,10 +504,18 @@ const BiharBillCalculator = () => {
               <CardHeader>
                 <CardTitle>Slab-wise Energy Charges</CardTitle>
                 <CardDescription>
-                  Detailed breakdown of energy charges by consumption slabs
+                  Detailed breakdown of energy charges by consumption slabs (after free units deduction)
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {billResult.applied_rules.free_units_applied > 0 && (
+                  <div className="mb-4 p-3 bg-green-50 rounded-lg">
+                    <p className="text-sm text-green-700">
+                      <strong>Note:</strong> {billResult.applied_rules.free_units_applied} units were provided free under the Bihar government scheme. 
+                      The slab calculation below applies to the remaining {billResult.units_kwh - billResult.applied_rules.free_units_applied} billable units.
+                    </p>
+                  </div>
+                )}
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>

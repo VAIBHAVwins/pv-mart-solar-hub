@@ -40,6 +40,7 @@ export interface BiharBillResult {
   applied_rules: {
     lifeline_applied: boolean;
     timely_payment_applied: boolean;
+    free_units_applied: number;
   };
   slab_wise: SlabBreakdown[];
   warnings?: {
@@ -77,9 +78,9 @@ export async function computeBiharBill(request: BiharBillRequest): Promise<Bihar
     throw new Error(`Provider ${provider_code} not found or inactive`);
   }
 
-  // Get active tariff version
+  // Get active tariff version with fallback to latest
   const requestDate = new Date(year, month - 1, 1);
-  const { data: tariffVersion, error: tariffError } = await supabase
+  let { data: tariffVersion, error: tariffError } = await supabase
     .from('tariff_versions')
     .select('*')
     .eq('provider_id', provider.id)
@@ -90,8 +91,22 @@ export async function computeBiharBill(request: BiharBillRequest): Promise<Bihar
     .limit(1)
     .single();
 
+  // Fallback to latest active tariff if none found for the specific date
   if (tariffError || !tariffVersion) {
-    throw new Error(`No active tariff found for ${category}`);
+    const { data: latestTariff, error: latestError } = await supabase
+      .from('tariff_versions')
+      .select('*')
+      .eq('provider_id', provider.id)
+      .eq('category', category)
+      .eq('is_active', true)
+      .order('effective_from', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (latestError || !latestTariff) {
+      throw new Error(`No active tariff found for ${category}`);
+    }
+    tariffVersion = latestTariff;
   }
 
   // Get tariff slabs
@@ -105,14 +120,32 @@ export async function computeBiharBill(request: BiharBillRequest): Promise<Bihar
     throw new Error('Failed to load tariff slabs');
   }
 
+  // Check for free units scheme
+  let free_units_applied = 0;
+  const { data: freeUnitsRules } = await supabase
+    .from('free_units_rules')
+    .select('*')
+    .eq('provider_id', provider.id)
+    .eq('is_active', true)
+    .lte('effective_from', requestDate.toISOString().split('T')[0])
+    .gte('effective_to', requestDate.toISOString().split('T')[0])
+    .order('effective_from', { ascending: false });
+
+  if (freeUnitsRules && freeUnitsRules.length > 0) {
+    free_units_applied = Math.min(units_kwh, freeUnitsRules[0].free_units);
+  }
+
+  // Calculate billable units after free units deduction
+  const billable_units = Math.max(0, units_kwh - free_units_applied);
+
   // Check lifeline eligibility
   const lifeline_applied = provider.supports_lifeline && 
-    units_kwh <= provider.lifeline_threshold_units &&
+    billable_units <= provider.lifeline_threshold_units &&
     (!provider.lifeline_requires_registration || is_lifeline_registered);
 
-  // Calculate energy charges using slabs
+  // Calculate energy charges using slabs on billable units
   let energy_charge = 0;
-  let remaining_units = units_kwh;
+  let remaining_units = billable_units;
   const slab_wise: SlabBreakdown[] = [];
 
   for (const slab of slabs) {
@@ -157,7 +190,7 @@ export async function computeBiharBill(request: BiharBillRequest): Promise<Bihar
     .single();
 
   if (fppca && !fppcaError) {
-    fppca_charge = units_kwh * Number(fppca.rate_per_unit);
+    fppca_charge = billable_units * Number(fppca.rate_per_unit);
   } else {
     fppca_missing = true;
   }
@@ -168,6 +201,29 @@ export async function computeBiharBill(request: BiharBillRequest): Promise<Bihar
   // Calculate rebates
   const rebates: Record<string, number> = {};
   let total_rebate = 0;
+
+  // Free units rebate
+  if (free_units_applied > 0) {
+    // Calculate what the energy charge would have been for free units
+    let free_units_energy_charge = 0;
+    let temp_units = free_units_applied;
+    
+    for (const slab of slabs) {
+      if (temp_units <= 0) break;
+      
+      const slab_start = slab.min_unit;
+      const slab_end = slab.max_unit || Infinity;
+      const slab_capacity = Math.min(temp_units, slab_end - slab_start + 1);
+      
+      if (slab_capacity > 0) {
+        free_units_energy_charge += slab_capacity * Number(slab.rate_per_unit);
+        temp_units -= slab_capacity;
+      }
+    }
+    
+    rebates['GOVT_FREE_UNITS'] = Number(free_units_energy_charge.toFixed(2));
+    total_rebate += rebates['GOVT_FREE_UNITS'];
+  }
 
   const { data: rebateRules } = await supabase
     .from('rebate_rules')
@@ -202,7 +258,7 @@ export async function computeBiharBill(request: BiharBillRequest): Promise<Bihar
 
   // Calculate totals
   const total_before_rebate = energy_charge + fixed_charge + fppca_charge + duty_charge + meter_rent;
-  const total_payable = total_before_rebate - total_rebate;
+  const total_payable = Math.max(0, total_before_rebate - total_rebate);
 
   const result: BiharBillResult = {
     provider_code,
@@ -223,7 +279,8 @@ export async function computeBiharBill(request: BiharBillRequest): Promise<Bihar
     total_payable: Number(total_payable.toFixed(2)),
     applied_rules: {
       lifeline_applied,
-      timely_payment_applied: timely_payment_opt_in && provider.supports_timely_rebate
+      timely_payment_applied: timely_payment_opt_in && provider.supports_timely_rebate,
+      free_units_applied
     },
     slab_wise
   };

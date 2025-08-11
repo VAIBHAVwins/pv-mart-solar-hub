@@ -392,6 +392,50 @@ export type Database = {
           },
         ]
       }
+      free_units_rules: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          effective_from: string
+          effective_to: string | null
+          free_units: number
+          id: string
+          is_active: boolean
+          provider_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          effective_from: string
+          effective_to?: string | null
+          free_units: number
+          id?: string
+          is_active?: boolean
+          provider_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          free_units?: number
+          id?: string
+          is_active?: boolean
+          provider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "free_units_rules_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hero_images: {
         Row: {
           created_at: string | null
