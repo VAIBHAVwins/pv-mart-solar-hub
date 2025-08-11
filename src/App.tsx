@@ -40,7 +40,6 @@ import VendorResetPassword from "./pages/vendor/ResetPassword";
 import SupabaseQuotationForm from "./pages/vendor/SupabaseQuotationForm";
 
 // Admin pages
-import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminEnhancedDashboard from "./pages/admin/EnhancedDashboard";
 import AdminCustomers from "./pages/admin/Customers";
@@ -102,7 +101,6 @@ const App = () => (
           <Route path="/vendor/supabase-quotation" element={<SupabaseQuotationForm />} />
           
           {/* Admin routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/enhanced-dashboard" element={<AdminEnhancedDashboard />} />
           <Route path="/admin/customers" element={<AdminCustomers />} />
