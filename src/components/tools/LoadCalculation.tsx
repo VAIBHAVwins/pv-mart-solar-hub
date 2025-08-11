@@ -73,9 +73,9 @@ const LoadCalculation = () => {
 
       const appliancesWithDefaults = data.map(appliance => ({
         ...appliance,
-        quantity: 1,
-        hoursPerDay: 10,
-        monthlyUnits: calculateMonthlyUnits(appliance.wattage, 1, 10)
+        quantity: 0,
+        hoursPerDay: 0,
+        monthlyUnits: 0
       }));
 
       setAppliances(appliancesWithDefaults);
@@ -233,7 +233,7 @@ const LoadCalculation = () => {
                       <th className="text-left py-2 pr-4">Appliance</th>
                       <th className="text-left py-2 pr-4">Wattage</th>
                       <th className="text-left py-2 pr-4">Quantity</th>
-                      <th className="text-left py-2 pr-4">Hours/Day</th>
+                      <th className="text-left py-2 pr-4">Hours per Day</th>
                       <th className="text-left py-2">Monthly Units (kWh)</th>
                     </tr>
                   </thead>
@@ -291,7 +291,8 @@ const LoadCalculation = () => {
             </div>
             <div className="text-right">
               <p className="text-3xl font-bold text-green-600">{totalLoad.toFixed(2)} kWh</p>
-              <p className="text-sm text-gray-500">Estimated electricity units</p>
+              <p className="text-xl font-bold text-blue-600">{totalLoad.toFixed(2)} Units</p>
+              <p className="text-sm text-gray-500">1 kWh = 1 Unit</p>
             </div>
           </div>
         </CardContent>

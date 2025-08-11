@@ -17,6 +17,7 @@ import MobileAuth from "./pages/MobileAuth";
 
 // Tools pages
 import LoadCalculation from "./pages/tools/LoadCalculation";
+import BillCalculator from "./pages/tools/BillCalculator";
 
 // Customer pages
 import CustomerLogin from "./pages/customer/Login";
@@ -85,6 +86,7 @@ function App() {
               
               {/* Tools routes */}
               <Route path="/tools/load-calculation" element={<LoadCalculation />} />
+              <Route path="/tools/bill-calculator" element={<BillCalculator />} />
               
               {/* Blog routes */}
               <Route path="/blogs" element={<Blogs />} />

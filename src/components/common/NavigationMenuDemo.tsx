@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import * as React from "react"
+import { cn } from "@/lib/utils"
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -8,56 +8,76 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-} from '@/components/ui/navigation-menu';
-import { Calculator, Wrench } from 'lucide-react';
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu"
+import { Calculator, Zap } from "lucide-react"
 
-const NavigationMenuDemo = () => {
+const components: { title: string; href: string; description: string; icon: React.ReactNode }[] = [
+  {
+    title: "Load Calculation",
+    href: "/tools/load-calculation",
+    description: "Calculate electrical load and monthly consumption for your appliances",
+    icon: <Calculator className="h-4 w-4" />,
+  },
+  {
+    title: "Bill Calculator",
+    href: "/tools/bill-calculator", 
+    description: "Calculate your electricity bill based on consumption and tariff rates",
+    icon: <Zap className="h-4 w-4" />,
+  },
+]
+
+export default function NavigationMenuDemo() {
   return (
     <NavigationMenu>
       <NavigationMenuList>
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="text-gray-600 hover:text-green-600">
-            Tools
-          </NavigationMenuTrigger>
+          <NavigationMenuTrigger className="text-gray-600 hover:text-green-600">Tools</NavigationMenuTrigger>
           <NavigationMenuContent>
-            <div className="grid gap-3 p-6 w-[400px]">
-              <div className="grid gap-3">
-                <NavigationMenuLink asChild>
-                  <Link
-                    to="/tools/load-calculation"
-                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground group"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Calculator className="w-4 h-4 text-blue-600 group-hover:text-green-600" />
-                      <div className="text-sm font-medium leading-none">Load Calculation</div>
-                    </div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      Calculate your monthly electricity consumption based on appliance usage
-                    </p>
-                  </Link>
-                </NavigationMenuLink>
-                
-                <NavigationMenuLink asChild>
-                  <Link
-                    to="#"
-                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground group opacity-50 cursor-not-allowed"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Wrench className="w-4 h-4 text-gray-400" />
-                      <div className="text-sm font-medium leading-none">More Tools</div>
-                    </div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      Coming soon - Additional calculation tools
-                    </p>
-                  </Link>
-                </NavigationMenuLink>
-              </div>
-            </div>
+            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-1 lg:w-[600px]">
+              {components.map((component) => (
+                <ListItem
+                  key={component.title}
+                  title={component.title}
+                  href={component.href}
+                  icon={component.icon}
+                >
+                  {component.description}
+                </ListItem>
+              ))}
+            </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
-  );
-};
+  )
+}
 
-export default NavigationMenuDemo;
+const ListItem = React.forwardRef<
+  React.ElementRef<"a">,
+  React.ComponentPropsWithoutRef<"a"> & { icon?: React.ReactNode }
+>(({ className, title, children, icon, ...props }, ref) => {
+  return (
+    <li>
+      <NavigationMenuLink asChild>
+        <a
+          ref={ref}
+          className={cn(
+            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            className
+          )}
+          {...props}
+        >
+          <div className="flex items-center space-x-2">
+            {icon}
+            <div className="text-sm font-medium leading-none">{title}</div>
+          </div>
+          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+            {children}
+          </p>
+        </a>
+      </NavigationMenuLink>
+    </li>
+  )
+})
+ListItem.displayName = "ListItem"

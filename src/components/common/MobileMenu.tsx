@@ -2,7 +2,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { User, Calculator } from 'lucide-react';
-import SkipAuth from './SkipAuth';
 
 interface MobileMenuProps {
   isMenuOpen: boolean;
@@ -75,24 +74,14 @@ const MobileMenu = ({
               asChild 
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
             >
-              <a href="/customer/login">Customer Login</a>
+              <a href="/customer/dashboard">Customer Dashboard</a>
             </Button>
             <Button 
               asChild 
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
             >
-              <a href="/vendor/login">Vendor Login</a>
+              <a href="/vendor/dashboard">Vendor Dashboard</a>
             </Button>
-            
-            {/* Skip Auth Buttons */}
-            <div className="space-y-2 pt-2 border-t border-gray-200">
-              <p className="text-xs text-gray-500 text-center">Demo Access (Skip Authentication)</p>
-              <div className="flex flex-col space-y-2">
-                <SkipAuth targetPath="/customer/dashboard" userType="customer" className="w-full text-xs" />
-                <SkipAuth targetPath="/vendor/dashboard" userType="vendor" className="w-full text-xs" />
-                <SkipAuth targetPath="/admin/dashboard" userType="admin" className="w-full text-xs" />
-              </div>
-            </div>
           </div>
         )}
       </div>
