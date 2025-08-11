@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import { Calculator, Zap, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -44,14 +43,12 @@ const LoadCalculation = () => {
 
   const getDaysInMonth = (month: number, year: number) => {
     const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    
-    // Check for leap year
     const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-    
+
     if (month === 2 && isLeapYear) {
       return 29;
     }
-    
+
     return daysInMonth[month - 1];
   };
 
@@ -71,7 +68,7 @@ const LoadCalculation = () => {
 
       if (error) throw error;
 
-      const appliancesWithDefaults = data.map(appliance => ({
+      const appliancesWithDefaults = (data || []).map(appliance => ({
         ...appliance,
         quantity: 0,
         hoursPerDay: 0,
@@ -152,7 +149,7 @@ const LoadCalculation = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
           <Calculator className="w-8 h-8 text-blue-600" />
@@ -174,96 +171,91 @@ const LoadCalculation = () => {
             Choose the month and year for calculation. Days in month will be calculated automatically.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="month">Month</Label>
-              <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select month" />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map(month => (
-                    <SelectItem key={month.value} value={month.value.toString()}>
-                      {month.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="year">Year</Label>
-              <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i).map(year => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end">
-              <div className="p-3 bg-blue-50 rounded-lg w-full">
-                <p className="text-sm text-gray-600">Days in Month</p>
-                <p className="text-xl font-bold text-blue-600">
-                  {getDaysInMonth(selectedMonth, selectedYear)} days
-                </p>
-              </div>
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <Label htmlFor="month">Month</Label>
+            <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map(month => (
+                  <SelectItem key={month.value} value={month.value.toString()}>
+                    {month.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="year">Year</Label>
+            <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i).map(year => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Days in Month</Label>
+            <div className="flex items-center h-10 px-3 py-2 border border-input bg-background rounded-md">
+              <span className="text-sm">{getDaysInMonth(selectedMonth, selectedYear)} days</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Appliances by Category */}
-      <div className="space-y-6 mb-6">
+      <div className="space-y-6">
         {Object.entries(groupedAppliances).map(([type, typeAppliances]) => (
           <Card key={type}>
             <CardHeader>
-              <CardTitle className="text-lg">{type}</CardTitle>
+              <CardTitle>{type}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-2 pr-4">Appliance</th>
-                      <th className="text-left py-2 pr-4">Wattage</th>
-                      <th className="text-left py-2 pr-4">Quantity</th>
-                      <th className="text-left py-2 pr-4">Hours per Day</th>
+                      <th className="text-left py-2">Appliance</th>
+                      <th className="text-left py-2">Wattage</th>
+                      <th className="text-left py-2">Quantity</th>
+                      <th className="text-left py-2">Hours per Day</th>
                       <th className="text-left py-2">Monthly Units (kWh)</th>
                     </tr>
                   </thead>
                   <tbody>
                     {typeAppliances.map(appliance => (
                       <tr key={appliance.id} className="border-b">
-                        <td className="py-3 pr-4 font-medium">{appliance.name}</td>
-                        <td className="py-3 pr-4 text-gray-600">{appliance.wattage}W</td>
-                        <td className="py-3 pr-4">
+                        <td className="py-2 font-medium">{appliance.name}</td>
+                        <td className="py-2">{appliance.wattage}W</td>
+                        <td className="py-2">
                           <Input
                             type="number"
                             min="0"
-                            max="999"
+                            step="1"
                             value={appliance.quantity}
                             onChange={(e) => updateAppliance(appliance.id, 'quantity', parseInt(e.target.value) || 0)}
                             className="w-20"
                           />
                         </td>
-                        <td className="py-3 pr-4">
+                        <td className="py-2">
                           <Input
                             type="number"
                             min="0"
-                            max="24"
                             step="0.5"
                             value={appliance.hoursPerDay}
                             onChange={(e) => updateAppliance(appliance.id, 'hoursPerDay', parseFloat(e.target.value) || 0)}
                             className="w-24"
                           />
                         </td>
-                        <td className="py-3 font-semibold text-green-600">
+                        <td className="py-2 font-medium">
                           {appliance.monthlyUnits.toFixed(2)}
                         </td>
                       </tr>
@@ -277,23 +269,21 @@ const LoadCalculation = () => {
       </div>
 
       {/* Total Load Display */}
-      <Card className="sticky bottom-4 bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Zap className="w-8 h-8 text-blue-600" />
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">Total Monthly Consumption</h3>
-                <p className="text-gray-600">
-                  For {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-green-600">{totalLoad.toFixed(2)} kWh</p>
-              <p className="text-xl font-bold text-blue-600">{totalLoad.toFixed(2)} Units</p>
-              <p className="text-sm text-gray-500">1 kWh = 1 Unit</p>
-            </div>
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="w-5 h-5" />
+            Total Monthly Consumption
+          </CardTitle>
+          <CardDescription>
+            For {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center space-y-2">
+            <div className="text-4xl font-bold text-green-600">{totalLoad.toFixed(2)} kWh</div>
+            <div className="text-2xl text-gray-600">{totalLoad.toFixed(2)} Units</div>
+            <div className="text-sm text-gray-500">1 kWh = 1 Unit</div>
           </div>
         </CardContent>
       </Card>

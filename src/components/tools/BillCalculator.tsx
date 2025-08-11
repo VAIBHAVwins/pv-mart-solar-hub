@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calculator, IndianRupee, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -37,7 +36,6 @@ const BillCalculator = () => {
   const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [tariffData, setTariffData] = useState<TariffData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [calculating, setCalculating] = useState(false);
   
   // Input states
   const [unitsConsumed, setUnitsConsumed] = useState<number>(0);
@@ -54,7 +52,7 @@ const BillCalculator = () => {
   const fetchProviders = async () => {
     try {
       const { data, error } = await supabase
-        .from('electricity_providers')
+        .from('electricity_providers' as any)
         .select('*')
         .eq('is_active', true)
         .order('name');
@@ -79,12 +77,12 @@ const BillCalculator = () => {
     try {
       const [slabsResult, configResult] = await Promise.all([
         supabase
-          .from('electricity_slabs')
+          .from('electricity_slabs' as any)
           .select('*')
           .eq('provider_id', providerId)
           .order('min_unit'),
         supabase
-          .from('electricity_provider_config')
+          .from('electricity_provider_config' as any)
           .select('*')
           .eq('provider_id', providerId)
           .single()
@@ -113,8 +111,6 @@ const BillCalculator = () => {
 
   const calculateBill = () => {
     if (!tariffData) return;
-
-    setCalculating(true);
     
     let energyCharges = 0;
     let remainingUnits = unitsConsumed;
@@ -177,8 +173,6 @@ const BillCalculator = () => {
       totalBeforeRebate: totalBeforeRebate.toFixed(2),
       finalAmount: finalAmount.toFixed(2)
     });
-
-    setCalculating(false);
   };
 
   useEffect(() => {
@@ -301,7 +295,7 @@ const BillCalculator = () => {
                 <Checkbox
                   id="lifeline"
                   checked={isLifelineConsumer}
-                  onCheckedChange={setIsLifelineConsumer}
+                  onCheckedChange={(checked) => setIsLifelineConsumer(checked === true)}
                 />
                 <Label htmlFor="lifeline">Life Line Consumer</Label>
               </div>
@@ -310,7 +304,7 @@ const BillCalculator = () => {
                 <Checkbox
                   id="rebate"
                   checked={timelyPaymentRebate}
-                  onCheckedChange={setTimelyPaymentRebate}
+                  onCheckedChange={(checked) => setTimelyPaymentRebate(checked === true)}
                 />
                 <Label htmlFor="rebate">Timely Payment Rebate</Label>
               </div>

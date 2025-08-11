@@ -224,6 +224,109 @@ export type Database = {
           },
         ]
       }
+      electricity_provider_config: {
+        Row: {
+          created_at: string
+          duty_percentage: number
+          fixed_charge_per_kva: number
+          id: string
+          lifeline_rate_paise: number
+          meter_rent: number
+          provider_id: string
+          timely_payment_rebate: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duty_percentage?: number
+          fixed_charge_per_kva?: number
+          id?: string
+          lifeline_rate_paise?: number
+          meter_rent?: number
+          provider_id: string
+          timely_payment_rebate?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duty_percentage?: number
+          fixed_charge_per_kva?: number
+          id?: string
+          lifeline_rate_paise?: number
+          meter_rent?: number
+          provider_id?: string
+          timely_payment_rebate?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "electricity_provider_config_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: true
+            referencedRelation: "electricity_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      electricity_providers: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      electricity_slabs: {
+        Row: {
+          created_at: string
+          id: string
+          max_unit: number | null
+          min_unit: number
+          provider_id: string
+          rate_paise_per_kwh: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_unit?: number | null
+          min_unit: number
+          provider_id: string
+          rate_paise_per_kwh: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_unit?: number | null
+          min_unit?: number
+          provider_id?: string
+          rate_paise_per_kwh?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "electricity_slabs_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "electricity_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hero_images: {
         Row: {
           created_at: string | null
