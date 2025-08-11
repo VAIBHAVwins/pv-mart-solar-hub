@@ -181,21 +181,16 @@ const VendorQuotationForm: React.FC = () => {
 
       const totalPrice = calculateTotalPrice();
 
-      // Insert quotation
+      // For now, use existing table structure with mapped values
       const { data: quotation, error: quotationError } = await supabase
-        .from('vendor_quotations_new')
+        .from('vendor_quotations')
         .insert({
-          quotation_id: formData.quotationId,
           vendor_id: user.id,
-          vendor_name: profile.company_name || profile.full_name,
-          vendor_email: profile.email,
-          vendor_phone: profile.phone,
-          bundle_capacity: formData.bundleCapacity,
-          installation_type: formData.installationType,
-          usage_type: formData.usageType,
-          bi_directional_meter: formData.biDirectionalMeter,
-          bi_directional_meter_price: formData.biDirectionalMeterPrice,
-          subsidy_assistance: formData.subsidyAssistance,
+          vendor_name: profile.company_name || profile.full_name || '',
+          vendor_email: profile.email || '',
+          vendor_phone: profile.phone || '',
+          system_type: formData.installationType as any, // Map to existing enum
+          installation_type: 'rooftop' as any, // Default value for existing schema
           total_price: totalPrice,
           installation_charge: formData.installationCharge,
           description: formData.description,
@@ -204,15 +199,18 @@ const VendorQuotationForm: React.FC = () => {
         .select()
         .single();
 
-      if (quotationError) throw quotationError;
+      if (quotationError) {
+        console.error('Quotation error:', quotationError);
+        throw quotationError;
+      }
 
-      // Insert components
+      // Insert components using existing table
       const componentInserts = requiredComponents.map(comp => ({
         quotation_id: quotation.id,
         component_type: comp.componentType,
-        component_name: comp.componentName,
+        specifications: comp.specification,
         brand: comp.brand,
-        specification: comp.specification,
+        model: comp.componentName,
         quantity: comp.quantity,
         unit_price: comp.unitPrice,
         total_price: comp.totalPrice,
@@ -220,10 +218,13 @@ const VendorQuotationForm: React.FC = () => {
       }));
 
       const { error: componentsError } = await supabase
-        .from('quotation_components_new')
+        .from('quotation_components')
         .insert(componentInserts);
 
-      if (componentsError) throw componentsError;
+      if (componentsError) {
+        console.error('Components error:', componentsError);
+        throw componentsError;
+      }
 
       toast.success(`Quotation ${formData.quotationId} submitted successfully!`);
       
