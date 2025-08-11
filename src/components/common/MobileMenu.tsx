@@ -1,89 +1,69 @@
 
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { User, Calculator } from 'lucide-react';
 
 interface MobileMenuProps {
-  isMenuOpen: boolean;
-  setIsMenuOpen: (open: boolean) => void;
-  getLinkClasses: () => string;
-  user: any;
-  userType: string | null;
-  handleCustomerDashboardClick: () => void;
-  handleVendorDashboardClick: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  user: { email?: string; id?: string } | null;
+  handleLogout: () => void;
 }
 
-const MobileMenu = ({ 
-  isMenuOpen, 
-  setIsMenuOpen, 
-  getLinkClasses, 
-  user, 
-  userType,
-  handleCustomerDashboardClick,
-  handleVendorDashboardClick
-}: MobileMenuProps) => {
-  if (!isMenuOpen) return null;
+const MobileMenu = ({ isOpen, onClose, user, handleLogout }: MobileMenuProps) => {
+  if (!isOpen) return null;
 
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/about', label: 'About' },
     { path: '/blogs', label: 'Blog' },
-    { path: '/contact', label: 'Contact' }
+    { path: '/contact', label: 'Contact' },
+    { path: '/tools/bill-calculator', label: 'Tools' }
   ];
 
   return (
-    <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
-      <div className="px-4 py-6 space-y-4">
+    <div className="lg:hidden border-t bg-white">
+      <div className="px-4 py-3 space-y-3">
         {navItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}
-            className={`${getLinkClasses()} block text-center`}
-            onClick={() => setIsMenuOpen(false)}
+            className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+            onClick={onClose}
           >
             {item.label}
           </Link>
         ))}
         
-        {/* Tools Menu */}
-        <div className="pt-2 border-t border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-500 mb-2">Tools</h3>
-          <Link
-            to="/tools/load-calculation"
-            className={`${getLinkClasses()} block text-center flex items-center justify-center gap-2`}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            <Calculator className="w-4 h-4" />
-            Load Calculation
-          </Link>
+        <div className="pt-3 border-t space-y-2">
+          {!user ? (
+            <>
+              <Link
+                to="/customer/login"
+                className="block px-3 py-2 text-center border border-blue-600 text-blue-600 rounded-md"
+                onClick={onClose}
+              >
+                Customer Login
+              </Link>
+              <Link
+                to="/vendor/login"
+                className="block px-3 py-2 text-center bg-blue-600 text-white rounded-md"
+                onClick={onClose}
+              >
+                Vendor Login
+              </Link>
+            </>
+          ) : (
+            <button
+              className="w-full px-3 py-2 text-center border border-red-500 text-red-500 rounded-md"
+              onClick={() => {
+                handleLogout();
+                onClose();
+              }}
+            >
+              Logout
+            </button>
+          )}
         </div>
-        
-        {user ? (
-          <div className="pt-4 border-t border-gray-200">
-            <Button
-              onClick={userType === 'customer' ? handleCustomerDashboardClick : handleVendorDashboardClick}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
-            >
-              <User className="mr-2 h-4 w-4" />
-              Dashboard
-            </Button>
-          </div>
-        ) : (
-          <div className="pt-4 border-t border-gray-200 space-y-3">
-            <Button 
-              asChild 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
-            >
-              <a href="/customer/dashboard">Customer Dashboard</a>
-            </Button>
-            <Button 
-              asChild 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
-            >
-              <a href="/vendor/dashboard">Vendor Dashboard</a>
-            </Button>
-          </div>
-        )}
       </div>
     </div>
   );
