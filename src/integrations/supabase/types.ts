@@ -76,6 +76,36 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action: string
+          admin_user_id: string | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: string
+          payload: Json | null
+        }
+        Insert: {
+          action: string
+          admin_user_id?: string | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: string
+          payload?: Json | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          payload?: Json | null
+        }
+        Relationships: []
+      }
       blogs: {
         Row: {
           author: string
@@ -327,6 +357,41 @@ export type Database = {
           },
         ]
       }
+      fppca_rates: {
+        Row: {
+          created_at: string
+          id: string
+          month: number
+          provider_id: string
+          rate_per_unit: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month: number
+          provider_id: string
+          rate_per_unit: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: number
+          provider_id?: string
+          rate_per_unit?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fppca_rates_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hero_images: {
         Row: {
           created_at: string | null
@@ -396,6 +461,51 @@ export type Database = {
         }
         Relationships: []
       }
+      providers: {
+        Row: {
+          code: string
+          created_at: string
+          fixed_charge_per_kva: number
+          government_duty_percent: number | null
+          id: string
+          is_active: boolean
+          lifeline_requires_registration: boolean
+          lifeline_threshold_units: number
+          meter_rent: number
+          name: string
+          supports_lifeline: boolean
+          supports_timely_rebate: boolean
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          fixed_charge_per_kva?: number
+          government_duty_percent?: number | null
+          id?: string
+          is_active?: boolean
+          lifeline_requires_registration?: boolean
+          lifeline_threshold_units?: number
+          meter_rent?: number
+          name: string
+          supports_lifeline?: boolean
+          supports_timely_rebate?: boolean
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          fixed_charge_per_kva?: number
+          government_duty_percent?: number | null
+          id?: string
+          is_active?: boolean
+          lifeline_requires_registration?: boolean
+          lifeline_threshold_units?: number
+          meter_rent?: number
+          name?: string
+          supports_lifeline?: boolean
+          supports_timely_rebate?: boolean
+        }
+        Relationships: []
+      }
       quotation_components: {
         Row: {
           brand: string | null
@@ -445,6 +555,139 @@ export type Database = {
             columns: ["quotation_id"]
             isOneToOne: false
             referencedRelation: "vendor_quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rebate_rules: {
+        Row: {
+          active: boolean
+          amount_fixed: number | null
+          applies_to: string
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          percent: number | null
+          provider_id: string
+          tariff_version_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          amount_fixed?: number | null
+          applies_to?: string
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          percent?: number | null
+          provider_id: string
+          tariff_version_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          amount_fixed?: number | null
+          applies_to?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          percent?: number | null
+          provider_id?: string
+          tariff_version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rebate_rules_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rebate_rules_tariff_version_id_fkey"
+            columns: ["tariff_version_id"]
+            isOneToOne: false
+            referencedRelation: "tariff_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tariff_slabs: {
+        Row: {
+          created_at: string
+          id: string
+          max_unit: number | null
+          min_unit: number
+          position: number
+          rate_per_unit: number
+          tariff_version_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_unit?: number | null
+          min_unit: number
+          position: number
+          rate_per_unit: number
+          tariff_version_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_unit?: number | null
+          min_unit?: number
+          position?: number
+          rate_per_unit?: number
+          tariff_version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tariff_slabs_tariff_version_id_fkey"
+            columns: ["tariff_version_id"]
+            isOneToOne: false
+            referencedRelation: "tariff_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tariff_versions: {
+        Row: {
+          category: string
+          code: string
+          created_at: string
+          description: string | null
+          effective_from: string
+          id: string
+          is_active: boolean
+          provider_id: string
+        }
+        Insert: {
+          category: string
+          code: string
+          created_at?: string
+          description?: string | null
+          effective_from: string
+          id?: string
+          is_active?: boolean
+          provider_id: string
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          effective_from?: string
+          id?: string
+          is_active?: boolean
+          provider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tariff_versions_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
             referencedColumns: ["id"]
           },
         ]

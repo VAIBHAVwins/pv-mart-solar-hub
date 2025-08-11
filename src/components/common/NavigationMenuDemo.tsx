@@ -1,6 +1,6 @@
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import React from "react";
+import { Link } from "react-router-dom";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -8,76 +8,86 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu"
-import { Calculator, Zap } from "lucide-react"
+} from "@/components/ui/navigation-menu";
+import { Calculator, Zap, Settings } from "lucide-react";
 
-const components: { title: string; href: string; description: string; icon: React.ReactNode }[] = [
-  {
-    title: "Load Calculation",
-    href: "/tools/load-calculation",
-    description: "Calculate electrical load and monthly consumption for your appliances",
-    icon: <Calculator className="h-4 w-4" />,
-  },
-  {
-    title: "Bill Calculator",
-    href: "/tools/bill-calculator", 
-    description: "Calculate your electricity bill based on consumption and tariff rates",
-    icon: <Zap className="h-4 w-4" />,
-  },
-]
-
-export default function NavigationMenuDemo() {
+const NavigationMenuDemo = () => {
   return (
     <NavigationMenu>
       <NavigationMenuList>
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="text-gray-600 hover:text-green-600">Tools</NavigationMenuTrigger>
+          <NavigationMenuTrigger className="px-4 py-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium">
+            Tools
+          </NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-1 lg:w-[600px]">
-              {components.map((component) => (
-                <ListItem
-                  key={component.title}
-                  title={component.title}
-                  href={component.href}
-                  icon={component.icon}
-                >
-                  {component.description}
-                </ListItem>
-              ))}
+            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+              <li className="row-span-3">
+                <NavigationMenuLink asChild>
+                  <Link
+                    className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-blue-500/20 to-blue-700/20 p-6 no-underline outline-none focus:shadow-md"
+                    to="/tools/bill-calculator"
+                  >
+                    <Calculator className="h-6 w-6 text-blue-600" />
+                    <div className="mb-2 mt-4 text-lg font-medium text-blue-900">
+                      Bill Calculator
+                    </div>
+                    <p className="text-sm leading-tight text-blue-700">
+                      Calculate your electricity bill with detailed breakdown
+                    </p>
+                  </Link>
+                </NavigationMenuLink>
+              </li>
+              <li>
+                <NavigationMenuLink asChild>
+                  <Link
+                    to="/tools/bihar-bill-calculator"
+                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-orange-600" />
+                      <div className="text-sm font-medium leading-none">Bihar Bill Calculator</div>
+                    </div>
+                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                      Specialized calculator for Bihar (NBPCL/SBPCL) with lifeline rates
+                    </p>
+                  </Link>
+                </NavigationMenuLink>
+              </li>
+              <li>
+                <NavigationMenuLink asChild>
+                  <Link
+                    to="/tools/enhanced-bill-calculator"
+                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Settings className="h-4 w-4 text-green-600" />
+                      <div className="text-sm font-medium leading-none">Enhanced Calculator</div>
+                    </div>
+                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                      Advanced bill calculator with multiple provider support
+                    </p>
+                  </Link>
+                </NavigationMenuLink>
+              </li>
+              <li>
+                <NavigationMenuLink asChild>
+                  <Link
+                    to="/tools/load-calculation"
+                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
+                    <div className="text-sm font-medium leading-none">Load Calculation</div>
+                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                      Calculate electrical load requirements for your home
+                    </p>
+                  </Link>
+                </NavigationMenuLink>
+              </li>
             </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
-  )
-}
+  );
+};
 
-const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a"> & { icon?: React.ReactNode }
->(({ className, title, children, icon, ...props }, ref) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <a
-          ref={ref}
-          className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className
-          )}
-          {...props}
-        >
-          <div className="flex items-center space-x-2">
-            {icon}
-            <div className="text-sm font-medium leading-none">{title}</div>
-          </div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-            {children}
-          </p>
-        </a>
-      </NavigationMenuLink>
-    </li>
-  )
-})
-ListItem.displayName = "ListItem"
+export default NavigationMenuDemo;
