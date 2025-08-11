@@ -478,6 +478,36 @@ export type Database = {
         }
         Relationships: []
       }
+      mobile_otp_verifications: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          is_used: boolean | null
+          otp_code: string
+          phone: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          is_used?: boolean | null
+          otp_code: string
+          phone: string
+          user_type: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          is_used?: boolean | null
+          otp_code?: string
+          phone?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       otp_verifications: {
         Row: {
           created_at: string | null
@@ -768,6 +798,8 @@ export type Database = {
       }
       users: {
         Row: {
+          company_name: string | null
+          contact_person: string | null
           created_at: string | null
           email: string | null
           full_name: string | null
@@ -775,9 +807,13 @@ export type Database = {
           is_verified: boolean | null
           password_hash: string | null
           phone: string
+          pm_surya_ghar_registered: boolean | null
           role: Database["public"]["Enums"]["user_role"]
+          vendor_name: string | null
         }
         Insert: {
+          company_name?: string | null
+          contact_person?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
@@ -785,9 +821,13 @@ export type Database = {
           is_verified?: boolean | null
           password_hash?: string | null
           phone: string
+          pm_surya_ghar_registered?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
+          vendor_name?: string | null
         }
         Update: {
+          company_name?: string | null
+          contact_person?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
@@ -795,7 +835,9 @@ export type Database = {
           is_verified?: boolean | null
           password_hash?: string | null
           phone?: string
+          pm_surya_ghar_registered?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
+          vendor_name?: string | null
         }
         Relationships: []
       }
@@ -928,6 +970,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_mobile_otp: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_email_by_phone: {
         Args: { _raw_phone: string }
         Returns: string
@@ -935,6 +981,10 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      normalize_phone: {
+        Args: { phone_input: string }
+        Returns: string
       }
       pvmart_create_otp_verification: {
         Args: { phone_input: string }
@@ -947,6 +997,14 @@ export type Database = {
       pvmart_normalize_phone: {
         Args: { phone_input: string }
         Returns: string
+      }
+      send_mobile_otp: {
+        Args: { phone_number: string; user_type: string }
+        Returns: string
+      }
+      verify_mobile_otp: {
+        Args: { phone_number: string; otp_code: string; user_type: string }
+        Returns: boolean
       }
     }
     Enums: {
