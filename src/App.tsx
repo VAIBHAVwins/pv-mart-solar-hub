@@ -56,6 +56,7 @@ import AdminApplianceManager from "./pages/admin/ApplianceManager";
 // Tools pages
 import LoadCalculation from "./pages/tools/LoadCalculation";
 import BillCalculator from "./pages/tools/BillCalculator";
+import EnhancedBillCalculatorPage from "./pages/tools/enhanced-bill-calculator";
 
 // Auth pages
 import MobileAuth from "./pages/MobileAuth";
@@ -121,6 +122,7 @@ function App() {
               {/* Tools routes */}
               <Route path="/tools/load-calculation" element={<LoadCalculation />} />
               <Route path="/tools/bill-calculator" element={<BillCalculator />} />
+              <Route path="/tools/enhanced-bill-calculator" element={<EnhancedBillCalculatorPage />} />
 
               {/* Auth routes */}
               <Route path="/mobile-auth" element={<MobileAuth />} />
