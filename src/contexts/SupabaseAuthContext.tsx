@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,7 +10,6 @@ interface SupabaseAuthContextType {
   signUp: (email: string, password: string, options?: { data?: any; options?: any }) => Promise<{ data: any; error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: any }>;
 }
 
 const SupabaseAuthContext = createContext<SupabaseAuthContextType | undefined>(undefined);
@@ -140,13 +138,6 @@ export const SupabaseAuthProvider: React.FC<{ children: ReactNode }> = ({ childr
     await supabase.auth.signOut();
   };
 
-  const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`
-    });
-    return { error };
-  };
-
   return (
     <SupabaseAuthContext.Provider value={{
       user,
@@ -155,8 +146,7 @@ export const SupabaseAuthProvider: React.FC<{ children: ReactNode }> = ({ childr
       userRole,
       signUp,
       signIn,
-      signOut,
-      resetPassword
+      signOut
     }}>
       {children}
     </SupabaseAuthContext.Provider>

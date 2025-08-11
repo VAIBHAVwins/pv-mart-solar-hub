@@ -1,178 +1,279 @@
-
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
-import Layout from '@/components/layout/Layout';
+import { useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import Layout from '@/components/layout/Layout';
+import { supabase } from '@/integrations/supabase/client';
+import { Eye, EyeOff } from 'lucide-react';
 import { VendorRegistrationForm } from '@/components/auth/VendorRegistrationForm';
 import { OTPVerification } from '@/components/auth/OTPVerification';
+import { AuthMethodSelector } from '@/components/auth/AuthMethodSelector';
 
-const VendorLogin = () => {
-  const { signIn, user } = useSupabaseAuth();
-  const navigate = useNavigate();
+export default function VendorLogin() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
   const [showRegistration, setShowRegistration] = useState(false);
   const [showOTPVerification, setShowOTPVerification] = useState(false);
-  const [registrationPhone, setRegistrationPhone] = useState('');
-  const [registrationEmail, setRegistrationEmail] = useState('');
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  
+  const location = useLocation();
 
   useEffect(() => {
-    if (user) {
-      navigate('/');
+    if (location.state?.message) {
+      setSuccess(location.state.message);
     }
-  }, [user, navigate]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (error) setError('');
-  };
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+    setSuccess('');
+    setLoading(true);
 
     try {
-      const { error: signInError } = await signIn(formData.email, formData.password);
-      
-      if (signInError) {
-        setError(signInError.message);
-      } else {
-        navigate('/');
+      if (!email || !password) {
+        setError('Please enter both email and password.');
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-      setError('An unexpected error occurred');
+
+      // For email auth, use Supabase
+      if (authMethod === 'email') {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: password,
+        });
+
+        if (error) {
+          setError(error.message);
+          setLoading(false);
+          return;
+        }
+
+        if (data?.user) {
+          // Check if email is verified
+          if (!data.user.email_confirmed_at) {
+            setError('Please verify your email before logging in.');
+            setLoading(false);
+            return;
+          }
+
+          // Redirect based on user role (assuming role is stored in user_metadata)
+          const { data: userRecord, error: userError } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', data.user.id)
+            .single();
+
+          if (userError) {
+            setError('Failed to fetch user role.');
+            setLoading(false);
+            return;
+          }
+
+          if (userRecord?.role === 'vendor') {
+            window.location.href = '/vendor/dashboard';
+          } else {
+            setError('Invalid credentials or unauthorized access.');
+            setLoading(false);
+          }
+        }
+      } else if (authMethod === 'phone') {
+        // Handle phone authentication
+        const { data, error } = await supabase.auth.signInWithOtp({
+          phone: email,
+          options: {
+            email: {
+              shouldCreateUser: false,
+            },
+          },
+        });
+
+        if (error) {
+          setError(error.message);
+          setLoading(false);
+          return;
+        }
+
+        setVerificationEmail(email);
+        setShowOTPVerification(true);
+      }
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOTPRequired = (phone: string) => {
-    setRegistrationPhone(phone);
+  const handleRegistrationSuccess = (email: string) => {
+    setSuccess('Registration successful! Please check your email to verify your account.');
+    setEmail(email);
     setShowRegistration(false);
-    setShowOTPVerification(true);
   };
 
-  const handleOTPVerified = () => {
-    setShowOTPVerification(false);
-    navigate('/');
+  const handleOTPSubmit = async (otp: string) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: verificationEmail,
+        token: otp,
+        type: 'sms',
+      });
+
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (data?.user) {
+        // Redirect based on user role (assuming role is stored in user_metadata)
+        const { data: userRecord, error: userError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        if (userError) {
+          setError('Failed to fetch user role.');
+          setLoading(false);
+          return;
+        }
+
+        if (userRecord?.role === 'vendor') {
+          window.location.href = '/vendor/dashboard';
+        } else {
+          setError('Invalid credentials or unauthorized access.');
+          setLoading(false);
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (showOTPVerification) {
     return (
-      <Layout>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-          <OTPVerification 
-            email={registrationEmail}
-            onVerificationComplete={handleOTPVerified}
-            onBack={() => {
-              setShowOTPVerification(false);
-              setShowRegistration(false);
-            }}
-          />
-        </div>
+      <Layout className="bg-gradient-to-br from-[#797a83] to-[#4f4f56] min-h-screen">
+        <OTPVerification
+          email={verificationEmail}
+          onSuccess={() => {
+            setShowOTPVerification(false);
+            setSuccess('Login successful! Redirecting...');
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 1500);
+          }}
+          onBack={() => setShowOTPVerification(false)}
+        />
       </Layout>
     );
   }
 
   if (showRegistration) {
     return (
-      <Layout>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-          <VendorRegistrationForm 
-            onOTPRequired={handleOTPRequired}
-            onBack={() => setShowRegistration(false)}
-          />
-        </div>
+      <Layout className="bg-gradient-to-br from-[#797a83] to-[#4f4f56] min-h-screen">
+        <VendorRegistrationForm 
+          onSuccess={handleRegistrationSuccess}
+          onBackToLogin={() => setShowRegistration(false)}
+        />
       </Layout>
     );
   }
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Vendor Login
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              Sign in to your vendor account
-            </p>
+    <Layout className="bg-gradient-to-br from-[#797a83] to-[#4f4f56] min-h-screen">
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-md mx-auto bg-[#f7f7f6] rounded-lg shadow-lg p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-[#171a21] mb-2">Vendor Login</h1>
+            <p className="text-[#4f4f56]">Access your business dashboard</p>
           </div>
-
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                  disabled={loading}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
+          
+          <AuthMethodSelector 
+            authMethod={authMethod} 
+            onMethodChange={setAuthMethod}
+          />
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && <div className="text-red-600 font-semibold text-center p-3 bg-red-100 rounded">{error}</div>}
+            {success && <div className="text-green-600 font-semibold text-center p-3 bg-green-100 rounded">{success}</div>}
+            
+            <div>
+              <Label htmlFor="email" className="text-[#171a21]">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 border-[#b07e66] focus:border-[#797a83]"
+                placeholder="Enter your email"
+                required
+                disabled={loading}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="password" className="text-[#171a21]">Password</Label>
+              <div className="relative">
                 <Input
                   id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 border-[#b07e66] focus:border-[#797a83] pr-10"
+                  placeholder="Enter your password"
                   required
                   disabled={loading}
-                  className="mt-1"
                 />
-              </div>
-            </div>
-
-            <div>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading}
-              >
-                {loading ? 'Signing in...' : 'Sign In'}
-              </Button>
-            </div>
-
-            <div className="text-center space-y-2">
-              <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
                 <button
                   type="button"
-                  onClick={() => setShowRegistration(true)}
-                  className="font-medium text-blue-600 hover:text-blue-500"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
                 >
-                  Register here
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-[#4f4f56]" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-[#4f4f56]" />
+                  )}
                 </button>
-              </p>
+              </div>
             </div>
+            
+            <Button 
+              type="submit" 
+              className="w-full bg-[#797a83] hover:bg-[#4f4f56] text-[#f7f7f6] font-semibold" 
+              disabled={loading}
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </Button>
           </form>
+          
+          <div className="mt-6 text-center space-y-3">
+            <button
+              onClick={() => setShowRegistration(true)}
+              className="text-[#4f4f56] hover:underline"
+            >
+              Don't have an account? Register here
+            </button>
+            <div>
+              <Link to="/" className="text-[#171a21] hover:underline">
+                ← Back to Home
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>
   );
-};
-
-export default VendorLogin;
+}
