@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const Logo = () => {
   return (
-    <Link to="/admin/enhanced-dashboard" className="flex items-center space-x-2">
+    <Link to="/admin/dashboard" className="flex items-center space-x-2">
       <img 
         src="/pvmart-logo.png" 
         alt="PVMart Logo" 
