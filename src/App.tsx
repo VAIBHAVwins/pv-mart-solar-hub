@@ -25,6 +25,7 @@ import QuotationForm from "@/pages/vendor/QuotationForm";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminEnhancedDashboard from "@/pages/admin/EnhancedDashboard";
+import UnifiedAdminDashboard from "@/pages/admin/UnifiedDashboard";
 import AdminCustomers from "@/pages/admin/Customers";
 import AdminVendors from "@/pages/admin/Vendors";
 import AdminUsers from "@/pages/admin/AdminUsers";
@@ -127,6 +128,10 @@ const router = createBrowserRouter([
   {
     path: "/admin/enhanced-dashboard",
     element: <AdminEnhancedDashboard />,
+  },
+  {
+    path: "/admin/unified-dashboard",
+    element: <UnifiedAdminDashboard />,
   },
   {
     path: "/admin/customers",
