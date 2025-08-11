@@ -21,13 +21,23 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Twilio credentials from secrets
-    const accountSid = Deno.env.get('Twilio Account SID');
-    const authToken = Deno.env.get('Twilio Auth Token');
-    const verifySid = Deno.env.get('Twilio Verify Service SID');
+    // Try to get Twilio credentials with different naming patterns
+    let accountSid = Deno.env.get('TWILIO_ACCOUNT_SID') || Deno.env.get('Twilio Account SID');
+    let authToken = Deno.env.get('TWILIO_AUTH_TOKEN') || Deno.env.get('Twilio Auth Token');
+    let verifySid = Deno.env.get('TWILIO_VERIFY_SERVICE_SID') || Deno.env.get('Twilio Verify Service SID');
+
+    console.log('Environment check:', {
+      accountSid: accountSid ? 'Found' : 'Missing',
+      authToken: authToken ? 'Found' : 'Missing',
+      verifySid: verifySid ? 'Found' : 'Missing'
+    });
 
     if (!accountSid || !authToken || !verifySid) {
-      console.error('Missing Twilio credentials');
+      console.error('Missing Twilio credentials:', {
+        accountSid: !!accountSid,
+        authToken: !!authToken,
+        verifySid: !!verifySid
+      });
       return new Response(
         JSON.stringify({ error: 'SMS service not configured' }),
         { 
@@ -62,7 +72,7 @@ serve(async (req) => {
     if (!response.ok) {
       console.error('Twilio error:', twilioData);
       return new Response(
-        JSON.stringify({ error: 'Failed to send OTP' }),
+        JSON.stringify({ error: 'Failed to send OTP. Please check your phone number.' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -70,16 +80,16 @@ serve(async (req) => {
       );
     }
 
-    console.log('OTP sent successfully:', twilioData);
+    console.log('OTP sent successfully:', twilioData.status);
 
-    // Store OTP verification record in database
+    // Store OTP verification record in database (expires in 5 minutes)
     const { error: dbError } = await supabase
       .from('mobile_otp_verifications')
       .insert({
         phone: normalizedPhone,
         otp_code: 'TWILIO_MANAGED', // Twilio manages the actual OTP
         user_type: userType,
-        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes
+        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 minutes
       });
 
     if (dbError) {
@@ -89,8 +99,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'OTP sent successfully',
-        sid: twilioData.sid 
+        message: 'OTP sent successfully to your phone number'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

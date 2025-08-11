@@ -3,10 +3,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, User, Mail, Phone, Lock, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 interface CustomerRegistrationFormProps {
   onOTPRequired: (phone: string) => void;
@@ -16,7 +15,6 @@ interface CustomerRegistrationFormProps {
 export function CustomerRegistrationForm({ onOTPRequired, onBack }: CustomerRegistrationFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -33,25 +31,20 @@ export function CustomerRegistrationForm({ onOTPRequired, onBack }: CustomerRegi
   };
 
   const validateForm = () => {
-    const requiredFields = ['fullName', 'phone', 'email', 'password', 'confirmPassword'];
-    
-    for (const field of requiredFields) {
-      if (!formData[field as keyof typeof formData] || (formData[field as keyof typeof formData] as string).trim() === '') {
-        setError(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} is required`);
-        return false;
-      }
+    if (!formData.fullName.trim()) {
+      setError('Full name is required');
+      return false;
     }
-
-    if (formData.phone.length !== 10) {
+    if (!formData.phone.trim() || formData.phone.length !== 10) {
       setError('Please enter a valid 10-digit phone number');
       return false;
     }
-    if (!formData.email.includes('@')) {
+    if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
       setError('Please enter a valid email address');
       return false;
     }
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long');
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
@@ -61,49 +54,49 @@ export function CustomerRegistrationForm({ onOTPRequired, onBack }: CustomerRegi
     return true;
   };
 
-  const normalizePhone = (phone: string) => {
-    const cleaned = phone.replace(/[^\d]/g, '');
-    if (cleaned.length === 10) {
-      return `+91${cleaned}`;
-    }
-    return phone;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     setError('');
 
     try {
-      const normalizedPhone = normalizePhone(formData.phone);
+      // Sign out any existing session first
+      await supabase.auth.signOut();
 
-      // Check if user already exists with this email or phone
-      const { data: existingUser } = await supabase
+      const normalizedPhone = `+91${formData.phone}`;
+
+      // Check if email or phone already exists
+      const { data: existingUsers, error: checkError } = await supabase
         .from('users')
-        .select('email, phone, role')
-        .or(`email.eq.${formData.email},phone.eq.${normalizedPhone}`)
-        .maybeSingle();
+        .select('email, phone')
+        .or(`email.eq.${formData.email},phone.eq.${normalizedPhone}`);
 
-      if (existingUser) {
-        if (existingUser.email === formData.email) {
-          setError('An account with this email already exists');
-        } else if (existingUser.phone === normalizedPhone) {
-          setError('An account with this phone number already exists');
-        }
+      if (checkError) {
+        console.error('Error checking existing users:', checkError);
+        setError('Failed to validate user data. Please try again.');
         return;
       }
 
-      // Create user account with Supabase Auth
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      if (existingUsers && existingUsers.length > 0) {
+        const existingUser = existingUsers[0];
+        if (existingUser.email === formData.email) {
+          setError('An account with this email already exists');
+          return;
+        }
+        if (existingUser.phone === normalizedPhone) {
+          setError('An account with this phone number already exists');
+          return;
+        }
+      }
+
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/customer/dashboard`,
           data: {
             full_name: formData.fullName,
             phone: normalizedPhone,
@@ -112,31 +105,32 @@ export function CustomerRegistrationForm({ onOTPRequired, onBack }: CustomerRegi
         }
       });
 
-      if (signUpError) {
-        setError(signUpError.message);
+      if (authError) {
+        console.error('Auth error:', authError);
+        setError(authError.message);
         return;
       }
 
-      if (data.user) {
-        // Send OTP using Twilio via edge function
-        const { data: otpResponse, error: otpError } = await supabase.functions.invoke('send-otp', {
-          body: {
+      if (authData.user) {
+        // Send OTP
+        const otpResponse = await fetch('https://nchxapviawfjtcsvjvfl.supabase.co/functions/v1/send-otp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             phone: normalizedPhone,
             userType: 'customer'
-          }
+          }),
         });
 
-        if (otpError) {
-          setError('Failed to send OTP. Please try again.');
-          return;
+        const otpData = await otpResponse.json();
+
+        if (otpData.success) {
+          onOTPRequired(normalizedPhone);
+        } else {
+          setError(otpData.error || 'Failed to send OTP. Please try again.');
         }
-
-        toast({
-          title: "Registration Initiated",
-          description: "Please verify your phone number with the OTP sent to your mobile."
-        });
-
-        onOTPRequired(formData.phone);
       }
     } catch (err: any) {
       console.error('Registration error:', err);
@@ -147,61 +141,69 @@ export function CustomerRegistrationForm({ onOTPRequired, onBack }: CustomerRegi
   };
 
   return (
-    <Card className="w-full max-w-lg mx-auto">
+    <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
+        <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+          <User className="w-8 h-8 text-green-600" />
+        </div>
         <CardTitle className="text-2xl font-bold">Customer Registration</CardTitle>
         <CardDescription>
           Create your account to access solar solutions
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
               Full Name *
             </label>
-            <Input
-              id="fullName"
-              name="fullName"
-              type="text"
-              placeholder="Enter your full name"
-              value={formData.fullName}
-              onChange={handleInputChange}
-              required
-              disabled={loading}
-              className="h-12"
-            />
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                id="fullName"
+                name="fullName"
+                type="text"
+                placeholder="Enter your full name"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                required
+                disabled={loading}
+                className="pl-10"
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number *
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 text-sm">+91</span>
-                </div>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="9876543210"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  required
-                  disabled={loading}
-                  className="pl-12 h-12"
-                  maxLength={10}
-                />
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+              Phone Number *
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <div className="absolute left-10 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                +91
               </div>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder="9876543210"
+                value={formData.phone}
+                onChange={handleInputChange}
+                required
+                disabled={loading}
+                className="pl-16"
+                maxLength={10}
+              />
             </div>
+          </div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address *
-              </label>
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              Email Address *
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 id="email"
                 name="email"
@@ -211,33 +213,37 @@ export function CustomerRegistrationForm({ onOTPRequired, onBack }: CustomerRegi
                 onChange={handleInputChange}
                 required
                 disabled={loading}
-                className="h-12"
+                className="pl-10"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password *
-              </label>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              Password *
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 id="password"
                 name="password"
                 type="password"
-                placeholder="Create a password (min 8 characters)"
+                placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleInputChange}
                 required
                 disabled={loading}
-                className="h-12"
+                className="pl-10"
               />
             </div>
+          </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password *
-              </label>
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              Confirm Password *
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
@@ -247,21 +253,21 @@ export function CustomerRegistrationForm({ onOTPRequired, onBack }: CustomerRegi
                 onChange={handleInputChange}
                 required
                 disabled={loading}
-                className="h-12"
+                className="pl-10"
               />
             </div>
           </div>
 
           {error && (
             <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
+              <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           <Button
             type="submit"
-            className="w-full h-12 text-base font-medium"
+            className="w-full"
             disabled={loading}
           >
             {loading ? 'Creating Account...' : 'Register'}
@@ -271,8 +277,10 @@ export function CustomerRegistrationForm({ onOTPRequired, onBack }: CustomerRegi
             type="button"
             variant="ghost"
             onClick={onBack}
+            disabled={loading}
             className="w-full"
           >
+            <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Login
           </Button>
         </form>

@@ -21,10 +21,10 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Twilio credentials from secrets
-    const accountSid = Deno.env.get('Twilio Account SID');
-    const authToken = Deno.env.get('Twilio Auth Token');
-    const verifySid = Deno.env.get('Twilio Verify Service SID');
+    // Try to get Twilio credentials with different naming patterns
+    let accountSid = Deno.env.get('TWILIO_ACCOUNT_SID') || Deno.env.get('Twilio Account SID');
+    let authToken = Deno.env.get('TWILIO_AUTH_TOKEN') || Deno.env.get('Twilio Auth Token');
+    let verifySid = Deno.env.get('TWILIO_VERIFY_SERVICE_SID') || Deno.env.get('Twilio Verify Service SID');
 
     if (!accountSid || !authToken || !verifySid) {
       console.error('Missing Twilio credentials');
@@ -64,7 +64,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Invalid or expired OTP' 
+          error: 'Invalid or expired OTP. Please try again.' 
         }),
         { 
           status: 400, 
@@ -73,7 +73,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('OTP verified successfully:', twilioData);
+    console.log('OTP verified successfully');
 
     // Mark OTP as used in database
     const { error: dbError } = await supabase

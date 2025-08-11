@@ -48,6 +48,9 @@ export function UnifiedLoginForm({ userType, onRegisterClick }: UnifiedLoginForm
     setError('');
 
     try {
+      // Sign out any existing session first
+      await supabase.auth.signOut();
+
       let signInData;
       
       if (loginMethod === 'email') {
@@ -98,45 +101,57 @@ export function UnifiedLoginForm({ userType, onRegisterClick }: UnifiedLoginForm
       }
 
       if (data.user) {
-        // Check user role
-        const { data: userRole, error: roleError } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', data.user.id)
-          .single();
+        // Wait a moment for the trigger to populate the users table
+        setTimeout(async () => {
+          try {
+            // Check user role
+            const { data: userRole, error: roleError } = await supabase
+              .from('users')
+              .select('role')
+              .eq('id', data.user.id)
+              .single();
 
-        if (roleError) {
-          setError('Failed to verify user role');
-          return;
-        }
+            if (roleError) {
+              console.error('Role fetch error:', roleError);
+              setError('Failed to verify user role. Please contact support.');
+              await supabase.auth.signOut();
+              return;
+            }
 
-        // Validate user type matches login page
-        if (userRole.role !== userType) {
-          if (userType === 'customer' && userRole.role === 'vendor') {
-            setError('You are registered as a vendor. Please use the vendor login page to access your dashboard.');
-          } else if (userType === 'vendor' && userRole.role === 'customer') {
-            setError('You are registered as a customer. Please use the customer login page to access your dashboard.');
-          } else {
-            setError('Invalid user type for this login page.');
+            // Validate user type matches login page
+            if (userRole.role !== userType) {
+              if (userType === 'customer' && userRole.role === 'vendor') {
+                setError('You are registered as a vendor. Please use the vendor login page to access your dashboard.');
+              } else if (userType === 'vendor' && userRole.role === 'customer') {
+                setError('You are registered as a customer. Please use the customer login page to access your dashboard.');
+              } else {
+                setError('Invalid user type for this login page.');
+              }
+              
+              // Sign out the user since they're on wrong page
+              await supabase.auth.signOut();
+              setLoading(false);
+              return;
+            }
+
+            toast({
+              title: "Login Successful",
+              description: `Welcome back! Redirecting to your ${userType} dashboard.`
+            });
+
+            // Redirect to appropriate dashboard
+            navigate(`/${userType}/dashboard`);
+          } catch (err: any) {
+            console.error('Post-login error:', err);
+            setError('Login completed but verification failed. Please try again.');
+            await supabase.auth.signOut();
+            setLoading(false);
           }
-          
-          // Sign out the user since they're on wrong page
-          await supabase.auth.signOut();
-          return;
-        }
-
-        toast({
-          title: "Login Successful",
-          description: `Welcome back! Redirecting to your ${userType} dashboard.`
-        });
-
-        // Redirect to appropriate dashboard
-        navigate(`/${userType}/dashboard`);
+        }, 1000);
       }
     } catch (err: any) {
       console.error('Login error:', err);
       setError('Login failed. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
