@@ -137,43 +137,25 @@ const CustomerRequirementForm: React.FC = () => {
         }
       }
 
-      // For now, use a direct SQL insert since the table types aren't updated yet
-      const { error } = await supabase.rpc('insert_customer_requirement', {
-        p_requirement_id: formData.requirementId,
-        p_customer_id: user.id,
-        p_customer_name: userProfile.full_name || '',
-        p_customer_email: userProfile.email || '',
-        p_customer_phone: userProfile.phone || '',
-        p_installation_address: formData.installationAddress,
-        p_latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-        p_longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-        p_state: formData.state,
-        p_district: formData.district,
-        p_rooftop_area: formData.rooftopArea || null,
-        p_electricity_provider: formData.electricityProvider,
-        p_consumer_id: formData.consumerId,
-        p_highest_monthly_bill: formData.highestMonthlyBill,
-        p_bill_pdf_path: billPdfPath
-      });
+      // Insert into customer_requirements table using existing schema
+      const { error } = await supabase
+        .from('customer_requirements')
+        .insert({
+          customer_id: user.id,
+          customer_name: userProfile.full_name || '',
+          customer_email: userProfile.email || '',
+          customer_phone: userProfile.phone || '',
+          address: formData.installationAddress,
+          pincode: '', // Required field in existing schema - we'll use empty string for now
+          monthly_bill: formData.highestMonthlyBill,
+          system_type: 'residential' as any,
+          installation_type: 'rooftop' as any
+        });
 
       if (error) {
         console.error('Error submitting requirement:', error);
-        // Fallback to direct table insert with existing schema
-        const { error: insertError } = await supabase
-          .from('customer_requirements')
-          .insert({
-            customer_id: user.id,
-            customer_name: userProfile.full_name || '',
-            customer_email: userProfile.email || '',
-            customer_phone: userProfile.phone || '',
-            address: formData.installationAddress,
-            pincode: '', // Required field in existing schema
-            monthly_bill: formData.highestMonthlyBill,
-            system_type: 'residential' as any,
-            installation_type: 'rooftop' as any
-          });
-
-        if (insertError) throw insertError;
+        toast.error('Failed to submit requirement. Please try again.');
+        return;
       }
 
       toast.success(`Requirement ${formData.requirementId} submitted successfully!`);
