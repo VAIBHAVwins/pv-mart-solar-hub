@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
@@ -22,6 +22,29 @@ const AdminSidebar = () => {
   const location = useLocation();
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
+  // Load calculator section state from localStorage and auto-open based on current route
+  useEffect(() => {
+    const saved = localStorage.getItem('admin-calculator-section-open');
+    const shouldAutoOpen = location.pathname.includes('/admin/bihar-tariff-manager') || 
+                          location.pathname.includes('/admin/cesc-tariff-manager') ||
+                          location.pathname.includes('/admin/providers') ||
+                          location.pathname.includes('/admin/tariff-config') ||
+                          location.pathname.includes('/admin/bill-analytics');
+    
+    if (shouldAutoOpen) {
+      setIsCalculatorOpen(true);
+    } else if (saved !== null) {
+      setIsCalculatorOpen(JSON.parse(saved));
+    } else {
+      setIsCalculatorOpen(true); // Default to open
+    }
+  }, [location.pathname]);
+
+  // Save calculator section state to localStorage
+  useEffect(() => {
+    localStorage.setItem('admin-calculator-section-open', JSON.stringify(isCalculatorOpen));
+  }, [isCalculatorOpen]);
+
   const isActive = (path: string) => location.pathname === path;
   
   const menuItems = [
@@ -37,6 +60,7 @@ const AdminSidebar = () => {
 
   const calculatorItems = [
     { path: '/admin/bihar-tariff-manager', icon: Zap, label: 'Bihar Tariff Manager' },
+    { path: '/admin/cesc-tariff-manager', icon: Zap, label: 'CESC Tariff Manager' },
     { path: '/admin/providers', icon: Database, label: 'Electricity Providers' },
     { path: '/admin/tariff-config', icon: Settings, label: 'Tariff Configuration' },
     { path: '/admin/bill-analytics', icon: BarChart3, label: 'Bill Analytics' },
