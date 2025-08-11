@@ -15,14 +15,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Provider {
   id: string;
-  code: string;
   name: string;
-  supports_lifeline: boolean;
-  lifeline_unit_threshold: number;
-  lifeline_requires_registration: boolean;
-  supports_timely_rebate: boolean;
-  meter_rent: number;
-  fixed_charge_per_kva: number;
+  is_active: boolean;
 }
 
 const EnhancedBillCalculator = () => {
@@ -63,7 +57,7 @@ const EnhancedBillCalculator = () => {
   const fetchProviders = async () => {
     try {
       const { data, error } = await supabase
-        .from('providers')
+        .from('electricity_providers')
         .select('*')
         .eq('is_active', true)
         .order('name');
@@ -96,7 +90,7 @@ const EnhancedBillCalculator = () => {
 
     try {
       const result = await calculateBill({
-        provider_code: selectedProvider.code,
+        provider_code: selectedProvider.name,
         year,
         month,
         units_kwh: unitsConsumed,
@@ -244,12 +238,6 @@ const EnhancedBillCalculator = () => {
                 onChange={(e) => setUnitsConsumed(parseFloat(e.target.value) || 0)}
                 placeholder="Enter units from your meter reading"
               />
-              {selectedProvider?.supports_lifeline && (
-                <p className="text-sm text-blue-600 mt-1">
-                  <Info className="w-4 h-4 inline mr-1" />
-                  Lifeline rate applies for first {selectedProvider.lifeline_unit_threshold} units
-                </p>
-              )}
             </div>
 
             {/* Sanctioned Load */}
@@ -269,42 +257,22 @@ const EnhancedBillCalculator = () => {
               </p>
             </div>
 
-            {/* Conditional Options */}
-            {selectedProvider?.supports_timely_rebate && (
-              <div className="flex items-center space-x-2 p-4 bg-green-50 rounded-lg">
-                <Switch
-                  id="timely-payment"
-                  checked={timelyPaymentOptIn}
-                  onCheckedChange={setTimelyPaymentOptIn}
-                />
-                <div>
-                  <Label htmlFor="timely-payment" className="font-medium">
-                    Timely Payment Rebate
-                  </Label>
-                  <p className="text-sm text-gray-600">
-                    Get rebate for paying your bill on time
-                  </p>
-                </div>
+            {/* Timely Payment Option */}
+            <div className="flex items-center space-x-2 p-4 bg-green-50 rounded-lg">
+              <Switch
+                id="timely-payment"
+                checked={timelyPaymentOptIn}
+                onCheckedChange={setTimelyPaymentOptIn}
+              />
+              <div>
+                <Label htmlFor="timely-payment" className="font-medium">
+                  Timely Payment Rebate
+                </Label>
+                <p className="text-sm text-gray-600">
+                  Get rebate for paying your bill on time
+                </p>
               </div>
-            )}
-
-            {selectedProvider?.supports_lifeline && selectedProvider?.lifeline_requires_registration && (
-              <div className="flex items-center space-x-2 p-4 bg-blue-50 rounded-lg">
-                <Checkbox
-                  id="lifeline"
-                  checked={isLifelineRegistered}
-                  onCheckedChange={(checked) => setIsLifelineRegistered(checked === true)}
-                />
-                <div>
-                  <Label htmlFor="lifeline" className="font-medium">
-                    Lifeline Consumer Registration
-                  </Label>
-                  <p className="text-sm text-gray-600">
-                    Check if you are registered as a lifeline consumer
-                  </p>
-                </div>
-              </div>
-            )}
+            </div>
 
             {/* Auto-detection notice */}
             <Alert>
@@ -345,7 +313,7 @@ const EnhancedBillCalculator = () => {
                         {billResult.applied_rules.lifeline_applied && (
                           <div className="flex items-center gap-2 text-green-700">
                             <CheckCircle className="w-4 h-4" />
-                            Lifeline rate applied for first {selectedProvider?.lifeline_unit_threshold} units
+                            Lifeline rate applied
                           </div>
                         )}
                         {billResult.applied_rules.timely_payment_applied && (

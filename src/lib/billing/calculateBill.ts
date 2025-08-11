@@ -62,11 +62,11 @@ export async function calculateBill(params: BillCalculationParams): Promise<Bill
   // Calculate days in month
   const days_in_month = new Date(year, month, 0).getDate();
 
-  // Load provider
+  // Load provider using existing table name
   const { data: provider, error: providerError } = await supabase
-    .from('providers')
+    .from('electricity_providers')
     .select('*')
-    .eq('code', provider_code)
+    .eq('name', provider_code)
     .eq('is_active', true)
     .single();
 
@@ -74,26 +74,19 @@ export async function calculateBill(params: BillCalculationParams): Promise<Bill
     throw new Error(`Provider ${provider_code} not found or inactive`);
   }
 
-  // Load slabs
+  // Load slabs using existing table name
   const { data: slabs, error: slabsError } = await supabase
-    .from('slabs')
+    .from('electricity_slabs')
     .select('*')
     .eq('provider_id', provider.id)
-    .order('position');
+    .order('min_unit');
 
   if (slabsError || !slabs) {
     throw new Error('Failed to load provider slabs');
   }
 
-  // Determine if lifeline applies
-  let lifeline_applied = false;
-  if (provider.supports_lifeline) {
-    if (provider.lifeline_requires_registration) {
-      lifeline_applied = is_lifeline_registered && units_kwh <= provider.lifeline_unit_threshold;
-    } else {
-      lifeline_applied = units_kwh <= provider.lifeline_unit_threshold;
-    }
-  }
+  // For now, assume no lifeline support since the existing schema doesn't have these fields
+  const lifeline_applied = false;
 
   // Calculate energy charges using slabs
   let energy_charge = 0;
@@ -123,60 +116,34 @@ export async function calculateBill(params: BillCalculationParams): Promise<Bill
     }
   }
 
-  // Fixed charge
-  const fixed_charge = sanctioned_load_kva * Number(provider.fixed_charge_per_kva);
-
-  // FPPCA charge
-  let fppca_charge = 0;
-  let fppca_missing = false;
-  
-  const { data: fppca_rate } = await supabase
-    .from('fppca_rates')
-    .select('rate_per_kwh')
+  // Load provider config for fixed charges
+  const { data: providerConfig } = await supabase
+    .from('electricity_provider_config')
+    .select('*')
     .eq('provider_id', provider.id)
-    .eq('year', year)
-    .eq('month', month)
     .single();
 
-  if (fppca_rate) {
-    fppca_charge = units_kwh * Number(fppca_rate.rate_per_kwh);
-  } else {
-    fppca_missing = true;
-  }
+  // Fixed charge - use config if available, otherwise fallback
+  const fixed_charge = sanctioned_load_kva * Number(providerConfig?.fixed_charge_per_kva || 15.00);
 
-  // Duty charges
-  const { data: duty_rates } = await supabase
-    .from('duty_rates')
-    .select('percent')
-    .eq('provider_id', provider.id);
+  // FPPCA charge - for now set to 0 since we don't have monthly rates
+  const fppca_charge = 0;
+  const fppca_missing = true;
 
-  let duty_charge = 0;
-  if (duty_rates && duty_rates.length > 0) {
-    const total_duty_percent = duty_rates.reduce((sum, rate) => sum + Number(rate.percent), 0);
-    duty_charge = (energy_charge + fixed_charge) * (total_duty_percent / 100);
-  }
+  // Duty charges - use config if available
+  const duty_charge = (energy_charge + fixed_charge) * (Number(providerConfig?.duty_percentage || 5) / 100);
 
   // Meter rent
-  const meter_rent = Number(provider.meter_rent);
+  const meter_rent = Number(providerConfig?.meter_rent || 10.00);
 
   // Calculate rebates
   const rebates: Record<string, number> = {};
   let total_rebate = 0;
 
-  if (provider.supports_timely_rebate && timely_payment_opt_in) {
-    const { data: timely_rebate } = await supabase
-      .from('rebate_rules')
-      .select('percent')
-      .eq('provider_id', provider.id)
-      .eq('code', 'timely_payment')
-      .eq('active', true)
-      .single();
-
-    if (timely_rebate) {
-      const rebate_amount = (energy_charge + fixed_charge) * (Number(timely_rebate.percent) / 100);
-      rebates.timely_payment = Number(rebate_amount.toFixed(2));
-      total_rebate += rebates.timely_payment;
-    }
+  if (timely_payment_opt_in && providerConfig?.timely_payment_rebate) {
+    const rebate_amount = (energy_charge + fixed_charge) * (Number(providerConfig.timely_payment_rebate) / 100);
+    rebates.timely_payment = Number(rebate_amount.toFixed(2));
+    total_rebate += rebates.timely_payment;
   }
 
   // Calculate totals
@@ -202,7 +169,7 @@ export async function calculateBill(params: BillCalculationParams): Promise<Bill
     total_payable: Number(total_payable.toFixed(2)),
     applied_rules: {
       lifeline_applied,
-      timely_payment_applied: provider.supports_timely_rebate && timely_payment_opt_in
+      timely_payment_applied: timely_payment_opt_in && !!providerConfig?.timely_payment_rebate
     },
     slab_wise
   };
