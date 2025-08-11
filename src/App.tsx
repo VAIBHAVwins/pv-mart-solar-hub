@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -119,6 +119,10 @@ const App = () => (
           {/* Tools routes */}
           <Route path="/tools/load-calculation" element={<LoadCalculation />} />
           <Route path="/tools/bill-calculator" element={<UnifiedBillCalculator />} />
+          
+          {/* Redirect old calculator routes to unified calculator */}
+          <Route path="/tools/bihar-bill-calculator" element={<Navigate to="/tools/bill-calculator" replace />} />
+          <Route path="/tools/enhanced-bill-calculator" element={<Navigate to="/tools/bill-calculator" replace />} />
           
           {/* Catch all route */}
           <Route path="*" element={<NotFound />} />

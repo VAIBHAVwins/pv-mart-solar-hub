@@ -9,7 +9,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Calculator, Zap, Settings } from "lucide-react";
+import { Calculator, Wrench } from "lucide-react";
 
 const NavigationMenuDemo = () => {
   return (
@@ -29,42 +29,10 @@ const NavigationMenuDemo = () => {
                   >
                     <Calculator className="h-6 w-6 text-blue-600" />
                     <div className="mb-2 mt-4 text-lg font-medium text-blue-900">
-                      Bill Calculator
+                      Electricity Bill Calculator
                     </div>
                     <p className="text-sm leading-tight text-blue-700">
-                      Calculate your electricity bill with detailed breakdown
-                    </p>
-                  </Link>
-                </NavigationMenuLink>
-              </li>
-              <li>
-                <NavigationMenuLink asChild>
-                  <Link
-                    to="/tools/bihar-bill-calculator"
-                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-orange-600" />
-                      <div className="text-sm font-medium leading-none">Bihar Bill Calculator</div>
-                    </div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      Specialized calculator for Bihar (NBPCL/SBPCL) with lifeline rates
-                    </p>
-                  </Link>
-                </NavigationMenuLink>
-              </li>
-              <li>
-                <NavigationMenuLink asChild>
-                  <Link
-                    to="/tools/enhanced-bill-calculator"
-                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Settings className="h-4 w-4 text-green-600" />
-                      <div className="text-sm font-medium leading-none">Enhanced Calculator</div>
-                    </div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      Advanced bill calculator with multiple provider support
+                      Calculate your electricity bill for CESC and Bihar (NBPCL/SBPCL) providers with detailed breakdown
                     </p>
                   </Link>
                 </NavigationMenuLink>
@@ -75,7 +43,10 @@ const NavigationMenuDemo = () => {
                     to="/tools/load-calculation"
                     className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                   >
-                    <div className="text-sm font-medium leading-none">Load Calculation</div>
+                    <div className="flex items-center gap-2">
+                      <Wrench className="h-4 w-4 text-green-600" />
+                      <div className="text-sm font-medium leading-none">Load Calculation</div>
+                    </div>
                     <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
                       Calculate electrical load requirements for your home
                     </p>
