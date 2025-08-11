@@ -7,66 +7,19 @@ import AdminSidebar from '@/components/admin/AdminSidebar';
 import DashboardStats from '@/components/admin/DashboardStats';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogOut, RefreshCw, Bell, Calendar, TrendingUp } from 'lucide-react';
+import { LogOut, RefreshCw, Bell, Calendar, TrendingUp, Calculator, Zap, Database, Settings, Users, FileText } from 'lucide-react';
 
 const EnhancedAdminDashboard = () => {
   const { user, signOut } = useSupabaseAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-
-  useEffect(() => {
-    const checkAuthorization = async () => {
-      if (!user?.email) {
-        navigate('/admin/login');
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('admin_users')
-          .select('email, is_active')
-          .eq('email', user.email)
-          .eq('is_active', true)
-          .single();
-
-        if (error || !data) {
-          console.error('Admin authorization failed:', error);
-          navigate('/admin/login');
-          return;
-        }
-
-        setIsAuthorized(true);
-      } catch (error) {
-        console.error('Authorization check error:', error);
-        navigate('/admin/login');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuthorization();
-  }, [user, navigate]);
+  const [loading, setLoading] = useState(false);
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/admin/login');
+    if (user) {
+      await signOut();
+    }
+    navigate('/');
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Verifying admin access...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthorized) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -78,7 +31,7 @@ const EnhancedAdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600">Welcome back, {user?.email}</p>
+              <p className="text-gray-600">PV Mart Control Center - {user?.email || 'Direct Access'}</p>
             </div>
             
             <div className="flex items-center space-x-4">
@@ -94,7 +47,7 @@ const EnhancedAdminDashboard = () => {
               
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
+                {user ? 'Sign Out' : 'Go Home'}
               </Button>
             </div>
           </div>
@@ -141,6 +94,66 @@ const EnhancedAdminDashboard = () => {
               <DashboardStats />
             </div>
 
+            {/* Electricity Bill Calculator Management Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Calculator className="w-5 h-5 mr-2 text-blue-600" />
+                  Electricity Bill Calculator Management
+                </CardTitle>
+                <CardDescription>
+                  Manage electricity providers, tariff rates, and billing configurations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Button 
+                    variant="outline" 
+                    className="h-auto p-4 flex flex-col items-center space-y-2"
+                    onClick={() => navigate('/admin/bihar-tariff-manager')}
+                  >
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Zap className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-medium">Bihar Tariff Manager</span>
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="h-auto p-4 flex flex-col items-center space-y-2"
+                    onClick={() => navigate('/admin/providers')}
+                  >
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <Database className="w-4 h-4 text-green-600" />
+                    </div>
+                    <span className="text-sm font-medium">Electricity Providers</span>
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="h-auto p-4 flex flex-col items-center space-y-2"
+                    onClick={() => navigate('/admin/tariff-config')}
+                  >
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Settings className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <span className="text-sm font-medium">Tariff Configuration</span>
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="h-auto p-4 flex flex-col items-center space-y-2"
+                    onClick={() => navigate('/admin/bill-analytics')}
+                  >
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                      <FileText className="w-4 h-4 text-orange-600" />
+                    </div>
+                    <span className="text-sm font-medium">Bill Analytics</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Quick Actions */}
             <Card>
               <CardHeader>
@@ -154,7 +167,7 @@ const EnhancedAdminDashboard = () => {
                   <Button 
                     variant="outline" 
                     className="h-auto p-4 flex flex-col items-center space-y-2"
-                    onClick={() => navigate('/admin/banners')}
+                    onClick={() => navigate('/admin/hero-banners')}
                   >
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                       <span className="text-blue-600 text-sm font-bold">+</span>
@@ -165,7 +178,7 @@ const EnhancedAdminDashboard = () => {
                   <Button 
                     variant="outline" 
                     className="h-auto p-4 flex flex-col items-center space-y-2"
-                    onClick={() => navigate('/admin/blogs')}
+                    onClick={() => navigate('/admin/blog-manager')}
                   >
                     <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                       <span className="text-green-600 text-sm font-bold">+</span>
@@ -179,9 +192,9 @@ const EnhancedAdminDashboard = () => {
                     onClick={() => navigate('/admin/users')}
                   >
                     <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                      <span className="text-purple-600 text-sm font-bold">+</span>
+                      <Users className="w-4 h-4 text-purple-600" />
                     </div>
-                    <span className="text-sm font-medium">Add Admin User</span>
+                    <span className="text-sm font-medium">Manage Users</span>
                   </Button>
                   
                   <Button 

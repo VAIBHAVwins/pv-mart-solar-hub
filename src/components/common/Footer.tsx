@@ -10,7 +10,7 @@ const Footer = () => {
               <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-sm">PV</span>
               </div>
-              <Link to="/admin/login" className="text-xl font-bold hover:text-yellow-400 transition-colors">
+              <Link to="/admin/enhanced-dashboard" className="text-xl font-bold hover:text-yellow-400 transition-colors">
                 PV MART
               </Link>
             </div>
