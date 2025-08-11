@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -23,8 +23,6 @@ import QuotationForm from "@/pages/vendor/QuotationForm";
 
 // Admin pages
 import AdminLogin from "@/pages/admin/AdminLogin";
-import AdminDashboard from "@/pages/admin/Dashboard";
-import AdminEnhancedDashboard from "@/pages/admin/EnhancedDashboard";
 import UnifiedAdminDashboard from "@/pages/admin/UnifiedDashboard";
 import AdminCustomers from "@/pages/admin/Customers";
 import AdminVendors from "@/pages/admin/Vendors";
@@ -123,11 +121,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/admin/dashboard",
-    element: <AdminDashboard />,
+    element: <Navigate to="/admin/unified-dashboard" replace />,
   },
   {
     path: "/admin/enhanced-dashboard",
-    element: <AdminEnhancedDashboard />,
+    element: <Navigate to="/admin/unified-dashboard" replace />,
   },
   {
     path: "/admin/unified-dashboard",

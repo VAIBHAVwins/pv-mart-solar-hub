@@ -25,7 +25,7 @@ const AdminSidebar = () => {
   const isActive = (path: string) => location.pathname === path;
   
   const menuItems = [
-    { path: '/admin/enhanced-dashboard', icon: Home, label: 'Dashboard' },
+    { path: '/admin/unified-dashboard', icon: Home, label: 'Dashboard' },
     { path: '/admin/customers', icon: Users, label: 'Customers' },
     { path: '/admin/vendors', icon: Users, label: 'Vendors' },
     { path: '/admin/requirements', icon: FileText, label: 'Requirements' },
