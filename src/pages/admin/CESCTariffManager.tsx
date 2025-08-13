@@ -1,18 +1,13 @@
 
-import React from 'react';
 import Layout from '@/components/layout/Layout';
-import TariffManagerBase from '@/components/admin/tariff/TariffManagerBase';
+import CESCTariffManager from '@/components/admin/tariff/CESCTariffManager';
 
-const CESCTariffManager = () => {
+const CESCTariffManagerPage = () => {
   return (
     <Layout>
-      <TariffManagerBase
-        providerCode="CESC"
-        title="CESC Tariff Management"
-        description="Manage CESC (Calcutta Electric Supply Corporation) tariffs, slabs, and provider configurations."
-      />
+      <CESCTariffManager />
     </Layout>
   );
 };
 
-export default CESCTariffManager;
+export default CESCTariffManagerPage;

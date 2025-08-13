@@ -254,6 +254,41 @@ export type Database = {
           },
         ]
       }
+      electricity_fppca_rates: {
+        Row: {
+          created_at: string
+          id: string
+          month: number
+          provider_id: string
+          rate_per_unit: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month: number
+          provider_id: string
+          rate_per_unit: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: number
+          provider_id?: string
+          rate_per_unit?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "electricity_fppca_rates_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "electricity_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       electricity_provider_config: {
         Row: {
           created_at: string

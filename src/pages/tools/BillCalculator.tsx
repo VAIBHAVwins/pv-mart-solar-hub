@@ -1,13 +1,13 @@
 
 import Layout from '@/components/layout/Layout';
-import BillCalculatorComponent from '@/components/tools/BillCalculator';
+import RestoredBillCalculator from '@/components/tools/RestoredBillCalculator';
 
-const BillCalculator = () => {
+const BillCalculatorPage = () => {
   return (
     <Layout>
-      <BillCalculatorComponent />
+      <RestoredBillCalculator />
     </Layout>
   );
 };
 
-export default BillCalculator;
+export default BillCalculatorPage;
