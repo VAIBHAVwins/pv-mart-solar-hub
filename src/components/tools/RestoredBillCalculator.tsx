@@ -26,6 +26,7 @@ const RestoredBillCalculator = () => {
   // Input states
   const [unitsConsumed, setUnitsConsumed] = useState<number>(0);
   const [sanctionedLoad, setSanctionedLoad] = useState<number>(1.0);
+  const [category, setCategory] = useState<'RURAL_DOMESTIC' | 'URBAN_DOMESTIC'>('RURAL_DOMESTIC');
   const [isLifelineConsumer, setIsLifelineConsumer] = useState(false);
   const [timelyPaymentRebate, setTimelyPaymentRebate] = useState(true);
   const [year, setYear] = useState(new Date().getFullYear());
@@ -92,6 +93,7 @@ const RestoredBillCalculator = () => {
         // Use Bihar calculation logic
         const result = await computeBiharBill({
           provider_code: selectedProvider,
+          category: category,
           year,
           month,
           units_kwh: unitsConsumed,
@@ -167,7 +169,7 @@ const RestoredBillCalculator = () => {
     if (selectedProvider && unitsConsumed >= 0 && sanctionedLoad >= 0) {
       calculateBill();
     }
-  }, [selectedProvider, year, month, unitsConsumed, sanctionedLoad, isLifelineConsumer, timelyPaymentRebate]);
+  }, [selectedProvider, category, year, month, unitsConsumed, sanctionedLoad, isLifelineConsumer, timelyPaymentRebate]);
 
   if (loading) {
     return (
@@ -181,6 +183,8 @@ const RestoredBillCalculator = () => {
       </div>
     );
   }
+
+  const isBiharProvider = selectedProvider.includes('NBPCL') || selectedProvider.includes('SBPCL');
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -220,6 +224,22 @@ const RestoredBillCalculator = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Category Selection - Only show for Bihar providers */}
+            {isBiharProvider && (
+              <div>
+                <Label htmlFor="category">Consumer Category</Label>
+                <Select value={category} onValueChange={(value: 'RURAL_DOMESTIC' | 'URBAN_DOMESTIC') => setCategory(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="RURAL_DOMESTIC">Rural Domestic</SelectItem>
+                    <SelectItem value="URBAN_DOMESTIC">Urban Domestic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Period Selection */}
             <div className="grid grid-cols-2 gap-4">
